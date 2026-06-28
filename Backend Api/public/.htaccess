@@ -1,0 +1,39 @@
+<IfModule mod_headers.c>
+    SetEnvIf Origin "^https://rre\.asquareai\.com$" CORS_ORIGIN=$0
+    SetEnvIf Origin "^http://localhost:5173$" CORS_ORIGIN=$0
+    SetEnvIf Origin "^http://127\.0\.0\.1:5173$" CORS_ORIGIN=$0
+    Header always set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, Accept, X-Requested-With, X-Branch-Code, X-Api-Key" env=CORS_ORIGIN
+    Header always set Access-Control-Max-Age "86400" env=CORS_ORIGIN
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # CORS preflight must reach Laravel (LiteSpeed returns 404 for [R=204] on API paths)
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^ index.php [L]
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

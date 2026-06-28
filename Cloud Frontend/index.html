@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="theme-color" content="#eef2ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap"
+      rel="stylesheet"
+    />
+    <title>CloudEye</title>
+    <script>
+      (function () {
+        var t = localStorage.getItem('rr-theme');
+        if (!t && window.matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
+        document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#0b0f1a' : '#eef2ff');
+      })();
+    </script>
+    <script>
+      (function () {
+        var buildMeta = document.querySelector('meta[name="app-build"]');
+        var build = buildMeta && buildMeta.getAttribute('content');
+        if (!build) return;
+        fetch('/index.html', { cache: 'no-store' })
+          .then(function (r) {
+            return r.text();
+          })
+          .then(function (html) {
+            var m = html.match(/name="app-build" content="([^"]+)"/);
+            if (m && m[1] !== build) {
+              var path = location.pathname.split('?')[0] || '/';
+              location.replace(path + '?v=' + encodeURIComponent(m[1]));
+            }
+          })
+          .catch(function () {});
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

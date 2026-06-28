@@ -1,0 +1,35 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+.idea/
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+
+# Node
+**/node_modules/
+**/dist/
+**/build/
+
+# PHP/Laravel
+**/vendor/
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.production.example
+**/public/build/
+**/public/hot
+
+# .NET / C#
+**/bin/
+**/obj/
+**/packages/
+
+# Common archives/artifacts
+*.zip
+*.nupkg
+*.snupkg

@@ -1,0 +1,186 @@
+﻿1>------ Rebuild All started: Project: Inventory, Configuration: Debug Any CPU ------
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\FrmRole.designer.cs(820,64,820,68): warning CS0108: 'Inventory.Masters.FrmRoles.Name' hides inherited member 'System.Windows.Forms.Control.Name'. Use the new keyword if hiding was intended.
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\FrmUser.Designer.cs(838,64,838,68): warning CS0108: 'Inventory.Masters.FrmUserCreation.Name' hides inherited member 'System.Windows.Forms.Control.Name'. Use the new keyword if hiding was intended.
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Location.designer.cs(855,64,855,68): warning CS0108: 'Inventory.Masters.Location.Name' hides inherited member 'System.Windows.Forms.Control.Name'. Use the new keyword if hiding was intended.
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Product.Designer.cs(1810,65,1810,73): warning CS0108: 'Inventory.Masters.Product.Location' hides inherited member 'System.Windows.Forms.Form.Location'. Use the new keyword if hiding was intended.
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceivedReport.designer.cs(554,64,554,75): warning CS0108: 'Inventory.Movement.FrmIssuedReceivedReport.ProductName' hides inherited member 'System.Windows.Forms.Control.ProductName'. Use the new keyword if hiding was intended.
+1>F:\Mohan\invchages\Inventory\Inventory\Accounts\AccountPayable.cs(759,41,759,45): warning CS0219: The variable 'coin' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Accounts\AccountsReceivable.cs(658,41,658,45): warning CS0219: The variable 'coin' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Accounts\AccountsReceivable.cs(701,41,701,51): warning CS0219: The variable 'coinreturn' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2266,20,2266,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2267,17,2267,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2283,20,2283,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2298,20,2298,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2683,30,2683,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(2901,30,2901,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmReceived.cs(769,20,769,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmReceived.cs(770,17,770,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\MaterialMovement.cs(1165,30,1165,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(478,30,478,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(552,20,552,31): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(968,20,968,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(2413,30,2413,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(2566,30,2566,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseOrder.cs(265,30,265,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseOrder.cs(434,30,434,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseOrder.cs(1710,24,1710,35): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseOrder.cs(2010,30,2010,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(266,30,266,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3552,29,3552,30): warning CS0219: The variable 'k' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3609,50,3609,53): warning CS0168: The variable 'eds' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3710,32,3710,43): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3719,38,3719,40): warning CS0168: The variable 'es' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3830,25,3830,36): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(3873,20,3873,31): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(4031,30,4031,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(4973,30,4973,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\SearchPurchaseOrder.cs(397,20,397,31): warning CS0219: The variable 'totalamount' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(2867,20,2867,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3045,20,3045,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3046,17,3046,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3067,20,3067,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3080,20,3080,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3335,20,3335,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3336,17,3336,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3417,30,3417,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(3676,44,3676,57): warning CS0219: The variable 'totalquantity' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(5221,30,5221,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(6444,20,6444,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(6445,17,6445,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(6463,20,6463,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(6464,17,6464,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(7095,30,7095,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(1045,30,1045,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(1455,34,1455,36): warning CS0168: The variable 'sa' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(2025,30,2025,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(959,30,959,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(1169,17,1169,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(1491,20,1491,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(1894,37,1894,50): warning CS0219: The variable 'totalquantity' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(2574,30,2574,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(3340,30,3340,33): warning CS0168: The variable 'efd' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(461,37,461,50): warning CS0219: The variable 'totalquantity' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(610,40,610,53): warning CS0219: The variable 'totalquantity' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(835,30,835,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(1896,20,1896,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(2232,30,2232,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(2423,37,2423,50): warning CS0219: The variable 'totalquantity' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(4103,20,4103,27): warning CS0219: The variable 'message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(4104,17,4104,18): warning CS0219: The variable 'i' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Service\ServiceRequest.cs(423,29,423,31): warning CS0168: The variable 'sa' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Transactions\CashPayment.cs(949,29,949,30): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Transactions\CashReceipt.cs(749,30,749,31): warning CS0168: The variable 'e' is declared but never used
+1>F:\Mohan\invchages\Inventory\Inventory\Adjustment\AdjustmentforPurchaseBill.cs(15,13,15,19): warning CS0414: The field 'Inventory.Adjustment.AdjustmentforPurchaseBill.userid' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Commission\CommissionPayment.cs(23,19,23,36): warning CS0169: The field 'Inventory.Sales.CommissionPayment.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Commission\CommissionPayment.cs(23,38,23,51): warning CS0169: The field 'Inventory.Sales.CommissionPayment.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Commission\CommissionPayment.cs(24,18,24,29): warning CS0169: The field 'Inventory.Sales.CommissionPayment.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Commission\CommissionPayment.cs(25,17,25,19): warning CS0169: The field 'Inventory.Sales.CommissionPayment.tb' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Commission\CommissionPayment.cs(25,49,25,64): warning CS0169: The field 'Inventory.Sales.CommissionPayment.tborderquantoty' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Employee.cs(23,22,23,28): warning CS0169: The field 'Inventory.Masters.Employee.DistId' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Employee.cs(26,16,26,28): warning CS0169: The field 'Inventory.Masters.Employee.newnameimage' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Employee.cs(27,16,27,26): warning CS0169: The field 'Inventory.Masters.Employee.sourcepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Employee.cs(28,23,28,32): warning CS0169: The field 'Inventory.Masters.Employee.imagepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Product.cs(24,16,24,19): warning CS0414: The field 'Inventory.Masters.Product.aaa' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Reference.cs(26,16,26,28): warning CS0169: The field 'Inventory.Masters.Reference.newnameimage' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Reference.cs(27,16,27,26): warning CS0169: The field 'Inventory.Masters.Reference.sourcepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Reference.cs(28,23,28,32): warning CS0169: The field 'Inventory.Masters.Reference.imagepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Suppliers.cs(25,16,25,26): warning CS0169: The field 'Inventory.Masters.Suppliers.sourcepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Suppliers.cs(27,16,27,28): warning CS0169: The field 'Inventory.Masters.Suppliers.newnameimage' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Suppliers.cs(28,16,28,23): warning CS0414: The field 'Inventory.Masters.Suppliers.message' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Masters\Suppliers.cs(31,23,31,32): warning CS0169: The field 'Inventory.Masters.Suppliers.imagepath' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(24,18,24,29): warning CS0169: The field 'Inventory.Movement.FrmIssuedReceived.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(26,13,26,28): warning CS0414: The field 'Inventory.Movement.FrmIssuedReceived.ProdSelRowvalue' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(27,14,27,17): warning CS0414: The field 'Inventory.Movement.FrmIssuedReceived.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(28,18,28,26): warning CS0169: The field 'Inventory.Movement.FrmIssuedReceived.tbamount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(28,28,28,44): warning CS0169: The field 'Inventory.Movement.FrmIssuedReceived.tbbaalanceanount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(28,63,28,77): warning CS0169: The field 'Inventory.Movement.FrmIssuedReceived.tbdeliveredqty' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmIssuedReceived.cs(32,16,32,22): warning CS0169: The field 'Inventory.Movement.FrmIssuedReceived.mianid' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\FrmReceived.cs(25,16,25,22): warning CS0169: The field 'Inventory.Movement.FrmReceived.mianid' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\MaterialMovement.cs(29,19,29,32): warning CS0649: Field 'Inventory.MaterialMovement.datatableitem' is never assigned to, and will always have its default value null
+1>F:\Mohan\invchages\Inventory\Inventory\Movement\MaterialMovement.cs(30,19,30,24): warning CS0649: Field 'Inventory.MaterialMovement.item3' is never assigned to, and will always have its default value null
+1>F:\Mohan\invchages\Inventory\Inventory\Program.cs(24,27,24,36): warning CS0649: Field 'Inventory.Program.userlevel' is never assigned to, and will always have its default value 0
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(21,16,21,22): warning CS0414: The field 'Inventory.Purchase_Return.FrmPurchaseReturn.UserId' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(25,14,25,17): warning CS0414: The field 'Inventory.Purchase_Return.FrmPurchaseReturn.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(29,17,29,25): warning CS0169: The field 'Inventory.Purchase_Return.FrmPurchaseReturn.tbamount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase Return\FrmPurchaseReturn.cs(29,27,29,43): warning CS0169: The field 'Inventory.Purchase_Return.FrmPurchaseReturn.tbbaalanceanount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseOrder.cs(29,14,29,17): warning CS0414: The field 'Inventory.Purchase.PurchaseOrder.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(24,14,24,31): warning CS0414: The field 'Inventory.Purchase.PurchaseReceipt.CellQtyValidation' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(25,14,25,39): warning CS0414: The field 'Inventory.Purchase.PurchaseReceipt.CellCheckingQtyValidation' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(27,13,27,19): warning CS0414: The field 'Inventory.Purchase.PurchaseReceipt.userid' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(33,17,33,29): warning CS0169: The field 'Inventory.Purchase.PurchaseReceipt.goodquantity' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(33,31,33,45): warning CS0169: The field 'Inventory.Purchase.PurchaseReceipt.demagequantity' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(39,14,39,17): warning CS0414: The field 'Inventory.Purchase.PurchaseReceipt.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Purchase\PurchaseReceipt.cs(41,13,41,19): warning CS0414: The field 'Inventory.Purchase.PurchaseReceipt.InsDel' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Report Transaction\TransactionCashReport.cs(18,16,18,20): warning CS0414: The field 'Inventory.Report_Transaction.TransactionCashReport.flag' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Report\FrmStockFinalRpt.cs(56,16,56,24): warning CS0414: The field 'Inventory.Report.FrmStockFinalRpt.category' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(28,19,28,36): warning CS0169: The field 'Inventory.Sales.SalesBillNew.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(28,38,28,51): warning CS0169: The field 'Inventory.Sales.SalesBillNew.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(29,18,29,29): warning CS0169: The field 'Inventory.Sales.SalesBillNew.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesBillNew.cs(34,14,34,17): warning CS0414: The field 'Inventory.Sales.SalesBillNew.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(23,19,23,36): warning CS0169: The field 'Inventory.Sales.SalesNewreport.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(23,38,23,51): warning CS0169: The field 'Inventory.Sales.SalesNewreport.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(24,18,24,29): warning CS0169: The field 'Inventory.Sales.SalesNewreport.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(25,17,25,19): warning CS0169: The field 'Inventory.Sales.SalesNewreport.tb' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(25,21,25,29): warning CS0169: The field 'Inventory.Sales.SalesNewreport.tbamount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(25,31,25,47): warning CS0169: The field 'Inventory.Sales.SalesNewreport.tbbaalanceanount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesNewreport.cs(25,49,25,64): warning CS0169: The field 'Inventory.Sales.SalesNewreport.tborderquantoty' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(27,14,27,18): warning CS0414: The field 'Inventory.SalesQuotation1.load' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(34,14,34,17): warning CS0414: The field 'Inventory.SalesQuotation1.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,16,38,25): warning CS0169: The field 'Inventory.SalesQuotation1.firstname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,27,38,37): warning CS0169: The field 'Inventory.SalesQuotation1.firstvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,39,38,49): warning CS0169: The field 'Inventory.SalesQuotation1.secondname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,51,38,62): warning CS0169: The field 'Inventory.SalesQuotation1.secondvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,64,38,73): warning CS0169: The field 'Inventory.SalesQuotation1.thirdname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesQuotation.cs(38,75,38,85): warning CS0169: The field 'Inventory.SalesQuotation1.thirdvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,16,29,25): warning CS0169: The field 'Inventory.SalesReport.firstname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,27,29,37): warning CS0169: The field 'Inventory.SalesReport.firstvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,39,29,49): warning CS0169: The field 'Inventory.SalesReport.secondname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,51,29,62): warning CS0169: The field 'Inventory.SalesReport.secondvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,64,29,73): warning CS0169: The field 'Inventory.SalesReport.thirdname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReport.cs(29,75,29,85): warning CS0169: The field 'Inventory.SalesReport.thirdvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(25,19,25,36): warning CS0169: The field 'Inventory.Sales.SalesReturn.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(25,38,25,51): warning CS0169: The field 'Inventory.Sales.SalesReturn.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(26,18,26,29): warning CS0169: The field 'Inventory.Sales.SalesReturn.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(28,21,28,29): warning CS0169: The field 'Inventory.Sales.SalesReturn.tbamount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(28,31,28,47): warning CS0169: The field 'Inventory.Sales.SalesReturn.tbbaalanceanount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(34,14,34,17): warning CS0414: The field 'Inventory.Sales.SalesReturn.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturn.cs(35,14,35,29): warning CS0414: The field 'Inventory.Sales.SalesReturn.ProdNotFoundMSg' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(19,19,19,36): warning CS0169: The field 'Inventory.Sales.SalesReturnList.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(19,38,19,51): warning CS0169: The field 'Inventory.Sales.SalesReturnList.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(20,18,20,29): warning CS0169: The field 'Inventory.Sales.SalesReturnList.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(21,19,21,26): warning CS0169: The field 'Inventory.Sales.SalesReturnList.dtitems' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(22,17,22,19): warning CS0169: The field 'Inventory.Sales.SalesReturnList.tb' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(22,21,22,29): warning CS0169: The field 'Inventory.Sales.SalesReturnList.tbamount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(22,31,22,47): warning CS0169: The field 'Inventory.Sales.SalesReturnList.tbbaalanceanount' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(22,49,22,64): warning CS0169: The field 'Inventory.Sales.SalesReturnList.tborderquantoty' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(27,13,27,28): warning CS0414: The field 'Inventory.Sales.SalesReturnList.ProdSelRowvalue' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(28,14,28,17): warning CS0414: The field 'Inventory.Sales.SalesReturnList.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SalesReturnList.cs(29,14,29,29): warning CS0414: The field 'Inventory.Sales.SalesReturnList.ProdNotFoundMSg' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(29,13,29,28): warning CS0414: The field 'Inventory.SearchQuatation.ProdSelRowvalue' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(30,14,30,17): warning CS0414: The field 'Inventory.SearchQuatation.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,16,32,25): warning CS0169: The field 'Inventory.SearchQuatation.firstname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,27,32,37): warning CS0169: The field 'Inventory.SearchQuatation.firstvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,39,32,49): warning CS0169: The field 'Inventory.SearchQuatation.secondname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,51,32,62): warning CS0169: The field 'Inventory.SearchQuatation.secondvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,64,32,73): warning CS0169: The field 'Inventory.SearchQuatation.thirdname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatation.cs(32,75,32,85): warning CS0169: The field 'Inventory.SearchQuatation.thirdvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(25,17,25,19): warning CS0169: The field 'Inventory.SearchQuatationEstimation.tb' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(29,13,29,28): warning CS0414: The field 'Inventory.SearchQuatationEstimation.ProdSelRowvalue' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(30,14,30,17): warning CS0414: The field 'Inventory.SearchQuatationEstimation.res' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,16,32,25): warning CS0169: The field 'Inventory.SearchQuatationEstimation.firstname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,27,32,37): warning CS0169: The field 'Inventory.SearchQuatationEstimation.firstvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,39,32,49): warning CS0169: The field 'Inventory.SearchQuatationEstimation.secondname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,51,32,62): warning CS0169: The field 'Inventory.SearchQuatationEstimation.secondvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,64,32,73): warning CS0169: The field 'Inventory.SearchQuatationEstimation.thirdname' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\SearchQuatationEstimation.cs(32,75,32,85): warning CS0169: The field 'Inventory.SearchQuatationEstimation.thirdvalue' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(24,19,24,36): warning CS0169: The field 'Inventory.Sales.WindowSales.dtreceivedbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(24,38,24,51): warning CS0169: The field 'Inventory.Sales.WindowSales.dtpaidbalance' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Sales\WindowSales.cs(25,18,25,29): warning CS0169: The field 'Inventory.Sales.WindowSales.cmblocation' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Service\CancelledTray.cs(16,14,16,19): warning CS0414: The field 'Inventory.Service.CancelledTray.first' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Service\IssuedTray.cs(16,14,16,19): warning CS0414: The field 'Inventory.Service.IssuedTray.first' is assigned but its value is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Service\ServiceRequest.cs(16,16,16,35): warning CS0169: The field 'Inventory.Service.ServiceRequest.chequeno_currentrow' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Tool\CashEndClose.cs(29,17,29,29): warning CS0169: The field 'Inventory.Tool.CashEndClose.BeginingCash' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Tool\CashEndClose.cs(29,31,29,37): warning CS0169: The field 'Inventory.Tool.CashEndClose.CashIn' is never used
+1>F:\Mohan\invchages\Inventory\Inventory\Tool\CashEndClose.cs(29,39,29,46): warning CS0169: The field 'Inventory.Tool.CashEndClose.CashOut' is never used
+1>  Inventory -> F:\Mohan\invchages\Inventory\Inventory\bin\Debug\Inventory.exe
+========== Rebuild All: 1 succeeded, 0 failed, 0 skipped ==========
