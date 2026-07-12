@@ -78,6 +78,19 @@ namespace Inventory
             GetSearchOrder();
            
         }       
+        private void btnGSTPrint_Click(object sender, EventArgs e)
+        {
+            string quotationId = txtorders.Text.Trim();
+            if (string.IsNullOrEmpty(quotationId))
+            {
+                MessageBox.Show("Please save or select a quotation before GST print.", "GST Print", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            QuotationGSTReport report = new QuotationGSTReport(quotationId);
+            report.ShowDialog();
+        }
+
         public void bindcustomers()
         {
             cmbcustomernames.DataSource = objQuotationbal.Getcustomer();

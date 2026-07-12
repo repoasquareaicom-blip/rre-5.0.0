@@ -30,10 +30,13 @@ namespace Inventory
     {
         QuotationBal objQuotationbal = new QuotationBal();
         private ToolStripMenuItem productSyncQueueToolStripMenuItem;
+        private ToolStripMenuItem remembranceReportToolStripMenuItem;
         public FrmMain(string userid)
         {
             InitializeComponent();
+            RemoveRetiredReportMenuItems();
             AddProductSyncQueueMenuItem();
+            AddRemembranceReportMenuItem();
             ApplyCloudEyeDelightMainTheme();
             ApplyMainOfficeProductRestrictions();
             FixMdiClientArea();
@@ -61,6 +64,39 @@ namespace Inventory
             this.IsMdiContainer = true;
             this.MainMenuStrip = this.menuStrip1;
             this.menuStrip1.Dock = DockStyle.Top;
+        }
+
+        private void RemoveRetiredReportMenuItems()
+        {
+            if (reportsToolStripMenuItem == null)
+                return;
+
+            reportsToolStripMenuItem.DropDownItems.Remove(slesReportToolStripMenuItem);
+            reportsToolStripMenuItem.DropDownItems.Remove(materialTransactionReportToolStripMenuItem);
+            reportsToolStripMenuItem.DropDownItems.Remove(hSNStockReportToolStripMenuItem);
+        }
+
+        private void AddRemembranceReportMenuItem()
+        {
+            if (reportsToolStripMenuItem == null)
+                return;
+
+            if (remembranceReportToolStripMenuItem != null)
+                return;
+
+            remembranceReportToolStripMenuItem = new ToolStripMenuItem();
+            remembranceReportToolStripMenuItem.Name = "remembranceReportToolStripMenuItem";
+            remembranceReportToolStripMenuItem.Size = new Size(277, 22);
+            remembranceReportToolStripMenuItem.Text = "Remembrance Report";
+            remembranceReportToolStripMenuItem.Click += new EventHandler(remembranceReportToolStripMenuItem_Click);
+            reportsToolStripMenuItem.DropDownItems.Add(remembranceReportToolStripMenuItem);
+        }
+
+        private void remembranceReportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RemembranceReport report = new RemembranceReport();
+            report.MdiParent = this;
+            report.Show();
         }
 
         private void ApplyCloudEyeDelightMainTheme()
@@ -1108,8 +1144,8 @@ namespace Inventory
             purchaseOrderToolStripMenuItem.Visible = true;
             purchaseReceiptToolStripMenuItem.Visible = true;
             receiptOfGoodsReportToolStripMenuItem.Visible = true;
-            purchaseReturnToolStripMenuItem.Visible = true;
-            purchaseReturnToolStripMenuItem.Visible = true;
+            purchaseReturnToolStripMenuItem.Visible = false;
+            purchaseReturnToolStripMenuItem.Visible = false;
             purchaseOrderListToolStripMenuItem.Visible = true;
             //purchaseAgeingToolStripMenuItem.Visible = true;
 
@@ -1248,7 +1284,7 @@ namespace Inventory
                 }
                 else if (menu == "PurchaseReturn")
                 {
-                    purchaseReturnToolStripMenuItem.Visible = true;
+                    purchaseReturnToolStripMenuItem.Visible = false;
                 }
 
                 else if (menu == "Purchase List")

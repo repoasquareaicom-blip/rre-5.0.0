@@ -425,7 +425,6 @@
             this.purchaseOrderToolStripMenuItem,
             this.purchaseReceiptToolStripMenuItem,
             this.receiptOfGoodsReportToolStripMenuItem,
-            this.purchaseReturnToolStripMenuItem,
             this.purchaseOrderListToolStripMenuItem});
             this.inventoryToolStripMenuItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.inventoryToolStripMenuItem.ForeColor = System.Drawing.Color.White;
@@ -1046,19 +1045,16 @@
             // 
             this.reportsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stockReportToolStripMenuItem,
-            this.slesReportToolStripMenuItem,
             this.followupQuotationReportToolStripMenuItem,
             this.issuedReceivedReportToolStripMenuItem1,
             this.stockAjustmentToolStripMenuItem,
             this.viewStockAdjustmentToolStripMenuItem,
-            this.materialTransactionReportToolStripMenuItem,
             this.userBillReportToolStripMenuItem,
             this.incentiveReportToolStripMenuItem,
             this.accountHeadWiseStatementToolStripMenuItem,
             this.periodWiseClosingStockReportToolStripMenuItem,
             this.roseReportToolStripMenuItem,
             this.productGSTReportToolStripMenuItem,
-            this.hSNStockReportToolStripMenuItem,
             this.customerWiseLedgerReportToolStripMenuItem,
             this.gSTNewReportToolStripMenuItem});
             this.reportsToolStripMenuItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));

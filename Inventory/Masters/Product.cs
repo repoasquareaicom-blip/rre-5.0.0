@@ -807,6 +807,12 @@ namespace Inventory.Masters
             dgvProduct.Columns["DisplayName"].Width = 410;
             dgvProduct.Columns["Brandname"].Width = 110;
             dgvProduct.Columns["SalesPrice"].Width = 60;
+            if (GridHasColumn(dgvProduct, "MRP"))
+            {
+                dgvProduct.Columns["MRP"].Width = 60;
+                dgvProduct.Columns["MRP"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvProduct.Columns["MRP"].HeaderText = "MRP";
+            }
             dgvProduct.Columns["ReorderPoint"].Width = 150;
             dgvProduct.Columns["Edit"].Width = 40;
             dgvProduct.Columns["Delete"].Width = 50;
@@ -1053,6 +1059,14 @@ namespace Inventory.Masters
                     this.ActiveControl = txtitemnames;
 
             }
+            if (txtMRP.Text == ".")
+            {
+                i++;
+                message = message + "* Please Enter Correct MRP" + "\n";
+                if (i == 1)
+                    this.ActiveControl = txtMRP;
+
+            }
 
             //if (chkBoxBarcode.Checked == false)
             //{
@@ -1178,6 +1192,13 @@ namespace Inventory.Masters
                 if (i == 1)
                     this.ActiveControl = txtSalesPrice;
             }
+            if (!string.IsNullOrEmpty(txtMRP.Text.Trim()) && IsMRPLessThanSalesPrice())
+            {
+                i++;
+                message = message + "* MRP Should Not Be Less Than Sales Price" + "\n";
+                if (i == 1)
+                    this.ActiveControl = txtMRP;
+            }
 
             //if (string.IsNullOrEmpty(Convert.ToString(txtMinimunStock.Text)))
             //{
@@ -1259,6 +1280,7 @@ namespace Inventory.Masters
             chkIncentive.Checked = false;
             txtbarcodes.Clear();
             txtSalesPrice.Clear();
+            txtMRP.Clear();
             txtsizes.Clear();
             lightValue.Checked = false;
             txtMinimunStock.Clear();
@@ -1584,7 +1606,7 @@ namespace Inventory.Masters
 
             ObjProductBAL.SalesPrice = txtSalesPrice.Text;
             Status = ProductBAL.SaveProduct(ObjProductBAL);
-            ProductMasterCloudQueue.EnqueueAndTryPush(Convert.ToString(Status), "Product", true);
+            UpdateProductMRP(Status);
 
             DataTable dt = new DataTable();
 
@@ -1627,6 +1649,7 @@ namespace Inventory.Masters
 
             if (lblhidden.Text == string.Empty)
             {
+                QueueProductMasterChange(Status);
                 MessageBox.Show("Inserted successfully");
 
                 itemdetails("");
@@ -1659,6 +1682,7 @@ namespace Inventory.Masters
                     }
 
 
+                QueueProductMasterChange(Status);
                 clear();
                 MessageBox.Show("Updated Succesfully");
                 bindproduct();
@@ -1693,6 +1717,107 @@ namespace Inventory.Masters
             DataTable dtSizeName = ProductBAL.ObjProductDAL.GetsizeName(SizeID);
 
             return dtSizeName;
+        }
+
+        private void QueueProductMasterChange(int productId)
+        {
+            if (productId > 0)
+            {
+                ProductMasterCloudQueue.EnqueueAndTryPush(Convert.ToString(productId), "Product", true);
+            }
+        }
+
+        private void UpdateProductMRP(int productId)
+        {
+            if (productId <= 0)
+                return;
+
+            decimal mrp;
+            object mrpValue = DBNull.Value;
+            if (!string.IsNullOrEmpty(txtMRP.Text.Trim()) && decimal.TryParse(txtMRP.Text.Trim(), out mrp))
+            {
+                mrpValue = mrp;
+            }
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                EnsureProductMRPColumn(con);
+
+                using (SqlCommand cmd = new SqlCommand("UPDATE ProductMaster SET MRP = @MRP WHERE id = @id", con))
+                {
+                    SqlParameter mrpParameter = cmd.Parameters.Add("@MRP", SqlDbType.Decimal);
+                    mrpParameter.Precision = 18;
+                    mrpParameter.Scale = 2;
+                    mrpParameter.Value = mrpValue;
+                    cmd.Parameters.AddWithValue("@id", productId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void EnsureProductMRPColumn(SqlConnection con)
+        {
+            using (SqlCommand existsCmd = new SqlCommand("SELECT COL_LENGTH('dbo.ProductMaster', 'MRP')", con))
+            {
+                if (existsCmd.ExecuteScalar() != DBNull.Value)
+                    return;
+            }
+
+            using (SqlCommand alterCmd = new SqlCommand("ALTER TABLE dbo.ProductMaster ADD MRP decimal(18,2) NULL", con))
+            {
+                alterCmd.ExecuteNonQuery();
+            }
+        }
+
+        private bool IsMRPLessThanSalesPrice()
+        {
+            decimal mrp;
+            decimal salesPrice;
+            if (!decimal.TryParse(txtMRP.Text.Trim(), out mrp) || !decimal.TryParse(txtSalesPrice.Text.Trim(), out salesPrice))
+                return false;
+
+            return mrp < salesPrice;
+        }
+
+        private bool GridHasColumn(DataGridView grid, string columnName)
+        {
+            return grid.Columns.Contains(columnName);
+        }
+
+        private string GetGridCellValue(DataGridView grid, int rowIndex, string columnName)
+        {
+            if (!GridHasColumn(grid, columnName))
+                return string.Empty;
+
+            return Convert.ToString(grid.Rows[rowIndex].Cells[columnName].Value);
+        }
+
+        private string GetProductMRP(string productId, DataGridView grid, int rowIndex)
+        {
+            string gridValue = GetGridCellValue(grid, rowIndex, "MRP");
+            if (!string.IsNullOrEmpty(gridValue))
+                return gridValue;
+
+            if (string.IsNullOrEmpty(productId))
+                return string.Empty;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                using (SqlCommand existsCmd = new SqlCommand("SELECT COL_LENGTH('dbo.ProductMaster', 'MRP')", con))
+                {
+                    if (existsCmd.ExecuteScalar() == DBNull.Value)
+                        return string.Empty;
+                }
+
+                using (SqlCommand cmd = new SqlCommand("SELECT CONVERT(varchar(50), MRP) FROM ProductMaster WHERE id = @id", con))
+                {
+                    cmd.Parameters.AddWithValue("@id", productId);
+                    object mrp = cmd.ExecuteScalar();
+                    return Convert.ToString(mrp);
+                }
+            }
         }
 
 
@@ -1778,6 +1903,7 @@ namespace Inventory.Masters
 
             ObjProductBAL.SalesPrice = txtSalesPrice.Text;
             Status = ProductBAL.SaveProductPending(ObjProductBAL);
+            UpdateProductMRP(Status);
 
             DataTable dt = new DataTable();
 
@@ -1820,6 +1946,7 @@ namespace Inventory.Masters
 
             if (lblhidden.Text == string.Empty)
             {
+                QueueProductMasterChange(Status);
                 MessageBox.Show("Inserted successfully");
 
                 itemdetails("");
@@ -1850,6 +1977,7 @@ namespace Inventory.Masters
                     }
                 }
 
+                QueueProductMasterChange(Status);
                 MessageBox.Show("Updated Succesfully");
                 itemdetails("");
                 if (!string.IsNullOrEmpty(filepath))
@@ -1951,6 +2079,12 @@ namespace Inventory.Masters
                 dgvProduct.Columns["DisplayName"].Width = 410;
                 dgvProduct.Columns["Brandname"].Width = 100;
                 dgvProduct.Columns["SalesPrice"].Width = 60;
+                if (GridHasColumn(dgvProduct, "MRP"))
+                {
+                    dgvProduct.Columns["MRP"].Width = 60;
+                    dgvProduct.Columns["MRP"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    dgvProduct.Columns["MRP"].HeaderText = "MRP";
+                }
                 dgvProduct.Columns["ReorderPoint"].Width = 150;
                 dgvProduct.Columns["Types"].Width = 100;
                 dgvProduct.Columns["HSNCODE"].Width = 50;
@@ -2100,6 +2234,7 @@ namespace Inventory.Masters
                     filename = Convert.ToString(dgvProduct.Rows[e.RowIndex].Cells["Imagepath"].Value);
                     txtRemarks.Text = Convert.ToString(dgvProduct.Rows[e.RowIndex].Cells["Remarks"].Value);
                     txtSalesPrice.Text = Convert.ToString(dgvProduct.Rows[e.RowIndex].Cells["SalesPrice"].Value);
+                    txtMRP.Text = GetProductMRP(lblhidden.Text, dgvProduct, e.RowIndex);
 
                     if (!string.IsNullOrEmpty(filename))
                     {
@@ -2301,6 +2436,20 @@ namespace Inventory.Masters
                 if (i == 1)
                     this.ActiveControl = txtSalesPrice;
             }
+            if (txtMRP.Text == ".")
+            {
+                i++;
+                message = message + "* Please Enter Correct MRP" + "\n";
+                if (i == 1)
+                    this.ActiveControl = txtMRP;
+            }
+            if (!string.IsNullOrEmpty(txtMRP.Text.Trim()) && IsMRPLessThanSalesPrice())
+            {
+                i++;
+                message = message + "* MRP Should Not Be Less Than Sales Price" + "\n";
+                if (i == 1)
+                    this.ActiveControl = txtMRP;
+            }
             if (string.IsNullOrEmpty(message))
             {
                 status = true;
@@ -2440,6 +2589,7 @@ namespace Inventory.Masters
                 txtitemnames.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["ItemName"].Value);
                 //textBox1.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Types"].Value);
                 txtSalesPrice.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["SalesPrice"].Value);
+                txtMRP.Text = GetProductMRP(lblhidden.Text, dgvSearch, e.RowIndex);
                 if (Convert.ToBoolean(dgvSearch.Rows[e.RowIndex].Cells["ISBarCodeable"].Value)==true)
                 {
                     chkBoxBarcode.Checked = true;

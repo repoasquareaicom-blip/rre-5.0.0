@@ -466,11 +466,12 @@
             // 
             // label25
             // 
-            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label25.AutoSize = true;
             this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label25.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.label25.Location = new System.Drawing.Point(477, 174);
+            this.label25.Location = new System.Drawing.Point(825, 186);
             this.label25.Name = "label25";
             this.label25.Size = new System.Drawing.Size(108, 20);
             this.label25.TabIndex = 489;
@@ -599,7 +600,7 @@
             this.dgvCustomerinfo.Name = "dgvCustomerinfo";
             this.dgvCustomerinfo.ReadOnly = true;
             this.dgvCustomerinfo.RowHeadersVisible = false;
-            this.dgvCustomerinfo.Size = new System.Drawing.Size(938, 379);
+            this.dgvCustomerinfo.Size = new System.Drawing.Size(944, 379);
             this.dgvCustomerinfo.TabIndex = 10;
             this.dgvCustomerinfo.TabStop = false;
             this.dgvCustomerinfo.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvCustomerinfo_CellClick);

@@ -23,7 +23,12 @@ namespace Inventory
         private readonly Label lblDays = new Label();
         private readonly Panel headerPanel = new Panel();
         private readonly Panel filterPanel = new Panel();
+        private readonly Panel contentPanel = new Panel();
         private readonly Label lblTitle = new Label();
+        private readonly Label lblSubtitle = new Label();
+        private readonly Label lblProductSearch = new Label();
+        private readonly Button btnApplySearch = new Button();
+        private readonly Button btnCancelFilter = new Button();
 
         public Updated()
         {
@@ -36,47 +41,62 @@ namespace Inventory
         {
             this.Text = "Product Updates";
             this.StartPosition = FormStartPosition.CenterParent;
-            this.Size = new Size(920, 560);
-            this.MinimumSize = new Size(820, 480);
-            this.BackColor = Color.FromArgb(245, 247, 250);
+            this.Size = new Size(960, 600);
+            this.MinimumSize = new Size(860, 520);
+            this.BackColor = Color.FromArgb(246, 248, 251);
+            this.Font = new Font("Calibri", 9.75F, FontStyle.Regular);
+            this.KeyPreview = true;
 
             headerPanel.Dock = DockStyle.Top;
-            headerPanel.Height = 56;
-            headerPanel.Padding = new Padding(16, 10, 16, 10);
-            headerPanel.BackColor = Color.FromArgb(242, 244, 247);
+            headerPanel.Height = 76;
+            headerPanel.Padding = new Padding(20, 12, 20, 12);
+            headerPanel.BackColor = Color.White;
 
             filterPanel.Dock = DockStyle.Right;
-            filterPanel.Width = 310;
+            filterPanel.Width = 655;
             filterPanel.BackColor = Color.Transparent;
 
             lblTitle.Text = "Product Updates";
-            lblTitle.Font = new Font("Calibri", 12F, FontStyle.Bold);
-            lblTitle.ForeColor = Color.FromArgb(32, 41, 57);
-            lblTitle.Location = new Point(16, 9);
+            lblTitle.Font = new Font("Calibri", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(24, 37, 57);
+            lblTitle.Location = new Point(20, 12);
             lblTitle.AutoSize = true;
+
+            lblSubtitle.Text = "Recent price changes and receipt-of-goods activity";
+            lblSubtitle.Font = new Font("Calibri", 9.75F, FontStyle.Regular);
+            lblSubtitle.ForeColor = Color.FromArgb(102, 112, 133);
+            lblSubtitle.Location = new Point(22, 42);
+            lblSubtitle.AutoSize = true;
 
             lblDays.Text = "Last updated days";
             lblDays.Font = new Font("Calibri", 9.75F, FontStyle.Regular);
             lblDays.ForeColor = Color.FromArgb(52, 64, 84);
-            lblDays.Location = new Point(0, 17);
+            lblDays.Location = new Point(0, 11);
             lblDays.AutoSize = true;
 
             cmbDays.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbDays.FlatStyle = FlatStyle.Popup;
+            cmbDays.FlatStyle = FlatStyle.Flat;
             cmbDays.Font = new Font("Calibri", 9.75F);
             cmbDays.Items.AddRange(new object[] { "7", "15", "30" });
-            cmbDays.Location = new Point(116, 13);
+            cmbDays.Location = new Point(118, 7);
             cmbDays.Width = 70;
             cmbDays.SelectedIndex = 0;
             cmbDays.SelectedIndexChanged += cmbDays_SelectedIndexChanged;
 
             this.Controls.Remove(dgvOrder);
+            this.Controls.Remove(label25);
+
+            contentPanel.Dock = DockStyle.Fill;
+            contentPanel.Padding = new Padding(14);
+            contentPanel.BackColor = Color.FromArgb(246, 248, 251);
+
             tabControl.Dock = DockStyle.Fill;
             tabControl.Font = new Font("Calibri", 10F, FontStyle.Regular);
-            tabControl.Padding = new Point(14, 5);
+            tabControl.Padding = new Point(18, 6);
             tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
-            tabControl.ItemSize = new Size(150, 30);
+            tabControl.ItemSize = new Size(170, 34);
             tabControl.SizeMode = TabSizeMode.Fixed;
+            tabControl.Appearance = TabAppearance.Normal;
             tabControl.DrawItem += tabControl_DrawItem;
             tabControl.SelectedIndexChanged += tabControl_SelectedIndexChanged;
 
@@ -92,9 +112,9 @@ namespace Inventory
             dgvReceiptGoods.Columns.Add("UOM", "UOM");
             dgvReceiptGoods.Columns.Add("ReceiptDate", "Receipt Date");
 
-            tabProductPrice.Padding = new Padding(8);
+            tabProductPrice.Padding = new Padding(10);
             tabProductPrice.BackColor = Color.White;
-            tabReceiptGoods.Padding = new Padding(8);
+            tabReceiptGoods.Padding = new Padding(10);
             tabReceiptGoods.BackColor = Color.White;
 
             tabProductPrice.Controls.Add(dgvOrder);
@@ -102,21 +122,52 @@ namespace Inventory
             tabControl.TabPages.Add(tabProductPrice);
             tabControl.TabPages.Add(tabReceiptGoods);
 
-            this.Controls.Add(tabControl);
-            this.Controls.Remove(label25);
-            label25.Text = "F3 - Search";
-            label25.Font = new Font("Calibri", 9.75F, FontStyle.Bold);
-            label25.ForeColor = Color.FromArgb(71, 84, 103);
-            label25.Location = new Point(206, 17);
-            label25.AutoSize = true;
+            contentPanel.Controls.Add(tabControl);
+            this.Controls.Add(contentPanel);
+
+            lblProductSearch.Text = "Product name";
+            lblProductSearch.Font = new Font("Calibri", 9.75F, FontStyle.Regular);
+            lblProductSearch.ForeColor = Color.FromArgb(52, 64, 84);
+            lblProductSearch.Location = new Point(205, 11);
+            lblProductSearch.AutoSize = true;
+
+            txtprodsearch.BorderStyle = BorderStyle.FixedSingle;
+            txtprodsearch.Font = new Font("Calibri", 10F, FontStyle.Regular);
+            txtprodsearch.Location = new Point(292, 7);
+            txtprodsearch.Size = new Size(160, 24);
+
+            btnApplySearch.Text = "Search";
+            btnApplySearch.Font = new Font("Calibri", 9.75F, FontStyle.Bold);
+            btnApplySearch.ForeColor = Color.White;
+            btnApplySearch.BackColor = Color.FromArgb(21, 112, 239);
+            btnApplySearch.FlatStyle = FlatStyle.Flat;
+            btnApplySearch.FlatAppearance.BorderSize = 0;
+            btnApplySearch.Cursor = Cursors.Hand;
+            btnApplySearch.Location = new Point(458, 6);
+            btnApplySearch.Size = new Size(78, 26);
+            btnApplySearch.Click += btnApplySearch_Click;
+
+            btnCancelFilter.Text = "Cancel Filter";
+            btnCancelFilter.Font = new Font("Calibri", 9.75F, FontStyle.Bold);
+            btnCancelFilter.ForeColor = Color.FromArgb(52, 64, 84);
+            btnCancelFilter.BackColor = Color.FromArgb(234, 236, 240);
+            btnCancelFilter.FlatStyle = FlatStyle.Flat;
+            btnCancelFilter.FlatAppearance.BorderSize = 0;
+            btnCancelFilter.Cursor = Cursors.Hand;
+            btnCancelFilter.Location = new Point(542, 6);
+            btnCancelFilter.Size = new Size(100, 26);
+            btnCancelFilter.Click += btnCancelFilter_Click;
+
             headerPanel.Controls.Add(lblTitle);
+            headerPanel.Controls.Add(lblSubtitle);
             filterPanel.Controls.Add(lblDays);
             filterPanel.Controls.Add(cmbDays);
-            filterPanel.Controls.Add(label25);
+            filterPanel.Controls.Add(lblProductSearch);
+            filterPanel.Controls.Add(txtprodsearch);
+            filterPanel.Controls.Add(btnApplySearch);
+            filterPanel.Controls.Add(btnCancelFilter);
             headerPanel.Controls.Add(filterPanel);
             this.Controls.Add(headerPanel);
-
-            pnlprodsearch.BringToFront();
         }
 
         private void ConfigureGrid(DataGridView grid)
@@ -127,17 +178,18 @@ namespace Inventory
             grid.AllowUserToResizeRows = false;
             grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
-            grid.BorderStyle = BorderStyle.None;
-            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.Single;
             grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             grid.ReadOnly = true;
             grid.RowHeadersVisible = false;
             grid.BackgroundColor = SystemColors.Window;
             grid.EnableHeadersVisualStyles = false;
-            grid.GridColor = Color.FromArgb(228, 231, 236);
-            grid.RowTemplate.Height = 28;
+            grid.GridColor = Color.FromArgb(191, 191, 191);
+            grid.RowTemplate.Height = 30;
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            grid.MultiSelect = false;
         }
 
         public void getupdate()
@@ -172,6 +224,7 @@ namespace Inventory
             dgvOrder.Columns["ProductName"].FillWeight = 300;
             dgvOrder.Columns["ProductName"].MinimumWidth = 300;
             dgvOrder.Columns["ProductName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgvOrder.Columns["ProductName"].HeaderText = "Product Name";
             dgvOrder.Columns["Price"].FillWeight = 100;
             dgvOrder.Columns["Price"].MinimumWidth = 90;
             dgvOrder.Columns["Price"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -227,6 +280,7 @@ ORDER BY UpdatedOn DESC, ItemName", con))
             dgvReceiptGoods.Columns["ProductName"].FillWeight = 260;
             dgvReceiptGoods.Columns["ProductName"].MinimumWidth = 300;
             dgvReceiptGoods.Columns["ProductName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgvReceiptGoods.Columns["ProductName"].HeaderText = "Product Name";
             dgvReceiptGoods.Columns["Price"].FillWeight = 90;
             dgvReceiptGoods.Columns["Price"].MinimumWidth = 90;
             dgvReceiptGoods.Columns["Price"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -278,15 +332,15 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
                 grid.Columns[2].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
 
-            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(52, 64, 84);
-            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Calibri", 9.75F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(217, 225, 242);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(32, 41, 57);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Calibri", 10F, FontStyle.Bold);
             grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             grid.DefaultCellStyle.BackColor = Color.White;
             grid.DefaultCellStyle.ForeColor = Color.FromArgb(32, 41, 57);
-            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(209, 233, 255);
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(198, 224, 180);
             grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(16, 24, 40);
-            grid.DefaultCellStyle.Padding = new Padding(3, 0, 3, 0);
+            grid.DefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
             grid.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
 
             foreach (DataGridViewColumn c in grid.Columns)
@@ -309,30 +363,10 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
   
-            if (keyData == (Keys.F3))
-            {
-                pnlprodsearch.Visible = true;
-                this.ActiveControl = txtprodsearch;
-                txtprodsearch.SelectionStart = 0;
-                txtprodsearch.SelectionLength = txtprodsearch.Text.Length;
-                pnlprodsearch.BringToFront();
-                return true;
-            }
             if (keyData == (Keys.Escape))
             {
-                if (pnlprodsearch.Visible)
-                {
-                    pnlprodsearch.Visible = false;
-                    //this.ActiveControl = txtitemcode;
-                    return true;
-                }
-                else
-                {
-                    this.Close();
-                    return true;
-
-
-                }
+                this.Close();
+                return true;
             }
 
             if (txtprodsearch.Focused)
@@ -343,9 +377,21 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
                     //{
                         LoadData();
                     //}
+                    return true;
                 }
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnApplySearch_Click(object sender, EventArgs e)
+        {
+            LoadData();
+        }
+
+        private void btnCancelFilter_Click(object sender, EventArgs e)
+        {
+            txtprodsearch.Clear();
+            LoadData();
         }
 
         private void productsearchbttn_Click(object sender, EventArgs e)
@@ -363,7 +409,6 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            pnlprodsearch.Visible = false;
         }
 
         private void tabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -371,8 +416,8 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
             TabPage page = tabControl.TabPages[e.Index];
             bool selected = e.Index == tabControl.SelectedIndex;
             Rectangle bounds = e.Bounds;
-            Color backColor = selected ? Color.White : Color.FromArgb(234, 238, 244);
-            Color foreColor = selected ? Color.FromArgb(16, 24, 40) : Color.FromArgb(71, 84, 103);
+            Color backColor = selected ? Color.White : Color.FromArgb(238, 242, 247);
+            Color foreColor = selected ? Color.FromArgb(21, 112, 239) : Color.FromArgb(71, 84, 103);
 
             using (SolidBrush backBrush = new SolidBrush(backColor))
             using (SolidBrush foreBrush = new SolidBrush(foreColor))
@@ -382,9 +427,9 @@ ORDER BY prh.OrderDate DESC, prh.PurchaseId DESC, pm.ItemName", con))
                 e.Graphics.DrawRectangle(borderPen, bounds.X, bounds.Y, bounds.Width - 1, bounds.Height - 1);
                 if (selected)
                 {
-                    using (SolidBrush accentBrush = new SolidBrush(Color.FromArgb(46, 144, 250)))
+                    using (SolidBrush accentBrush = new SolidBrush(Color.FromArgb(21, 112, 239)))
                     {
-                        e.Graphics.FillRectangle(accentBrush, bounds.X, bounds.Bottom - 3, bounds.Width, 3);
+                        e.Graphics.FillRectangle(accentBrush, bounds.X + 10, bounds.Bottom - 4, bounds.Width - 20, 3);
                     }
                 }
 

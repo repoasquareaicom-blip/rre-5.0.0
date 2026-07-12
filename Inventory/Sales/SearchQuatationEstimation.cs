@@ -313,21 +313,7 @@ namespace Inventory
         private void SearchPurchaselistOrder()
         {
             DataTable dt = objQuotationbal.SearchPurchaselistOrder(txtprodsearch.Text);
-            DataTable SearchResult = new DataTable();
-            if (dt.Rows.Count > 0)
-            {
-                try
-                {
-                    if (textSearchQty.Text == "")
-                        SearchResult = dt.Select("Products like '%" + txtSearchProduct.Text + "%'").CopyToDataTable();
-                    else
-                        SearchResult = dt.Select("Products like '%" + txtSearchProduct.Text + "%' and QTY like '%|" + textSearchQty.Text + "|%'").CopyToDataTable();
-                }
-                catch (Exception ex)
-                {
-                    SearchResult = new DataTable();
-                }
-            }
+            DataTable SearchResult = FilterQuotationSearchResult(dt);
 
             lblItemCount.Text = SearchResult.Rows.Count.ToString();
             total1();
@@ -879,31 +865,10 @@ namespace Inventory
             string Paymentmode = Convert.ToString(Payment.Text);
             DataTable dt = objQuotationbal.searchQuotEstimationwithDate(OrderNo, FromDate, ToDate, Vendorid, Convert.ToInt32(Iscombined), Paymentmode);
           
-            DataTable SearchResult = new DataTable();
-           
-            if (dt.Rows.Count > 0)
-            {
-                try
-                {
-                    if (textSearchQty.Text == "")
-                        SearchResult = dt.Select("Products like '%" + txtSearchProduct.Text + "%'", "SiNo ASC").CopyToDataTable();
-                    else
-                        SearchResult = dt.Select("Products like '%" + txtSearchProduct.Text + "%' and QTY like '%|" + textSearchQty.Text + "|%'", "SiNo ASC").CopyToDataTable();
-                }
-                catch (Exception ex)
-                {
-                    SearchResult = new DataTable();
-                }
+            DataTable SearchResult = FilterQuotationSearchResult(dt);
 
 
-              
-               
-               
-
-            }
-
-
-            lblItemCount.Text = dt.Rows.Count.ToString();
+            lblItemCount.Text = SearchResult.Rows.Count.ToString();
             
           //  Totalamt.Text = String.Format("{0:0,0.00}",totalamount + value);
             //try
@@ -951,6 +916,59 @@ namespace Inventory
             //    dgvSearch.CurrentCell=dgvSearch[0,0];
             //}
 
+        }
+
+        private DataTable FilterQuotationSearchResult(DataTable source)
+        {
+            DataTable result = source.Clone();
+            string productName = txtSearchProduct.Text.Trim();
+            string qty = textSearchQty.Text.Trim();
+            bool hasDetailFilter = !string.IsNullOrEmpty(productName) || !string.IsNullOrEmpty(qty);
+
+            foreach (DataRow row in source.Rows)
+            {
+                if (hasDetailFilter)
+                {
+                    string estimationId = Convert.ToString(row["Estimation No"]);
+                    if (EstimationHasMatchingProduct(estimationId, productName, qty))
+                    {
+                        result.ImportRow(row);
+                    }
+
+                    continue;
+                }
+                else
+                {
+                    result.ImportRow(row);
+                }
+            }
+
+            return result;
+        }
+
+        private bool EstimationHasMatchingProduct(string estimationId, string productName, string qty)
+        {
+            using (SqlConnection con = new SqlConnection(Program.connection))
+            using (SqlCommand cmd = con.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    SELECT TOP 1 1
+                    FROM QuotationEstimationDetails qed
+                    INNER JOIN ProductMaster pm ON qed.Productid = pm.id
+                    WHERE qed.Estimationid = @EstimationId
+                      AND (@ProductName = ''
+                           OR pm.DisplayName LIKE @ProductLike
+                           OR pm.ItemName LIKE @ProductLike)
+                      AND (@Qty = '' OR CONVERT(varchar(50), qed.Quantity) = @Qty)";
+
+                cmd.Parameters.AddWithValue("@EstimationId", estimationId);
+                cmd.Parameters.AddWithValue("@ProductName", productName);
+                cmd.Parameters.AddWithValue("@ProductLike", "%" + productName + "%");
+                cmd.Parameters.AddWithValue("@Qty", qty);
+
+                con.Open();
+                return cmd.ExecuteScalar() != null;
+            }
         }
 
         private void dgvSearch_CellContentClick(object sender, DataGridViewCellEventArgs e)

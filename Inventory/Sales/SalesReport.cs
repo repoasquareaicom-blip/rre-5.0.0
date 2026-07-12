@@ -1295,8 +1295,15 @@ namespace Inventory
                         Program.PrintInvoiceNumber = QuotationId;
                        
                        
-                        frmInvoice frmInvoice = new frmInvoice();
-                        frmInvoice.Show();
+                        try
+                        {
+                            frmInvoice frmInvoice = new frmInvoice();
+                            frmInvoice.ShowDialog();
+                        }
+                        catch (Exception invoiceException)
+                        {
+                            MessageBox.Show(invoiceException.ToString(), "Invoice window error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                         //}
                         //else
                         //{

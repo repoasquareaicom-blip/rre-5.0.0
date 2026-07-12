@@ -325,7 +325,7 @@ namespace Inventory.Sales
                 cmbstatus3.DisplayMember = "Estimationid";
                 cmbstatus3.ValueMember = "Estimationid";
                 btnsave.Enabled = false;
-                comboBox1.Enabled = true;
+                SetPaymentCustomerReadOnly();
                 btnSavePending.Enabled = false;
                 btnNew.Enabled = false;
                 btnPrint.Enabled = false;
@@ -2080,7 +2080,9 @@ namespace Inventory.Sales
             else if (selectedtab == "TabPayment")
             {
 
+                clear();
                 searchpay("Estimationid", "", "Updatedon", "Today", "customername", "", role1, Program.userid);
+                SetPaymentCustomerReadOnly();
                 btnPrint.Enabled = false;
                 btnNew.Enabled = false;
                 btnsave.Enabled = false;
@@ -3195,24 +3197,18 @@ namespace Inventory.Sales
                     }
 
                 }
-                try
+                if (selectedtab == "TabNew" && keyData == Keys.Tab && dgvNew.CurrentCell != null && dgvNew.CurrentCell.ColumnIndex == 5)
                 {
-                    if (keyData == Keys.Tab)
-                    {
-                        if (dgvNew.CurrentCell.ColumnIndex == 5)
-                        {
-                            dgvNew.Focus();
-                            //edit = true;
-                            dgvNew.CurrentCell = dgvNew[1, dgvNew.CurrentCell.RowIndex + 1];
-                        }
-                    }
-                }
-                catch
-                {
-
+                    dgvNew.Focus();
+                    //edit = true;
+                    dgvNew.CurrentCell = dgvNew[1, dgvNew.CurrentCell.RowIndex + 1];
+                    return true;
                 }
 
-                if (dgvFloorCheckOut.CurrentCell.RowIndex == dgvFloorCheckOut.Rows.Count - 1 && dgvFloorCheckOut.CurrentCell.ColumnIndex == 6)
+                if (selectedtab == "TabFloorCheckOut"
+                    && dgvFloorCheckOut.CurrentCell != null
+                    && dgvFloorCheckOut.CurrentCell.RowIndex == dgvFloorCheckOut.Rows.Count - 1
+                    && dgvFloorCheckOut.CurrentCell.ColumnIndex == 6)
                 {
                     try
                     {
@@ -3421,6 +3417,11 @@ namespace Inventory.Sales
                             UpdateFunction();
                             searchpay("Estimationid", "", "Updatedon", "Today", "customername", "", role1, Program.userid);
                             clear();
+                        }
+                        else if (radioButton5.Checked || radioButton4.Checked)
+                        {
+                            UpdateFunction();
+                            ShowCashDenomination();
                         }
                     }
                     else if (SavePayemntvalid == "1")
@@ -3662,21 +3663,13 @@ namespace Inventory.Sales
             //}
 
 
-            //if ((rbcredit.Checked || rbpartial.Checked) && (string.IsNullOrEmpty(Convert.ToString(Txtcustomername.SelectedValue)) || Convert.ToString(Txtcustomername.SelectedValue) == "0"))
-            if ((radioButton6.Checked || radioButton4.Checked))
+            if (IsCreditOrPartialEstimation() && !IsCustomerSelectedFromList(Txtcustomername))
             {
-                if (Convert.ToString(comboBox1.SelectedValue) == "0" || comboBox1.SelectedValue == null)
-                {
-                    i++;
-                    message = message + "* Please Select the customer name from list " + "\n";
-                    panel9.Enabled = true;
-
-                    comboBox1.Enabled = true;
-
-                    //.AllowDrop = true;
-
-
-                }
+                i++;
+                message = message + "* Please Select the customer name from list " + "\n";
+                panel9.Enabled = true;
+                if (i == 1)
+                    this.ActiveControl = Txtcustomername;
 
                 //int s = objQuotationbal.getcust(Convert.ToString(Txtcustomername.SelectedValue), Txtcustomername.Text.Trim());
                 //if (s != 1)
@@ -3998,21 +3991,23 @@ namespace Inventory.Sales
             //}
 
 
-            //if ((rbcredit.Checked || rbpartial.Checked) && (string.IsNullOrEmpty(Convert.ToString(Txtcustomername.SelectedValue)) || Convert.ToString(Txtcustomername.SelectedValue) == "0"))
-            if ((radioButton6.Checked || radioButton4.Checked))
+            if (selectedtab == "TabNew" && IsCreditOrPartialEstimation() && !IsCustomerSelectedFromList(Txtcustomername))
             {
-                if (Convert.ToString(comboBox1.SelectedValue) == "0" || comboBox1.SelectedValue == null)
-                {
-                    i++;
-                    message = message + "* Please Select the customer name from list " + "\n";
-                    panel9.Enabled = true;
+                i++;
+                message = message + "* Please Select the customer name from list " + "\n";
+                panel9.Enabled = true;
+                if (i == 1)
+                    this.ActiveControl = Txtcustomername;
+            }
 
-                    comboBox1.Enabled = true;
-                    
-                    //.AllowDrop = true;
-                    
-
-                }
+            //if ((rbcredit.Checked || rbpartial.Checked) && (string.IsNullOrEmpty(Convert.ToString(Txtcustomername.SelectedValue)) || Convert.ToString(Txtcustomername.SelectedValue) == "0"))
+            if (selectedtab == "TabPayment" && IsCreditOrPartialPayment() && !IsCustomerSelectedFromList(comboBox1))
+            {
+                i++;
+                message = message + "* Please Select the customer name from list " + "\n";
+                SetPaymentCustomerEditable(true);
+                if (i == 1)
+                    this.ActiveControl = comboBox1;
                
                 //int s = objQuotationbal.getcust(Convert.ToString(Txtcustomername.SelectedValue), Txtcustomername.Text.Trim());
                 //if (s != 1)
@@ -4153,6 +4148,80 @@ namespace Inventory.Sales
                 status = false;
             }
             return status;
+        }
+
+        private bool IsCreditOrPartialEstimation()
+        {
+            return rbcredit.Checked || rbpartial.Checked;
+        }
+
+        private bool IsCreditOrPartialPayment()
+        {
+            return radioButton6.Checked || radioButton4.Checked;
+        }
+
+        private bool IsCustomerSelectedFromList(ComboBox customerCombo)
+        {
+            string selectedValue = Convert.ToString(customerCombo.SelectedValue);
+            string customerName = Convert.ToString(customerCombo.Text).Trim();
+
+            return customerCombo.SelectedIndex > 0
+                && !string.IsNullOrEmpty(customerName)
+                && customerName != "--Select--"
+                && customerName != "-Select-"
+                && !string.IsNullOrEmpty(selectedValue)
+                && selectedValue != "0";
+        }
+
+        private void SetPaymentCustomerReadOnly()
+        {
+            comboBox1.Enabled = false;
+            comboBox1.TabStop = false;
+        }
+
+        private void SetPaymentCustomerEditable(bool editable)
+        {
+            comboBox1.Enabled = editable;
+            comboBox1.TabStop = editable;
+        }
+
+        private void SelectPaymentMode(string paymentMode)
+        {
+            string mode = Convert.ToString(paymentMode).Trim().ToUpperInvariant();
+
+            if (mode == "CASH" || mode == "CASH BILL")
+            {
+                radioButton5.Checked = true;
+            }
+            else if (mode == "CREDIT" || mode == "CREDIT BILL")
+            {
+                radioButton6.Checked = true;
+            }
+            else if (mode == "PARTIAL CREDIT" || mode == "PARTIAL CREDIT BILL" || mode == "PARITAL CREDIT BILL")
+            {
+                radioButton4.Checked = true;
+            }
+            else
+            {
+                radioButton5.Checked = false;
+                radioButton6.Checked = false;
+                radioButton4.Checked = false;
+                SetPaymentCustomerReadOnly();
+            }
+        }
+
+        private void ShowCashDenomination()
+        {
+            rbpaymentCash.Checked = true;
+            RbPaymentCard.Checked = false;
+            Rdcashcard.Checked = false;
+            lblpaymentamount.Text = String.Format("{0:00.00}", Convert.ToDouble(lblpatroundoff.Text));
+            cashpl.Visible = true;
+            panelCustomerpaid.Visible = false;
+            panelTransaction.Visible = false;
+            pntransction.Visible = false;
+            this.ActiveControl = cashddl;
+            Application.Idle += new EventHandler(Application_Idle);
         }
 
         private bool Validationcheckout()
@@ -4306,7 +4375,6 @@ namespace Inventory.Sales
               
                 Txtcustomername.Focus();
                 txtOrderNo.Text = string.Empty;
-                comboBox1.Enabled = true;
                 txtRemarks.Text = string.Empty;
                 cmbloaction.SelectedIndex = 0;
                 cmbpaymode.SelectedIndex = 0;
@@ -4412,8 +4480,8 @@ namespace Inventory.Sales
                 txttransactionid.Text = string.Empty;
                 //comboBox1.SelectedIndex = 0;
                 lblpaymentmode.Text = string.Empty;
-                comboBox1.Enabled = true;
                 comboBox1.Text = "--Select--";
+                SetPaymentCustomerReadOnly();
                 //cashpl.Visible = false;
                 cashddl.Rows[0].Cells[1].Value = 0;
                 cashddl.Rows[1].Cells[1].Value = 0;
@@ -4465,6 +4533,8 @@ namespace Inventory.Sales
                 lblpaidbalance.Text = "0.00";
                 btncashpay.Enabled = true;
                 cashpl.Visible = false;
+                panelTransaction.Visible = false;
+                pntransction.Visible = false;
                
                 panelCustomerpaid.Visible = false;
                 rbpaymentCash.Checked = false;
@@ -4660,6 +4730,7 @@ namespace Inventory.Sales
             comboBox1.DataSource = objQuotationbal.Getcustomer();
             comboBox1.DisplayMember = "Name";
             comboBox1.ValueMember = "CustomerID";
+            SetPaymentCustomerReadOnly();
         }
 
         public DataTable bindEstimation()
@@ -5866,7 +5937,7 @@ namespace Inventory.Sales
             {
                 panel9.Enabled = true;
                 txtOrderNo.Enabled = false;
-                Txtcustomername.Enabled = false;
+                Txtcustomername.Enabled = true;
                 cmdcity.Enabled = false;
                 cmbreference.Enabled = false;
                 cmbassistby.Enabled = false;
@@ -6186,6 +6257,7 @@ namespace Inventory.Sales
 
                 EstimationId = txtpayorderno.Text;
                 comboBox1.Text = Convert.ToString(ds.Tables[0].Rows[0]["customername"]);
+                SetPaymentCustomerReadOnly();
                 txtpaycity.Text = Convert.ToString(ds.Tables[0].Rows[0]["City"]);
                 txtpayref.Text = Convert.ToString(ds.Tables[0].Rows[0]["Name"]);
 
@@ -6198,6 +6270,7 @@ namespace Inventory.Sales
                 paydate.Value = Convert.ToDateTime(ds.Tables[0].Rows[0]["date"]);
 
                 lblpaymentmode.Text = Convert.ToString(ds.Tables[0].Rows[0]["Paymentmode"]);
+                SelectPaymentMode(lblpaymentmode.Text);
                 Txtpayquotationid.Text = Convert.ToString(ds.Tables[0].Rows[0]["Quotationid"]);
                 QuotationIdVal = Txtpayquotationid.Text;
                 txtpayremarks.Text = Convert.ToString(ds.Tables[0].Rows[0]["Remarks"]);
@@ -6464,7 +6537,6 @@ namespace Inventory.Sales
                         btnsave.Enabled = true;
                         getpay(s);
                         groupBox7.Enabled = true;
-                        radioButton5.Checked = true;
                     }
                     else
                     {
@@ -10208,8 +10280,9 @@ namespace Inventory.Sales
         {
             if(radioButton5.Checked)
             {
+                SetPaymentCustomerReadOnly();
                 groupBox3.Enabled = true;
-                btnsave.Enabled = false;
+                btnsave.Enabled = true;
                 string cash = radioButton5.Text;
                 lblpaymentmode.Text = cash;
                 RbPaymentCard.Checked = false;
@@ -10218,6 +10291,7 @@ namespace Inventory.Sales
             }
             else if (radioButton6.Checked)
             {
+                SetPaymentCustomerEditable(true);
                 groupBox3.Enabled = false;
                 btnsave.Enabled = true;
                 cashpl.Visible = false;
@@ -10229,8 +10303,9 @@ namespace Inventory.Sales
             }
             else if (radioButton4.Checked)
             {
+                SetPaymentCustomerEditable(true);
                 groupBox3.Enabled = true;
-                btnsave.Enabled = false;
+                btnsave.Enabled = true;
                 lblpaymentmode.Text = radioButton4.Text;
                 RbPaymentCard.Checked = false;
                 rbpaymentCash.Checked = false;

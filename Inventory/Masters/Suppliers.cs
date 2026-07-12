@@ -29,10 +29,12 @@ namespace Inventory.Masters
         string filepath = string.Empty;
         string imgpath = string.Empty;
         static string imagepath;
+        TextBox txtGSTNo;
         public Suppliers()
         {
             InitializeComponent();
             this.WindowState = FormWindowState.Maximized;
+            AddGSTField();
          
             SearchCreteria1();
             SearchCreteria2();
@@ -211,6 +213,25 @@ namespace Inventory.Masters
             
         }
 
+        private void AddGSTField()
+        {
+            Label lblGSTNo = new Label();
+            lblGSTNo.AutoSize = true;
+            lblGSTNo.Font = new Font("Calibri", 9.75F);
+            lblGSTNo.Location = new Point(20, 190);
+            lblGSTNo.Name = "lblGSTNo";
+            lblGSTNo.Text = "GST No";
+
+            txtGSTNo = new TextBox();
+            txtGSTNo.Location = new Point(141, 187);
+            txtGSTNo.MaxLength = 20;
+            txtGSTNo.Name = "txtGSTNo";
+            txtGSTNo.Size = new Size(180, 20);
+
+            pnlmain.Controls.Add(lblGSTNo);
+            pnlmain.Controls.Add(txtGSTNo);
+        }
+
        private void vLabel1_Click(object sender, EventArgs e)
         {
             if (pnlLabelSearch.Visible == true)
@@ -318,6 +339,10 @@ namespace Inventory.Masters
             ObjSuppliersBAL.Path = filename;
 
             Status = SuppliersBAL.SaveSuppliers(ObjSuppliersBAL);
+            if (Status == 1)
+            {
+                UpdateSupplierExtraFields(GetCurrentSupplierId());
+            }
 
 
             if (Status == 1 && lblhidden.Text == string.Empty)
@@ -385,6 +410,10 @@ namespace Inventory.Masters
              ObjSuppliersBAL.Path = filename;
 
              Status = SuppliersBAL.SaveSuppliers(ObjSuppliersBAL);
+             if (Status == 1)
+             {
+                 UpdateSupplierExtraFields(GetCurrentSupplierId());
+             }
 
              if (Status == 1 && lblhidden.Text == string.Empty)
              {
@@ -448,6 +477,84 @@ namespace Inventory.Masters
             dgvCustomerinfo.ColumnHeadersDefaultCellStyle.Font = new Font("Tahoma", 9.1F, FontStyle.Bold);
             dgvCustomerinfo.DefaultCellStyle.BackColor = Color.Gainsboro;
             dgvCustomerinfo.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
+        }
+
+        private string GetCurrentSupplierId()
+        {
+            if (!string.IsNullOrEmpty(lblhidden.Text))
+                return lblhidden.Text;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 SuppliersID FROM Suppliers WHERE Name = @Name ORDER BY SuppliersID DESC", con))
+                {
+                    cmd.Parameters.AddWithValue("@Name", txtCustomerName.Text.Trim());
+                    return Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+        }
+
+        private void EnsureSupplierExtraColumns(SqlConnection con)
+        {
+            EnsureColumn(con, "Suppliers", "GSTNo", "varchar(20) NULL");
+        }
+
+        private void UpdateSupplierExtraFields(string supplierId)
+        {
+            if (string.IsNullOrEmpty(supplierId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                EnsureSupplierExtraColumns(con);
+                using (SqlCommand cmd = new SqlCommand("UPDATE Suppliers SET GSTNo = @GSTNo WHERE SuppliersID = @Id", con))
+                {
+                    cmd.Parameters.AddWithValue("@GSTNo", string.IsNullOrEmpty(txtGSTNo.Text.Trim()) ? (object)DBNull.Value : txtGSTNo.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Id", supplierId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void LoadSupplierExtraFields(string supplierId)
+        {
+            txtGSTNo.Clear();
+            if (string.IsNullOrEmpty(supplierId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                if (!ColumnExists(con, "Suppliers", "GSTNo"))
+                    return;
+
+                using (SqlCommand cmd = new SqlCommand("SELECT GSTNo FROM Suppliers WHERE SuppliersID = @Id", con))
+                {
+                    cmd.Parameters.AddWithValue("@Id", supplierId);
+                    txtGSTNo.Text = Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+        }
+
+        private void EnsureColumn(SqlConnection con, string tableName, string columnName, string columnDefinition)
+        {
+            if (ColumnExists(con, tableName, columnName))
+                return;
+
+            using (SqlCommand cmd = new SqlCommand("ALTER TABLE dbo." + tableName + " ADD " + columnName + " " + columnDefinition, con))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private bool ColumnExists(SqlConnection con, string tableName, string columnName)
+        {
+            using (SqlCommand cmd = new SqlCommand("SELECT COL_LENGTH('dbo." + tableName + "', '" + columnName + "')", con))
+            {
+                return cmd.ExecuteScalar() != DBNull.Value;
+            }
         }
 
         private bool Validation()
@@ -684,6 +791,7 @@ namespace Inventory.Masters
             txtEmail.Clear();
             txtPhone.Clear();
             txtFax.Clear();
+            txtGSTNo.Clear();
             pcphoto.Image = null;
             filename = null;
             lblhidden.Text = string.Empty;
@@ -772,6 +880,7 @@ namespace Inventory.Masters
                     txtPhone.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Phone"].Value);
                     txtFax.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Fax"].Value);
                     filename = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Path"].Value);
+                    LoadSupplierExtraFields(lblhidden.Text);
 
                     if (!string.IsNullOrEmpty(filename))
                     {
@@ -1271,6 +1380,7 @@ namespace Inventory.Masters
               txtPhone.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Phone"].Value);
               txtFax.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Fax"].Value);
               filename = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Path"].Value);
+              LoadSupplierExtraFields(lblhidden.Text);
               if (!string.IsNullOrEmpty(filename))
               {
                   //pcphoto.Image = new Bitmap(imgpath);

@@ -28,12 +28,16 @@ namespace Inventory.Masters
         static string imagepath;
         string filepath = string.Empty;
         string imgpath = string.Empty;
+        DateTimePicker dtpDOB;
+        DateTimePicker dtpAnniversary;
+        DateTimePicker dtpDateOfJoining;
        
         public Employee()
         {
             
             InitializeComponent();
-            this.WindowState = FormWindowState.Maximized;         
+            this.WindowState = FormWindowState.Maximized;
+            AddEmployeeDateFields();
             SearchCreteria1();
             SearchCreteria2();
             SearchCreteria3();
@@ -61,6 +65,38 @@ namespace Inventory.Masters
             this.dgvSearch.Columns["employeeid"].Visible = false;
             this.dgvSearch.Columns["Email"].Visible = false;
             this.dgvSearch.Columns["Fax"].Visible = false;
+        }
+
+        private void AddEmployeeDateFields()
+        {
+            AddDateField("lblDOB", "Date Of Birth", "dtpDOB", 18, 178, out dtpDOB);
+            AddDateField("lblAnniversary", "Anniversary Date", "dtpAnniversary", 330, 178, out dtpAnniversary);
+            AddDateField("lblDateOfJoining", "Date Of Joining", "dtpDateOfJoining", 18, 205, out dtpDateOfJoining);
+            dgvCustomerinfo.Location = new Point(dgvCustomerinfo.Location.X, dgvCustomerinfo.Location.Y + 45);
+            dgvCustomerinfo.Height = Math.Max(100, dgvCustomerinfo.Height - 45);
+        }
+
+        private void AddDateField(string labelName, string labelText, string pickerName, int x, int y, out DateTimePicker picker)
+        {
+            Label label = new Label();
+            label.AutoSize = true;
+            label.Font = new Font("Calibri", 9.75F);
+            label.Location = new Point(x, y + 3);
+            label.Name = labelName;
+            label.Text = labelText;
+
+            picker = new DateTimePicker();
+            picker.Checked = false;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.CustomFormat = " ";
+            picker.Location = new Point(x + 120, y);
+            picker.Name = pickerName;
+            picker.ShowCheckBox = true;
+            picker.Size = new Size(120, 20);
+            picker.ValueChanged += new EventHandler(DatePicker_ValueChanged);
+
+            pnlmain.Controls.Add(label);
+            pnlmain.Controls.Add(picker);
         }
              
         private void pbxCollapse_Click(object sender, EventArgs e)
@@ -223,6 +259,10 @@ namespace Inventory.Masters
             ObjReferenceBal.Path = filename;
 
             Status = ReferenceBAL.SaveEmpoyee(ObjReferenceBal);
+            if (Status == 1)
+            {
+                UpdateEmployeeExtraFields(GetCurrentEmployeeId());
+            }
 
             if (Status == 1 && lblhidden.Text == string.Empty)
             {
@@ -287,6 +327,10 @@ namespace Inventory.Masters
             ObjReferenceBal.Path = filename;
 
             Status = ReferenceBAL.SaveEmpoyeePending(ObjReferenceBal);
+            if (Status == 1)
+            {
+                UpdateEmployeeExtraFields(GetCurrentEmployeeId());
+            }
 
             if (Status == 1 && lblhidden.Text == string.Empty)
             {
@@ -349,6 +393,141 @@ namespace Inventory.Masters
             dgvCustomerinfo.ColumnHeadersDefaultCellStyle.Font = new Font("Tahoma", 9.1F, FontStyle.Bold);
             dgvCustomerinfo.DefaultCellStyle.BackColor = Color.Gainsboro;
             dgvCustomerinfo.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
+        }
+
+        private string GetCurrentEmployeeId()
+        {
+            if (!string.IsNullOrEmpty(lblhidden.Text))
+                return lblhidden.Text;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 employeeid FROM Employee WHERE Name = @Name ORDER BY employeeid DESC", con))
+                {
+                    cmd.Parameters.AddWithValue("@Name", txtCustomerName.Text.Trim());
+                    return Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+        }
+
+        private void UpdateEmployeeExtraFields(string employeeId)
+        {
+            if (string.IsNullOrEmpty(employeeId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                EnsureEmployeeExtraColumns(con);
+                using (SqlCommand cmd = new SqlCommand("UPDATE Employee SET DOB = @DOB, AnniversaryDate = @AnniversaryDate, DateOfJoining = @DateOfJoining WHERE employeeid = @Id", con))
+                {
+                    AddDateParameter(cmd, "@DOB", dtpDOB);
+                    AddDateParameter(cmd, "@AnniversaryDate", dtpAnniversary);
+                    AddDateParameter(cmd, "@DateOfJoining", dtpDateOfJoining);
+                    cmd.Parameters.AddWithValue("@Id", employeeId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void LoadEmployeeExtraFields(string employeeId)
+        {
+            ClearDatePicker(dtpDOB);
+            ClearDatePicker(dtpAnniversary);
+            ClearDatePicker(dtpDateOfJoining);
+            if (string.IsNullOrEmpty(employeeId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                if (!ColumnExists(con, "Employee", "DOB") || !ColumnExists(con, "Employee", "AnniversaryDate") || !ColumnExists(con, "Employee", "DateOfJoining"))
+                    return;
+
+                using (SqlCommand cmd = new SqlCommand("SELECT DOB, AnniversaryDate, DateOfJoining FROM Employee WHERE employeeid = @Id", con))
+                {
+                    cmd.Parameters.AddWithValue("@Id", employeeId);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            SetDatePicker(dtpDOB, reader["DOB"]);
+                            SetDatePicker(dtpAnniversary, reader["AnniversaryDate"]);
+                            SetDatePicker(dtpDateOfJoining, reader["DateOfJoining"]);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void EnsureEmployeeExtraColumns(SqlConnection con)
+        {
+            EnsureColumn(con, "Employee", "DOB", "datetime NULL");
+            EnsureColumn(con, "Employee", "AnniversaryDate", "datetime NULL");
+            EnsureColumn(con, "Employee", "DateOfJoining", "datetime NULL");
+        }
+
+        private void AddDateParameter(SqlCommand cmd, string parameterName, DateTimePicker picker)
+        {
+            cmd.Parameters.AddWithValue(parameterName, picker.Checked ? (object)picker.Value.Date : DBNull.Value);
+        }
+
+        private void SetDatePicker(DateTimePicker picker, object value)
+        {
+            if (value == DBNull.Value || value == null)
+            {
+                ClearDatePicker(picker);
+                return;
+            }
+
+            picker.Value = Convert.ToDateTime(value);
+            picker.Checked = true;
+            picker.Format = DateTimePickerFormat.Short;
+        }
+
+        private void ClearDatePicker(DateTimePicker picker)
+        {
+            picker.Checked = false;
+            picker.Value = DateTime.Today;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.CustomFormat = " ";
+        }
+
+        private void DatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            DateTimePicker picker = sender as DateTimePicker;
+            if (picker == null)
+                return;
+
+            if (picker.Checked)
+            {
+                picker.Format = DateTimePickerFormat.Short;
+            }
+            else
+            {
+                picker.Format = DateTimePickerFormat.Custom;
+                picker.CustomFormat = " ";
+            }
+        }
+
+        private void EnsureColumn(SqlConnection con, string tableName, string columnName, string columnDefinition)
+        {
+            if (ColumnExists(con, tableName, columnName))
+                return;
+
+            using (SqlCommand cmd = new SqlCommand("ALTER TABLE dbo." + tableName + " ADD " + columnName + " " + columnDefinition, con))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private bool ColumnExists(SqlConnection con, string tableName, string columnName)
+        {
+            using (SqlCommand cmd = new SqlCommand("SELECT COL_LENGTH('dbo." + tableName + "', '" + columnName + "')", con))
+            {
+                return cmd.ExecuteScalar() != DBNull.Value;
+            }
         }
 
         private void btnsaveaspending_Click(object sender, EventArgs e)//save Bending
@@ -480,6 +659,9 @@ namespace Inventory.Masters
             txtEmail.Clear();
             txtPhone.Clear();
             txtFax.Clear();
+            ClearDatePicker(dtpDOB);
+            ClearDatePicker(dtpAnniversary);
+            ClearDatePicker(dtpDateOfJoining);
             pcphoto.Image = null;
             filename = null;
             lblhidden.Text = string.Empty;
@@ -754,6 +936,7 @@ namespace Inventory.Masters
                     txtPhone.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Phone"].Value);
                     txtFax.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Fax"].Value);
                     filename = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Path"].Value);
+                    LoadEmployeeExtraFields(lblhidden.Text);
 
                     if (!string.IsNullOrEmpty(filename))
                     {
@@ -1161,6 +1344,7 @@ namespace Inventory.Masters
                 txtPhone.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Phone"].Value);
                 txtFax.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Fax"].Value);
                 filename = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Path"].Value);
+                LoadEmployeeExtraFields(lblhidden.Text);
                 if (!string.IsNullOrEmpty(filename))
                 {
                     //pcphoto.Image = new Bitmap(imgpath);

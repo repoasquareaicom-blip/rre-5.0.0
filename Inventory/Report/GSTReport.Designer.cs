@@ -98,9 +98,9 @@
             this.label26.ForeColor = System.Drawing.Color.Teal;
             this.label26.Location = new System.Drawing.Point(370, 12);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(117, 19);
+            this.label26.Size = new System.Drawing.Size(73, 19);
             this.label26.TabIndex = 464;
-            this.label26.Text = "Company Name";
+            this.label26.Text = "Company";
             // 
             // cmbcompanychange
             // 

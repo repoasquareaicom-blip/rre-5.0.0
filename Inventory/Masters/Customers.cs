@@ -29,10 +29,13 @@ namespace Inventory.Masters
         string imgpath = string.Empty;
         int StateId, DistId;
         string conn = Program.connection;
+        DateTimePicker dtpDOB;
+        DateTimePicker dtpAnniversary;
         public Customers()
         {
             InitializeComponent();
             this.WindowState = FormWindowState.Maximized;
+            AddCustomerDateFields();
             SearchCreteria1();
             SearchCreteria2();
             SearchCreteria3();
@@ -622,6 +625,10 @@ namespace Inventory.Masters
             ObjCustomerBal.reff = Txttin.Text;
 
             Status = CustomerBAL.SaveCustomer(ObjCustomerBal);
+            if (Status == 1)
+            {
+                UpdateCustomerExtraFields(GetCurrentCustomerId());
+            }
 
             if (Status == 1 && lblhidden.Text == string.Empty)
             {
@@ -725,6 +732,10 @@ namespace Inventory.Masters
             ObjCustomerBal.Path = filename;
 
             Status = CustomerBAL.SaveCustomerPending(ObjCustomerBal);
+            if (Status == 1)
+            {
+                UpdateCustomerExtraFields(GetCurrentCustomerId());
+            }
 
             if (Status == 1 && lblhidden.Text == string.Empty)
             {
@@ -817,6 +828,137 @@ namespace Inventory.Masters
 
         }
 
+        private string GetCurrentCustomerId()
+        {
+            if (!string.IsNullOrEmpty(lblhidden.Text))
+                return lblhidden.Text;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 CustomerID FROM Customers WHERE Name = @Name ORDER BY CustomerID DESC", con))
+                {
+                    cmd.Parameters.AddWithValue("@Name", txtCustomerName.Text.Trim());
+                    return Convert.ToString(cmd.ExecuteScalar());
+                }
+            }
+        }
+
+        private void UpdateCustomerExtraFields(string customerId)
+        {
+            if (string.IsNullOrEmpty(customerId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                EnsureCustomerExtraColumns(con);
+                using (SqlCommand cmd = new SqlCommand("UPDATE Customers SET DOB = @DOB, AnniversaryDate = @AnniversaryDate WHERE CustomerID = @Id", con))
+                {
+                    AddDateParameter(cmd, "@DOB", dtpDOB);
+                    AddDateParameter(cmd, "@AnniversaryDate", dtpAnniversary);
+                    cmd.Parameters.AddWithValue("@Id", customerId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void LoadCustomerExtraFields(string customerId)
+        {
+            ClearDatePicker(dtpDOB);
+            ClearDatePicker(dtpAnniversary);
+            if (string.IsNullOrEmpty(customerId))
+                return;
+
+            using (SqlConnection con = new SqlConnection(conn))
+            {
+                con.Open();
+                if (!ColumnExists(con, "Customers", "DOB") || !ColumnExists(con, "Customers", "AnniversaryDate"))
+                    return;
+
+                using (SqlCommand cmd = new SqlCommand("SELECT DOB, AnniversaryDate FROM Customers WHERE CustomerID = @Id", con))
+                {
+                    cmd.Parameters.AddWithValue("@Id", customerId);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            SetDatePicker(dtpDOB, reader["DOB"]);
+                            SetDatePicker(dtpAnniversary, reader["AnniversaryDate"]);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void EnsureCustomerExtraColumns(SqlConnection con)
+        {
+            EnsureColumn(con, "Customers", "DOB", "datetime NULL");
+            EnsureColumn(con, "Customers", "AnniversaryDate", "datetime NULL");
+        }
+
+        private void AddDateParameter(SqlCommand cmd, string parameterName, DateTimePicker picker)
+        {
+            cmd.Parameters.AddWithValue(parameterName, picker.Checked ? (object)picker.Value.Date : DBNull.Value);
+        }
+
+        private void SetDatePicker(DateTimePicker picker, object value)
+        {
+            if (value == DBNull.Value || value == null)
+            {
+                ClearDatePicker(picker);
+                return;
+            }
+
+            picker.Value = Convert.ToDateTime(value);
+            picker.Checked = true;
+            picker.Format = DateTimePickerFormat.Short;
+        }
+
+        private void ClearDatePicker(DateTimePicker picker)
+        {
+            picker.Checked = false;
+            picker.Value = DateTime.Today;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.CustomFormat = " ";
+        }
+
+        private void DatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            DateTimePicker picker = sender as DateTimePicker;
+            if (picker == null)
+                return;
+
+            if (picker.Checked)
+            {
+                picker.Format = DateTimePickerFormat.Short;
+            }
+            else
+            {
+                picker.Format = DateTimePickerFormat.Custom;
+                picker.CustomFormat = " ";
+            }
+        }
+
+        private void EnsureColumn(SqlConnection con, string tableName, string columnName, string columnDefinition)
+        {
+            if (ColumnExists(con, tableName, columnName))
+                return;
+
+            using (SqlCommand cmd = new SqlCommand("ALTER TABLE dbo." + tableName + " ADD " + columnName + " " + columnDefinition, con))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private bool ColumnExists(SqlConnection con, string tableName, string columnName)
+        {
+            using (SqlCommand cmd = new SqlCommand("SELECT COL_LENGTH('dbo." + tableName + "', '" + columnName + "')", con))
+            {
+                return cmd.ExecuteScalar() != DBNull.Value;
+            }
+        }
+
         private void txtstate_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (Char.IsLetter(e.KeyChar) || Char.IsControl(e.KeyChar) || char.IsWhiteSpace(e.KeyChar))
@@ -858,6 +1000,8 @@ namespace Inventory.Masters
             txtPhone.Clear();
             txtFax.Clear();
             txtEmail.Clear();
+            ClearDatePicker(dtpDOB);
+            ClearDatePicker(dtpAnniversary);
             pcphoto.Image = null;
             filename = null;
             lblhidden.Text = string.Empty;
@@ -989,6 +1133,7 @@ namespace Inventory.Masters
                     txtEmail.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Email"].Value);
                     Txttin.Text = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["TIN/CST"].Value);
                     filename = Convert.ToString(dgvCustomerinfo.Rows[e.RowIndex].Cells["Path"].Value);
+                    LoadCustomerExtraFields(lblhidden.Text);
 
 
                     if (!string.IsNullOrEmpty(filename))
@@ -1063,6 +1208,37 @@ namespace Inventory.Masters
             cmbbxDistrict.DisplayMember = "DISTRICT";
             cmbbxDistrict.SelectedIndex = 0;
 
+        }
+
+        private void AddCustomerDateFields()
+        {
+            AddDateField("lblDOB", "Date Of Birth", "dtpDOB", 18, 210, out dtpDOB);
+            AddDateField("lblAnniversary", "Anniversary Date", "dtpAnniversary", 330, 210, out dtpAnniversary);
+            dgvCustomerinfo.Location = new Point(dgvCustomerinfo.Location.X, dgvCustomerinfo.Location.Y + 30);
+            dgvCustomerinfo.Height = Math.Max(100, dgvCustomerinfo.Height - 30);
+        }
+
+        private void AddDateField(string labelName, string labelText, string pickerName, int x, int y, out DateTimePicker picker)
+        {
+            Label label = new Label();
+            label.AutoSize = true;
+            label.Font = new Font("Calibri", 9.75F);
+            label.Location = new Point(x, y + 3);
+            label.Name = labelName;
+            label.Text = labelText;
+
+            picker = new DateTimePicker();
+            picker.Checked = false;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.CustomFormat = " ";
+            picker.Location = new Point(x + 120, y);
+            picker.Name = pickerName;
+            picker.ShowCheckBox = true;
+            picker.Size = new Size(120, 20);
+            picker.ValueChanged += new EventHandler(DatePicker_ValueChanged);
+
+            pnlmain.Controls.Add(label);
+            pnlmain.Controls.Add(picker);
         }
 
         private void Customers_Load(object sender, EventArgs e)
@@ -1443,6 +1619,7 @@ namespace Inventory.Masters
                 txtFax.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Fax"].Value);
                 Txttin.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["tin"].Value);
                 filename = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Path"].Value);
+                LoadCustomerExtraFields(lblhidden.Text);
                 if (!string.IsNullOrEmpty(filename))
                 {
                     //pcphoto.Image = new Bitmap(imgpath);

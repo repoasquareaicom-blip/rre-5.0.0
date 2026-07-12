@@ -60,6 +60,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.pcupdate = new System.Windows.Forms.PictureBox();
             this.label17 = new System.Windows.Forms.Label();
+            this.btnGSTPrint = new System.Windows.Forms.Button();
             this.btnPrint = new System.Windows.Forms.Button();
             this.btnSavePending = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
@@ -164,8 +165,8 @@
             this.cmbassistbys = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.pnlOrder = new System.Windows.Forms.Panel();
-            this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.pnlLabelSearch = new System.Windows.Forms.Panel();
+            this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -215,8 +216,8 @@
             this.splitContainer1.Panel2.AutoScrollMinSize = new System.Drawing.Size(700, 535);
             this.splitContainer1.Panel2.Controls.Add(this.pnlCollapse2);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(2);
-            this.splitContainer1.Size = new System.Drawing.Size(970, 664);
-            this.splitContainer1.SplitterDistance = 250;
+            this.splitContainer1.Size = new System.Drawing.Size(1025, 768);
+            this.splitContainer1.SplitterDistance = 264;
             this.splitContainer1.TabIndex = 115;
             // 
             // pnlSearch
@@ -244,7 +245,7 @@
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlSearch.Name = "pnlSearch";
-            this.pnlSearch.Size = new System.Drawing.Size(250, 664);
+            this.pnlSearch.Size = new System.Drawing.Size(264, 768);
             this.pnlSearch.TabIndex = 2;
             // 
             // cmbstatus3
@@ -256,7 +257,7 @@
             this.cmbstatus3.FormattingEnabled = true;
             this.cmbstatus3.Location = new System.Drawing.Point(130, 103);
             this.cmbstatus3.Name = "cmbstatus3";
-            this.cmbstatus3.Size = new System.Drawing.Size(114, 21);
+            this.cmbstatus3.Size = new System.Drawing.Size(128, 21);
             this.cmbstatus3.TabIndex = 412;
             // 
             // lblVendor
@@ -277,7 +278,7 @@
             this.dateTimePicker2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker2.Location = new System.Drawing.Point(130, 79);
             this.dateTimePicker2.Name = "dateTimePicker2";
-            this.dateTimePicker2.Size = new System.Drawing.Size(112, 20);
+            this.dateTimePicker2.Size = new System.Drawing.Size(126, 20);
             this.dateTimePicker2.TabIndex = 410;
             // 
             // dateTimePicker1
@@ -288,7 +289,7 @@
             this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker1.Location = new System.Drawing.Point(130, 57);
             this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(115, 20);
+            this.dateTimePicker1.Size = new System.Drawing.Size(129, 20);
             this.dateTimePicker1.TabIndex = 409;
             this.dateTimePicker1.Value = new System.DateTime(2018, 2, 12, 0, 0, 0, 0);
             // 
@@ -298,7 +299,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtOrderNo.Location = new System.Drawing.Point(130, 34);
             this.txtOrderNo.Name = "txtOrderNo";
-            this.txtOrderNo.Size = new System.Drawing.Size(116, 20);
+            this.txtOrderNo.Size = new System.Drawing.Size(130, 20);
             this.txtOrderNo.TabIndex = 408;
             // 
             // lblOrderDateTo
@@ -347,7 +348,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textSearchQtys.Location = new System.Drawing.Point(131, 160);
             this.textSearchQtys.Name = "textSearchQtys";
-            this.textSearchQtys.Size = new System.Drawing.Size(110, 20);
+            this.textSearchQtys.Size = new System.Drawing.Size(124, 20);
             this.textSearchQtys.TabIndex = 403;
             this.textSearchQtys.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
             this.textSearchQtys.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textSearchQtys_KeyPress);
@@ -368,7 +369,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSearchProducts.Location = new System.Drawing.Point(131, 132);
             this.txtSearchProducts.Name = "txtSearchProducts";
-            this.txtSearchProducts.Size = new System.Drawing.Size(111, 20);
+            this.txtSearchProducts.Size = new System.Drawing.Size(125, 20);
             this.txtSearchProducts.TabIndex = 401;
             // 
             // btnSearch
@@ -376,7 +377,7 @@
             this.btnSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSearch.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSearch.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSearch.Location = new System.Drawing.Point(167, 190);
+            this.btnSearch.Location = new System.Drawing.Point(181, 190);
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(75, 25);
             this.btnSearch.TabIndex = 5;
@@ -391,7 +392,7 @@
             this.btnmerge.FlatAppearance.BorderSize = 0;
             this.btnmerge.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnmerge.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnmerge.Location = new System.Drawing.Point(130, 191);
+            this.btnmerge.Location = new System.Drawing.Point(144, 191);
             this.btnmerge.Name = "btnmerge";
             this.btnmerge.Size = new System.Drawing.Size(25, 25);
             this.btnmerge.TabIndex = 400;
@@ -422,7 +423,7 @@
             this.dgvSearch.Location = new System.Drawing.Point(2, 219);
             this.dgvSearch.Name = "dgvSearch";
             this.dgvSearch.RowHeadersVisible = false;
-            this.dgvSearch.Size = new System.Drawing.Size(241, 441);
+            this.dgvSearch.Size = new System.Drawing.Size(255, 545);
             this.dgvSearch.TabIndex = 104;
             this.dgvSearch.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellClick_1);
             this.dgvSearch.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellContentClick_1);
@@ -438,7 +439,7 @@
             this.pnlSearchHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSearchHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlSearchHeader.Name = "pnlSearchHeader";
-            this.pnlSearchHeader.Size = new System.Drawing.Size(248, 25);
+            this.pnlSearchHeader.Size = new System.Drawing.Size(262, 25);
             this.pnlSearchHeader.TabIndex = 0;
             // 
             // pbxRightCollapse
@@ -448,7 +449,7 @@
             this.pbxRightCollapse.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pbxRightCollapse.BackgroundImage")));
             this.pbxRightCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxRightCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxRightCollapse.Location = new System.Drawing.Point(219, 0);
+            this.pbxRightCollapse.Location = new System.Drawing.Point(233, 0);
             this.pbxRightCollapse.Name = "pbxRightCollapse";
             this.pbxRightCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxRightCollapse.TabIndex = 1;
@@ -462,7 +463,7 @@
             this.pbxCollapse.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pbxCollapse.BackgroundImage")));
             this.pbxCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxCollapse.Location = new System.Drawing.Point(194, 0);
+            this.pbxCollapse.Location = new System.Drawing.Point(208, 0);
             this.pbxCollapse.Name = "pbxCollapse";
             this.pbxCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxCollapse.TabIndex = 0;
@@ -498,7 +499,7 @@
             this.pnlCollapse2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlCollapse2.Location = new System.Drawing.Point(2, 2);
             this.pnlCollapse2.Name = "pnlCollapse2";
-            this.pnlCollapse2.Size = new System.Drawing.Size(712, 660);
+            this.pnlCollapse2.Size = new System.Drawing.Size(753, 764);
             this.pnlCollapse2.TabIndex = 1;
             // 
             // panel1
@@ -506,6 +507,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.pcupdate);
             this.panel1.Controls.Add(this.label17);
+            this.panel1.Controls.Add(this.btnGSTPrint);
             this.panel1.Controls.Add(this.btnPrint);
             this.panel1.Controls.Add(this.btnSavePending);
             this.panel1.Controls.Add(this.btnClear);
@@ -514,7 +516,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(712, 32);
+            this.panel1.Size = new System.Drawing.Size(753, 32);
             this.panel1.TabIndex = 1;
             // 
             // pcupdate
@@ -537,9 +539,24 @@
             this.label17.ForeColor = System.Drawing.Color.SteelBlue;
             this.label17.Location = new System.Drawing.Point(1, 2);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(99, 26);
+            this.label17.Size = new System.Drawing.Size(117, 26);
             this.label17.TabIndex = 5;
-            this.label17.Text = "Quotation";
+            this.label17.Text = "Quotation D";
+            // 
+            // btnGSTPrint
+            // 
+            this.btnGSTPrint.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGSTPrint.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnGSTPrint.FlatAppearance.BorderSize = 0;
+            this.btnGSTPrint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnGSTPrint.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.btnGSTPrint.Location = new System.Drawing.Point(235, 3);
+            this.btnGSTPrint.Name = "btnGSTPrint";
+            this.btnGSTPrint.Size = new System.Drawing.Size(100, 25);
+            this.btnGSTPrint.TabIndex = 8;
+            this.btnGSTPrint.Text = "GST Print";
+            this.btnGSTPrint.UseVisualStyleBackColor = true;
+            this.btnGSTPrint.Click += new System.EventHandler(this.btnGSTPrint_Click);
             // 
             // btnPrint
             // 
@@ -548,7 +565,7 @@
             this.btnPrint.FlatAppearance.BorderSize = 0;
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPrint.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnPrint.Location = new System.Drawing.Point(296, 3);
+            this.btnPrint.Location = new System.Drawing.Point(337, 3);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(75, 25);
             this.btnPrint.TabIndex = 9;
@@ -563,7 +580,7 @@
             this.btnSavePending.FlatAppearance.BorderSize = 0;
             this.btnSavePending.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSavePending.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnSavePending.Location = new System.Drawing.Point(527, 3);
+            this.btnSavePending.Location = new System.Drawing.Point(568, 3);
             this.btnSavePending.Name = "btnSavePending";
             this.btnSavePending.Size = new System.Drawing.Size(103, 25);
             this.btnSavePending.TabIndex = 12;
@@ -578,7 +595,7 @@
             this.btnClear.FlatAppearance.BorderSize = 0;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnClear.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnClear.Location = new System.Drawing.Point(632, 3);
+            this.btnClear.Location = new System.Drawing.Point(673, 3);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(75, 25);
             this.btnClear.TabIndex = 13;
@@ -593,7 +610,7 @@
             this.btnSave.FlatAppearance.BorderSize = 0;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSave.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnSave.Location = new System.Drawing.Point(450, 3);
+            this.btnSave.Location = new System.Drawing.Point(491, 3);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 25);
             this.btnSave.TabIndex = 11;
@@ -608,7 +625,7 @@
             this.btnNew.FlatAppearance.BorderSize = 0;
             this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnNew.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnNew.Location = new System.Drawing.Point(373, 3);
+            this.btnNew.Location = new System.Drawing.Point(414, 3);
             this.btnNew.Name = "btnNew";
             this.btnNew.Size = new System.Drawing.Size(75, 25);
             this.btnNew.TabIndex = 10;
@@ -635,7 +652,7 @@
             this.panel2.Controls.Add(this.pntab);
             this.panel2.Location = new System.Drawing.Point(3, 32);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(709, 628);
+            this.panel2.Size = new System.Drawing.Size(750, 732);
             this.panel2.TabIndex = 0;
             // 
             // panel11s
@@ -717,7 +734,7 @@
             this.lbltotalquantity.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbltotalquantity.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lbltotalquantity.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbltotalquantity.Location = new System.Drawing.Point(403, 589);
+            this.lbltotalquantity.Location = new System.Drawing.Point(444, 693);
             this.lbltotalquantity.Name = "lbltotalquantity";
             this.lbltotalquantity.Size = new System.Drawing.Size(97, 31);
             this.lbltotalquantity.TabIndex = 362;
@@ -759,7 +776,7 @@
             this.pnsearch.Controls.Add(this.Btnsubmit);
             this.pnsearch.Controls.Add(this.tableLayoutPanel2);
             this.pnsearch.Controls.Add(this.lblitem);
-            this.pnsearch.Location = new System.Drawing.Point(225, 159);
+            this.pnsearch.Location = new System.Drawing.Point(266, 159);
             this.pnsearch.Name = "pnsearch";
             this.pnsearch.Size = new System.Drawing.Size(470, 426);
             this.pnsearch.TabIndex = 361;
@@ -1345,7 +1362,7 @@
             this.lbltotalamount.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbltotalamount.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lbltotalamount.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbltotalamount.Location = new System.Drawing.Point(506, 589);
+            this.lbltotalamount.Location = new System.Drawing.Point(547, 693);
             this.lbltotalamount.Name = "lbltotalamount";
             this.lbltotalamount.Size = new System.Drawing.Size(194, 31);
             this.lbltotalamount.TabIndex = 48;
@@ -1358,7 +1375,7 @@
             this.lblTotal.BackColor = System.Drawing.Color.Transparent;
             this.lblTotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblTotal.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotal.Location = new System.Drawing.Point(300, 589);
+            this.lblTotal.Location = new System.Drawing.Point(341, 693);
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(97, 31);
             this.lblTotal.TabIndex = 47;
@@ -1376,7 +1393,7 @@
             this.panel3.Controls.Add(this.label3);
             this.panel3.Controls.Add(this.cmbstatuss);
             this.panel3.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.panel3.Location = new System.Drawing.Point(466, 66);
+            this.panel3.Location = new System.Drawing.Point(507, 66);
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(233, 85);
             this.panel3.TabIndex = 44;
@@ -1493,7 +1510,7 @@
             this.pntab.Controls.Add(this.label9);
             this.pntab.Location = new System.Drawing.Point(0, 0);
             this.pntab.Name = "pntab";
-            this.pntab.Size = new System.Drawing.Size(709, 622);
+            this.pntab.Size = new System.Drawing.Size(750, 726);
             this.pntab.TabIndex = 112;
             this.pntab.Paint += new System.Windows.Forms.PaintEventHandler(this.pntab_Paint);
             // 
@@ -1613,10 +1630,11 @@
             // 
             // label108
             // 
+            this.label108.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label108.AutoSize = true;
             this.label108.Font = new System.Drawing.Font("Times New Roman", 12F, System.Drawing.FontStyle.Bold);
             this.label108.ForeColor = System.Drawing.Color.Red;
-            this.label108.Location = new System.Drawing.Point(1, 594);
+            this.label108.Location = new System.Drawing.Point(8, 699);
             this.label108.Name = "label108";
             this.label108.Size = new System.Drawing.Size(198, 19);
             this.label108.TabIndex = 398;
@@ -1630,7 +1648,7 @@
             this.btnLesss.FlatAppearance.BorderSize = 0;
             this.btnLesss.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnLesss.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLesss.Location = new System.Drawing.Point(676, 1);
+            this.btnLesss.Location = new System.Drawing.Point(717, 1);
             this.btnLesss.Name = "btnLesss";
             this.btnLesss.Size = new System.Drawing.Size(21, 25);
             this.btnLesss.TabIndex = 397;
@@ -1640,10 +1658,11 @@
             // 
             // label109
             // 
+            this.label109.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label109.AutoSize = true;
             this.label109.Font = new System.Drawing.Font("Times New Roman", 12F, System.Drawing.FontStyle.Bold);
             this.label109.ForeColor = System.Drawing.Color.Red;
-            this.label109.Location = new System.Drawing.Point(228, 594);
+            this.label109.Location = new System.Drawing.Point(235, 699);
             this.label109.Name = "label109";
             this.label109.Size = new System.Drawing.Size(208, 19);
             this.label109.TabIndex = 397;
@@ -1816,7 +1835,7 @@
             this.flowLayoutPanel1.Font = new System.Drawing.Font("Calibri", 9.75F);
             this.flowLayoutPanel1.Location = new System.Drawing.Point(1, 28);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(706, 28);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(747, 28);
             this.flowLayoutPanel1.TabIndex = 358;
             this.flowLayoutPanel1.TabStop = true;
             // 
@@ -1850,7 +1869,7 @@
             this.dgvOrders.Location = new System.Drawing.Point(7, 156);
             this.dgvOrders.Name = "dgvOrders";
             this.dgvOrders.RowHeadersVisible = false;
-            this.dgvOrders.Size = new System.Drawing.Size(690, 426);
+            this.dgvOrders.Size = new System.Drawing.Size(731, 530);
             this.dgvOrders.TabIndex = 0;
             this.dgvOrders.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrders_CellEndEdit);
             this.dgvOrders.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrders_CellEnter);
@@ -1910,27 +1929,11 @@
             this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlOrder.Controls.Add(this.vLabel2);
             this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlOrder.Location = new System.Drawing.Point(995, 0);
+            this.pnlOrder.Location = new System.Drawing.Point(1050, 0);
             this.pnlOrder.Name = "pnlOrder";
-            this.pnlOrder.Size = new System.Drawing.Size(25, 664);
+            this.pnlOrder.Size = new System.Drawing.Size(25, 768);
             this.pnlOrder.TabIndex = 113;
             this.pnlOrder.Visible = false;
-            // 
-            // vLabel2
-            // 
-            this.vLabel2.BackColor = System.Drawing.Color.Transparent;
-            this.vLabel2.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.vLabel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.vLabel2.Flip180 = true;
-            this.vLabel2.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.vLabel2.ForeColor = System.Drawing.Color.White;
-            this.vLabel2.Location = new System.Drawing.Point(0, 0);
-            this.vLabel2.Name = "vLabel2";
-            this.vLabel2.Size = new System.Drawing.Size(23, 662);
-            this.vLabel2.TabIndex = 1;
-            this.vLabel2.Text = "View Sales Quotation";
-            this.vLabel2.Visible = false;
-            this.vLabel2.Click += new System.EventHandler(this.vLabel2_Click);
             // 
             // pnlLabelSearch
             // 
@@ -1942,9 +1945,25 @@
             this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 664);
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 768);
             this.pnlLabelSearch.TabIndex = 112;
             this.pnlLabelSearch.Visible = false;
+            // 
+            // vLabel2
+            // 
+            this.vLabel2.BackColor = System.Drawing.Color.Transparent;
+            this.vLabel2.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.vLabel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.vLabel2.Flip180 = true;
+            this.vLabel2.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.vLabel2.ForeColor = System.Drawing.Color.White;
+            this.vLabel2.Location = new System.Drawing.Point(0, 0);
+            this.vLabel2.Name = "vLabel2";
+            this.vLabel2.Size = new System.Drawing.Size(23, 766);
+            this.vLabel2.TabIndex = 1;
+            this.vLabel2.Text = "View Sales Quotation";
+            this.vLabel2.Visible = false;
+            this.vLabel2.Click += new System.EventHandler(this.vLabel2_Click);
             // 
             // vLabel1
             // 
@@ -1955,7 +1974,7 @@
             this.vLabel1.ForeColor = System.Drawing.Color.White;
             this.vLabel1.Location = new System.Drawing.Point(0, 0);
             this.vLabel1.Name = "vLabel1";
-            this.vLabel1.Size = new System.Drawing.Size(23, 662);
+            this.vLabel1.Size = new System.Drawing.Size(23, 766);
             this.vLabel1.TabIndex = 0;
             this.vLabel1.Text = "Search";
             this.vLabel1.Click += new System.EventHandler(this.vLabel1_Click);
@@ -1964,7 +1983,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1020, 664);
+            this.ClientSize = new System.Drawing.Size(1075, 768);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.pnlOrder);
             this.Controls.Add(this.pnlLabelSearch);
@@ -2032,6 +2051,7 @@
         private System.Windows.Forms.Label lblTotal;
         private System.Windows.Forms.DataGridView dgvOrders;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Button btnGSTPrint;
         private System.Windows.Forms.Button btnPrint;
         private System.Windows.Forms.Button btnSavePending;
         private System.Windows.Forms.Button btnClear;

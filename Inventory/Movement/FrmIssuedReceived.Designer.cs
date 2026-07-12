@@ -29,15 +29,15 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmIssuedReceived));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
             this.vLabel4 = new VSM.Q_and_A.VLabel();
             this.pnlOrder = new System.Windows.Forms.Panel();
             this.vLabel2 = new VSM.Q_and_A.VLabel();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer1 = new Inventory.DesignerSafeSplitContainer();
             this.pnlSearch = new System.Windows.Forms.Panel();
             this.label31 = new System.Windows.Forms.Label();
             this.lblItemCount = new System.Windows.Forms.Label();
@@ -79,6 +79,8 @@
             this.LblEstStatus = new System.Windows.Forms.Label();
             this.txtphoneno = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.lblPreparedBy = new System.Windows.Forms.Label();
+            this.labelPreparedBy = new System.Windows.Forms.Label();
             this.pnsearch = new System.Windows.Forms.Panel();
             this.label14 = new System.Windows.Forms.Label();
             this.Delivery = new System.Windows.Forms.Label();
@@ -176,6 +178,7 @@
             this.btnsave = new System.Windows.Forms.Button();
             this.pnlLabelSearch.SuspendLayout();
             this.pnlOrder.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -241,7 +244,6 @@
             // 
             // vLabel4
             // 
-            this.vLabel4.Cursor = System.Windows.Forms.Cursors.Default;
             this.vLabel4.Flip180 = true;
             this.vLabel4.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.vLabel4.ForeColor = System.Drawing.Color.White;
@@ -628,34 +630,34 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Dgvmovementsearch.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Dgvmovementsearch.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Dgvmovementsearch.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.Dgvmovementsearch.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.Dgvmovementsearch.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.Dgvmovementsearch.DefaultCellStyle = dataGridViewCellStyle2;
             this.Dgvmovementsearch.Location = new System.Drawing.Point(2, 127);
             this.Dgvmovementsearch.Name = "Dgvmovementsearch";
             this.Dgvmovementsearch.ReadOnly = true;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.Dgvmovementsearch.RowHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.Dgvmovementsearch.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.Dgvmovementsearch.RowHeadersVisible = false;
             this.Dgvmovementsearch.Size = new System.Drawing.Size(345, 533);
             this.Dgvmovementsearch.TabIndex = 3;
@@ -765,6 +767,8 @@
             // panel2
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel2.Controls.Add(this.lblPreparedBy);
+            this.panel2.Controls.Add(this.labelPreparedBy);
             this.panel2.Controls.Add(this.lblhiddenproduct);
             this.panel2.Controls.Add(this.cmbEstmationID);
             this.panel2.Controls.Add(this.LblEstStatus);
@@ -835,6 +839,25 @@
             this.label7.Size = new System.Drawing.Size(59, 15);
             this.label7.TabIndex = 454;
             this.label7.Text = "Phone No";
+            // 
+            // lblPreparedBy
+            // 
+            this.lblPreparedBy.AutoSize = true;
+            this.lblPreparedBy.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPreparedBy.Location = new System.Drawing.Point(522, 40);
+            this.lblPreparedBy.Name = "lblPreparedBy";
+            this.lblPreparedBy.Size = new System.Drawing.Size(0, 14);
+            this.lblPreparedBy.TabIndex = 458;
+            // 
+            // labelPreparedBy
+            // 
+            this.labelPreparedBy.AutoSize = true;
+            this.labelPreparedBy.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.labelPreparedBy.Location = new System.Drawing.Point(436, 40);
+            this.labelPreparedBy.Name = "labelPreparedBy";
+            this.labelPreparedBy.Size = new System.Drawing.Size(80, 15);
+            this.labelPreparedBy.TabIndex = 457;
+            this.labelPreparedBy.Text = "Prepared By :";
             // 
             // pnsearch
             // 
@@ -1980,13 +2003,14 @@
             this.Controls.Add(this.pnlOrder);
             this.Controls.Add(this.pnlLabelSearch);
             this.Name = "FrmIssuedReceived";
-            this.Text = "FrmIssuedReceived";
+            this.Text = "Warrent Replacement";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmIssuedReceived_FormClosing);
             this.Load += new System.EventHandler(this.FrmIssuedReceived_Load);
             this.pnlLabelSearch.ResumeLayout(false);
             this.pnlOrder.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.pnlSearch.ResumeLayout(false);
             this.pnlSearch.PerformLayout();
@@ -2039,7 +2063,7 @@
         private VSM.Q_and_A.VLabel vLabel1;
         private System.Windows.Forms.Panel pnlOrder;
         private VSM.Q_and_A.VLabel vLabel2;
-        private System.Windows.Forms.SplitContainer splitContainer1;
+        private Inventory.DesignerSafeSplitContainer splitContainer1;
         private System.Windows.Forms.Panel pnlSearch;
         private System.Windows.Forms.Panel pnlCalender;
         private System.Windows.Forms.Panel panel8;
@@ -2126,6 +2150,8 @@
         private System.Windows.Forms.Label LblEstStatus;
         private System.Windows.Forms.TextBox txtphoneno;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label lblPreparedBy;
+        private System.Windows.Forms.Label labelPreparedBy;
         private System.Windows.Forms.TabPage TabPDI;
         private System.Windows.Forms.TabPage TabDelivery;
         private System.Windows.Forms.TabPage TabFloorCheckOut;

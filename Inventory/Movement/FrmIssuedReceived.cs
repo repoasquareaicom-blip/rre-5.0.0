@@ -55,6 +55,7 @@ namespace Inventory.Movement
             GetLocation();
             GetCustomers();
             LoadPorts();
+            lblPreparedBy.Text = Program.UserName;
            // LoadPortsFloorCheckOut();
             // BindsearchGrid();
             //Txtitem.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
@@ -68,26 +69,9 @@ namespace Inventory.Movement
             LoadPortsChecking();
             LoadPortsDelivery();
 
+            RemoveWarrantySkippedTabs();
+
             DataTable dt = Program.Dtmenu;
-            bool contains = dt.AsEnumerable()
-                .Any(row => "warrantyApproval" == row.Field<String>("Data"));
-
-            //if(Program.userlevel!=1)
-            //{
-            if (contains == false)
-            {
-                MainTabSalesBill.TabPages.Remove(TabfloorApproval);
-            }
-
-            bool contains1 = dt.AsEnumerable()
-                .Any(row => "warrantyFloorCheckout" == row.Field<String>("Data"));
-
-            //if(Program.userlevel!=1)
-            //{
-            if (contains1 == false)
-            {
-                MainTabSalesBill.TabPages.Remove(TabFloorCheckOut);
-            }
 
 
 
@@ -111,6 +95,18 @@ namespace Inventory.Movement
                 MainTabSalesBill.TabPages.Remove(TabDelivery);
             }
 
+        }
+        private void RemoveWarrantySkippedTabs()
+        {
+            if (MainTabSalesBill.TabPages.Contains(TabfloorApproval))
+            {
+                MainTabSalesBill.TabPages.Remove(TabfloorApproval);
+            }
+
+            if (MainTabSalesBill.TabPages.Contains(TabFloorCheckOut))
+            {
+                MainTabSalesBill.TabPages.Remove(TabFloorCheckOut);
+            }
         }
         private void LoadApproval()
         {
@@ -1601,9 +1597,14 @@ namespace Inventory.Movement
                      }
                  }
 
+                 MarkWarrantyReadyForPdi(HidLblMain.Text);
                  GetReport(HidLblMain.Text);
-                 search("us.UserFullName", "", "h.EnteredOn", "Today", role1, Program.UserName);
                  clear();
+                 if (MainTabSalesBill.TabPages.Contains(TabPDI))
+                 {
+                     MainTabSalesBill.SelectedTab = TabPDI;
+                     searchPDI("us.UserFullName", "", "h.EnteredOn", "Today", role1, Program.UserName);
+                 }
 
              }
              else
@@ -1618,6 +1619,33 @@ namespace Inventory.Movement
 
 
 
+        }
+
+        private void MarkWarrantyReadyForPdi(string referenceNo)
+        {
+            if (string.IsNullOrEmpty(referenceNo))
+            {
+                return;
+            }
+
+            using (SqlConnection con = new SqlConnection(Program.connection))
+            using (SqlCommand cmd = con.CreateCommand())
+            {
+                cmd.CommandText = @"
+                    UPDATE GoodsIssuedReceivedFromCustomerHeader
+                    SET status = @Status
+                    WHERE ReferenceNo = @ReferenceNo;
+
+                    UPDATE GoodsIssuedReceivedFromCustomerDetails
+                    SET status = @Status
+                    WHERE IssuedreceivedID = @ReferenceNo;";
+
+                cmd.Parameters.AddWithValue("@Status", "Issued FloorCheckedOut");
+                cmd.Parameters.AddWithValue("@ReferenceNo", referenceNo);
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
 

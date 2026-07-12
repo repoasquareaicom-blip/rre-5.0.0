@@ -55,64 +55,84 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Ref\CashTransactionReport.dll</HintPath>
     </Reference>
-    <Reference Include="CrystalDecisions.CrystalReports.Engine, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+    <Reference Include="CrystalDecisions.CrystalReports.Engine, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.ClientDoc, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.ClientDoc.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.ClientDoc, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.CommLayer.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CommonControls, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.CommonControls.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.CommonControls, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CommonObjectModel, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.CommonObjectModel.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.CommonObjectModel, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.Controllers, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.Controllers.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.Controllers, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CubeDefModel, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.CubeDefModel.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.CubeDefModel, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.DataDefModel, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.DataDefModel.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.DataDefModel, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.DataSetConversion, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.DataSetConversion.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.DataSetConversion, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.ObjectFactory, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.ObjectFactory.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.ObjectFactory, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.Prompting, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.Prompting.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.Prompting, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.ReportDefModel, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.ReportDefModel.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.ReportDefModel, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.XmlSerialize, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportAppServer.XmlSerialize.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportAppServer.XmlSerialize, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="CrystalDecisions.ReportSource, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.ReportSource.dll</HintPath>
+    <Reference Include="CrystalDecisions.ReportSource, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="CrystalDecisions.Shared, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\CrystalDecisions.Shared.dll</HintPath>
+    <Reference Include="CrystalDecisions.Shared, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
     </Reference>
     <Reference Include="CrystalDecisions.Windows.Forms, Version=13.0.2000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.Windows.Forms.1.0.0\lib\CrystalDecisions.Windows.Forms.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=x86">
+      <HintPath>lib\CrystalReports\log4net.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="EstimationReport, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -151,12 +171,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\it-004\Desktop\SalesReportDAL\SalesReportDAL\bin\Debug\SalesReportDAL.dll</HintPath>
     </Reference>
-    <Reference Include="SAPBusinessObjects.WPF.Viewer, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\SAPBusinessObjects.WPF.Viewer.dll</HintPath>
-    </Reference>
-    <Reference Include="SAPBusinessObjects.WPF.ViewerShared, Version=13.0.3500.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
-      <HintPath>packages\CrystalDecisions.CrystalReports.13.0.25.3158\lib\SAPBusinessObjects.WPF.ViewerShared.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -181,6 +195,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BranchAccess.cs" />
+    <Compile Include="DesignerSafeSplitContainer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ProductCloudSyncClient.cs" />
     <Compile Include="ProductCloudSyncResult.cs" />
     <Compile Include="ProductMasterCloudQueue.cs" />
@@ -630,6 +647,9 @@
     <Compile Include="Report\ReceiptReportView.designer.cs">
       <DependentUpon>ReceiptReportView.cs</DependentUpon>
     </Compile>
+    <Compile Include="Report\RemembranceReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Report\SALES_TRANSACTION_REPORT.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -698,6 +718,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Sales\Quotationreport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sales\QuotationGSTReport.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Sales\Quotationreport.designer.cs">
@@ -1272,7 +1295,10 @@
     <None Include="BranchSync\App.config" />
     <None Include="BranchSync\BranchSync.csproj" />
     <None Include="Directory.Build.targets" />
-    <None Include="GSTInvoice.rpt" />
+    <EmbeddedResource Include="GSTInvoice.rpt">
+      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
+      <LastGenOutput>GSTInvoice.cs</LastGenOutput>
+    </EmbeddedResource>
     <None Include="Invoice.xsc">
       <DependentUpon>Invoice.xsd</DependentUpon>
     </None>

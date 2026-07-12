@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Stockreport));
             this.dgvStockrpt = new System.Windows.Forms.DataGridView();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.electiclas = new System.Windows.Forms.CheckBox();
+            this.lights = new System.Windows.Forms.CheckBox();
             this.label25 = new System.Windows.Forms.Label();
             this.btnsearch = new System.Windows.Forms.Button();
             this.txtproductname = new System.Windows.Forms.TextBox();
@@ -44,8 +46,6 @@
             this.productsearchbttn = new System.Windows.Forms.Button();
             this.label24 = new System.Windows.Forms.Label();
             this.txtprodsearch = new System.Windows.Forms.TextBox();
-            this.electiclas = new System.Windows.Forms.CheckBox();
-            this.lights = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvStockrpt)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.panelIn.SuspendLayout();
@@ -59,7 +59,8 @@
             this.dgvStockrpt.AllowUserToAddRows = false;
             this.dgvStockrpt.AllowUserToResizeColumns = false;
             this.dgvStockrpt.AllowUserToResizeRows = false;
-            this.dgvStockrpt.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.dgvStockrpt.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvStockrpt.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvStockrpt.Location = new System.Drawing.Point(12, 65);
@@ -89,9 +90,30 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Stock Report";
             // 
+            // electiclas
+            // 
+            this.electiclas.AutoSize = true;
+            this.electiclas.Location = new System.Drawing.Point(658, 20);
+            this.electiclas.Name = "electiclas";
+            this.electiclas.Size = new System.Drawing.Size(84, 20);
+            this.electiclas.TabIndex = 492;
+            this.electiclas.Text = "Electricals";
+            this.electiclas.UseVisualStyleBackColor = true;
+            // 
+            // lights
+            // 
+            this.lights.AutoSize = true;
+            this.lights.Location = new System.Drawing.Point(586, 20);
+            this.lights.Name = "lights";
+            this.lights.Size = new System.Drawing.Size(61, 20);
+            this.lights.TabIndex = 491;
+            this.lights.Text = "Lights";
+            this.lights.UseVisualStyleBackColor = true;
+            // 
             // label25
             // 
-            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.label25.AutoSize = true;
             this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label25.ForeColor = System.Drawing.SystemColors.MenuHighlight;
@@ -125,7 +147,7 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(10, 22);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(90, 16);
+            this.label1.Size = new System.Drawing.Size(89, 16);
             this.label1.TabIndex = 0;
             this.label1.Text = "Product Name";
             // 
@@ -250,26 +272,6 @@
             this.txtprodsearch.Name = "txtprodsearch";
             this.txtprodsearch.Size = new System.Drawing.Size(257, 20);
             this.txtprodsearch.TabIndex = 4;
-            // 
-            // electiclas
-            // 
-            this.electiclas.AutoSize = true;
-            this.electiclas.Location = new System.Drawing.Point(658, 20);
-            this.electiclas.Name = "electiclas";
-            this.electiclas.Size = new System.Drawing.Size(85, 20);
-            this.electiclas.TabIndex = 492;
-            this.electiclas.Text = "Electricals";
-            this.electiclas.UseVisualStyleBackColor = true;
-            // 
-            // lights
-            // 
-            this.lights.AutoSize = true;
-            this.lights.Location = new System.Drawing.Point(586, 20);
-            this.lights.Name = "lights";
-            this.lights.Size = new System.Drawing.Size(62, 20);
-            this.lights.TabIndex = 491;
-            this.lights.Text = "Lights";
-            this.lights.UseVisualStyleBackColor = true;
             // 
             // Stockreport
             // 

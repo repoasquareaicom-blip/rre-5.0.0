@@ -123,6 +123,10 @@ namespace Inventory.Report
                 {
                     cmd.CommandText = "GetPipesCGSTReport";
                 }
+                if (CompanyName == "RR TRADERS")
+                {
+                    cmd.CommandText = "GetTradersCGSTReport_With_GST";
+                }
                 cmd.Connection = con;
                 SqlDataAdapter ad = new SqlDataAdapter(cmd);
                 ad.Fill(dt);

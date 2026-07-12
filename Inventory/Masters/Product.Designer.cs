@@ -52,6 +52,7 @@
             this.label35 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.chkArchive = new System.Windows.Forms.CheckBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label37 = new System.Windows.Forms.Label();
             this.lightValue = new System.Windows.Forms.CheckBox();
@@ -89,6 +90,8 @@
             this.label22 = new System.Windows.Forms.Label();
             this.dropunitofmeasure = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.txtMRP = new System.Windows.Forms.TextBox();
+            this.label38 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
             this.txtSalesPrice = new System.Windows.Forms.TextBox();
             this.label21 = new System.Windows.Forms.Label();
@@ -143,11 +146,10 @@
             this.btnProductSave = new System.Windows.Forms.Button();
             this.btnnew = new System.Windows.Forms.Button();
             this.pnlLabelSearch = new System.Windows.Forms.Panel();
-            this.vLabel3 = new VSM.Q_and_A.VLabel();
             this.pnlOrder = new System.Windows.Forms.Panel();
+            this.vLabel3 = new VSM.Q_and_A.VLabel();
             this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
-            this.chkArchive = new System.Windows.Forms.CheckBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -194,8 +196,8 @@
             this.splitContainer1.Panel2.AutoScrollMinSize = new System.Drawing.Size(700, 535);
             this.splitContainer1.Panel2.Controls.Add(this.pnlCollapse2);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(2);
-            this.splitContainer1.Size = new System.Drawing.Size(1269, 698);
-            this.splitContainer1.SplitterDistance = 304;
+            this.splitContainer1.Size = new System.Drawing.Size(1296, 825);
+            this.splitContainer1.SplitterDistance = 310;
             this.splitContainer1.TabIndex = 0;
             // 
             // pnlSearch
@@ -217,7 +219,7 @@
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlSearch.Name = "pnlSearch";
-            this.pnlSearch.Size = new System.Drawing.Size(304, 698);
+            this.pnlSearch.Size = new System.Drawing.Size(310, 825);
             this.pnlSearch.TabIndex = 0;
             // 
             // cbxVendor
@@ -248,7 +250,7 @@
             this.dgvSearch.ReadOnly = true;
             this.dgvSearch.RowHeadersVisible = false;
             this.dgvSearch.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvSearch.Size = new System.Drawing.Size(298, 547);
+            this.dgvSearch.Size = new System.Drawing.Size(304, 674);
             this.dgvSearch.TabIndex = 0;
             this.dgvSearch.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellClick);
             this.dgvSearch.CellMouseEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellMouseEnter);
@@ -259,7 +261,7 @@
             this.btnSearch.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSearch.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSearch.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSearch.Location = new System.Drawing.Point(221, 111);
+            this.btnSearch.Location = new System.Drawing.Point(227, 111);
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(75, 25);
             this.btnSearch.TabIndex = 0;
@@ -303,7 +305,7 @@
             this.pnlSearchHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSearchHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlSearchHeader.Name = "pnlSearchHeader";
-            this.pnlSearchHeader.Size = new System.Drawing.Size(302, 25);
+            this.pnlSearchHeader.Size = new System.Drawing.Size(308, 25);
             this.pnlSearchHeader.TabIndex = 0;
             // 
             // pbxRightCollapse
@@ -313,7 +315,7 @@
             this.pbxRightCollapse.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pbxRightCollapse.BackgroundImage")));
             this.pbxRightCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxRightCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxRightCollapse.Location = new System.Drawing.Point(276, 0);
+            this.pbxRightCollapse.Location = new System.Drawing.Point(282, 0);
             this.pbxRightCollapse.Name = "pbxRightCollapse";
             this.pbxRightCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxRightCollapse.TabIndex = 1;
@@ -327,7 +329,7 @@
             this.pbxCollapse.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pbxCollapse.BackgroundImage")));
             this.pbxCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxCollapse.Location = new System.Drawing.Point(251, 0);
+            this.pbxCollapse.Location = new System.Drawing.Point(257, 0);
             this.pbxCollapse.Name = "pbxCollapse";
             this.pbxCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxCollapse.TabIndex = 0;
@@ -361,7 +363,7 @@
             "Pending"});
             this.cmbstatus3.Location = new System.Drawing.Point(133, 80);
             this.cmbstatus3.Name = "cmbstatus3";
-            this.cmbstatus3.Size = new System.Drawing.Size(166, 21);
+            this.cmbstatus3.Size = new System.Drawing.Size(172, 21);
             this.cmbstatus3.TabIndex = 0;
             // 
             // cmbstatus2
@@ -379,7 +381,7 @@
             "Pending"});
             this.cmbstatus2.Location = new System.Drawing.Point(133, 57);
             this.cmbstatus2.Name = "cmbstatus2";
-            this.cmbstatus2.Size = new System.Drawing.Size(167, 21);
+            this.cmbstatus2.Size = new System.Drawing.Size(173, 21);
             this.cmbstatus2.TabIndex = 0;
             // 
             // cmbstatus1
@@ -397,7 +399,7 @@
             "Pending"});
             this.cmbstatus1.Location = new System.Drawing.Point(133, 34);
             this.cmbstatus1.Name = "cmbstatus1";
-            this.cmbstatus1.Size = new System.Drawing.Size(167, 21);
+            this.cmbstatus1.Size = new System.Drawing.Size(173, 21);
             this.cmbstatus1.TabIndex = 0;
             // 
             // txtsearch1
@@ -406,7 +408,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtsearch1.Location = new System.Drawing.Point(133, 34);
             this.txtsearch1.Name = "txtsearch1";
-            this.txtsearch1.Size = new System.Drawing.Size(167, 20);
+            this.txtsearch1.Size = new System.Drawing.Size(173, 20);
             this.txtsearch1.TabIndex = 3;
             // 
             // txtsearch2
@@ -415,7 +417,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtsearch2.Location = new System.Drawing.Point(133, 57);
             this.txtsearch2.Name = "txtsearch2";
-            this.txtsearch2.Size = new System.Drawing.Size(167, 20);
+            this.txtsearch2.Size = new System.Drawing.Size(173, 20);
             this.txtsearch2.TabIndex = 4;
             // 
             // txtsearch3
@@ -424,7 +426,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtsearch3.Location = new System.Drawing.Point(133, 80);
             this.txtsearch3.Name = "txtsearch3";
-            this.txtsearch3.Size = new System.Drawing.Size(167, 20);
+            this.txtsearch3.Size = new System.Drawing.Size(173, 20);
             this.txtsearch3.TabIndex = 6;
             this.txtsearch3.Visible = false;
             // 
@@ -435,7 +437,7 @@
             this.pnlCollapse2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlCollapse2.Location = new System.Drawing.Point(2, 2);
             this.pnlCollapse2.Name = "pnlCollapse2";
-            this.pnlCollapse2.Size = new System.Drawing.Size(957, 694);
+            this.pnlCollapse2.Size = new System.Drawing.Size(978, 821);
             this.pnlCollapse2.TabIndex = 0;
             // 
             // pnlmain
@@ -444,7 +446,7 @@
             this.pnlmain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlmain.Location = new System.Drawing.Point(0, 32);
             this.pnlmain.Name = "pnlmain";
-            this.pnlmain.Size = new System.Drawing.Size(957, 662);
+            this.pnlmain.Size = new System.Drawing.Size(978, 789);
             this.pnlmain.TabIndex = 4;
             // 
             // panel2
@@ -470,15 +472,16 @@
             this.panel2.Controls.Add(this.label6);
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(957, 662);
+            this.panel2.Size = new System.Drawing.Size(978, 789);
             this.panel2.TabIndex = 0;
             // 
             // label35
             // 
+            this.label35.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label35.AutoSize = true;
             this.label35.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label35.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.label35.Location = new System.Drawing.Point(375, 607);
+            this.label35.Location = new System.Drawing.Point(361, 769);
             this.label35.Name = "label35";
             this.label35.Size = new System.Drawing.Size(61, 13);
             this.label35.TabIndex = 105;
@@ -486,10 +489,11 @@
             // 
             // label10
             // 
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.label10.Location = new System.Drawing.Point(294, 605);
+            this.label10.Location = new System.Drawing.Point(280, 767);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(65, 13);
             this.label10.TabIndex = 104;
@@ -537,6 +541,19 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Basic Info";
+            // 
+            // chkArchive
+            // 
+            this.chkArchive.AutoSize = true;
+            this.chkArchive.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.chkArchive.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Bold);
+            this.chkArchive.ForeColor = System.Drawing.Color.Red;
+            this.chkArchive.Location = new System.Drawing.Point(190, 193);
+            this.chkArchive.Name = "chkArchive";
+            this.chkArchive.Size = new System.Drawing.Size(137, 19);
+            this.chkArchive.TabIndex = 909;
+            this.chkArchive.Text = "Archive This Product";
+            this.chkArchive.UseVisualStyleBackColor = true;
             // 
             // textBox2
             // 
@@ -944,16 +961,38 @@
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.txtMRP);
+            this.groupBox3.Controls.Add(this.label38);
             this.groupBox3.Controls.Add(this.label32);
             this.groupBox3.Controls.Add(this.txtSalesPrice);
             this.groupBox3.Controls.Add(this.label21);
             this.groupBox3.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.Location = new System.Drawing.Point(461, 174);
+            this.groupBox3.Location = new System.Drawing.Point(464, 173);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(236, 46);
+            this.groupBox3.Size = new System.Drawing.Size(236, 73);
             this.groupBox3.TabIndex = 5;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = " Price Info";
+            // 
+            // txtMRP
+            // 
+            this.txtMRP.Location = new System.Drawing.Point(102, 42);
+            this.txtMRP.MaxLength = 10;
+            this.txtMRP.Name = "txtMRP";
+            this.txtMRP.Size = new System.Drawing.Size(123, 22);
+            this.txtMRP.TabIndex = 1;
+            this.txtMRP.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtSalesPrice_KeyPress);
+            // 
+            // label38
+            // 
+            this.label38.AutoSize = true;
+            this.label38.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.label38.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.label38.Location = new System.Drawing.Point(6, 45);
+            this.label38.Name = "label38";
+            this.label38.Size = new System.Drawing.Size(32, 15);
+            this.label38.TabIndex = 454;
+            this.label38.Text = "MRP";
             // 
             // label32
             // 
@@ -1105,10 +1144,11 @@
             // 
             // label26
             // 
+            this.label26.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label26.AutoSize = true;
             this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label26.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.label26.Location = new System.Drawing.Point(122, 607);
+            this.label26.Location = new System.Drawing.Point(108, 769);
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(160, 13);
             this.label26.TabIndex = 101;
@@ -1116,10 +1156,11 @@
             // 
             // label25
             // 
+            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label25.AutoSize = true;
             this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label25.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.label25.Location = new System.Drawing.Point(23, 604);
+            this.label25.Location = new System.Drawing.Point(9, 766);
             this.label25.Name = "label25";
             this.label25.Size = new System.Drawing.Size(76, 13);
             this.label25.TabIndex = 100;
@@ -1190,7 +1231,7 @@
             // 
             // txtRemarks
             // 
-            this.txtRemarks.Location = new System.Drawing.Point(567, 226);
+            this.txtRemarks.Location = new System.Drawing.Point(567, 253);
             this.txtRemarks.Multiline = true;
             this.txtRemarks.Name = "txtRemarks";
             this.txtRemarks.Size = new System.Drawing.Size(372, 62);
@@ -1199,14 +1240,15 @@
             // 
             // panel3
             // 
-            this.panel3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.panel3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel3.Controls.Add(this.groupBasicinfo);
             this.panel3.Controls.Add(this.dgvProduct);
             this.panel3.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.panel3.Location = new System.Drawing.Point(13, 294);
+            this.panel3.Location = new System.Drawing.Point(13, 328);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(961, 307);
+            this.panel3.Size = new System.Drawing.Size(970, 436);
             this.panel3.TabIndex = 4;
             // 
             // groupBasicinfo
@@ -1398,7 +1440,7 @@
             this.dgvProduct.Name = "dgvProduct";
             this.dgvProduct.ReadOnly = true;
             this.dgvProduct.RowHeadersVisible = false;
-            this.dgvProduct.Size = new System.Drawing.Size(937, 291);
+            this.dgvProduct.Size = new System.Drawing.Size(958, 420);
             this.dgvProduct.TabIndex = 0;
             this.dgvProduct.TabStop = false;
             this.dgvProduct.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvProduct_CellClick);
@@ -1414,7 +1456,7 @@
             this.grouppicture.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grouppicture.Location = new System.Drawing.Point(709, 13);
             this.grouppicture.Name = "grouppicture";
-            this.grouppicture.Size = new System.Drawing.Size(2431, 154);
+            this.grouppicture.Size = new System.Drawing.Size(2440, 154);
             this.grouppicture.TabIndex = 4;
             this.grouppicture.TabStop = false;
             this.grouppicture.Text = "Picture";
@@ -1479,7 +1521,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Calibri", 9.75F);
             this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.label6.Location = new System.Drawing.Point(471, 229);
+            this.label6.Location = new System.Drawing.Point(462, 250);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(54, 15);
             this.label6.TabIndex = 98;
@@ -1497,7 +1539,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(957, 32);
+            this.panel1.Size = new System.Drawing.Size(978, 32);
             this.panel1.TabIndex = 0;
             // 
             // Btnprint
@@ -1507,7 +1549,7 @@
             this.Btnprint.FlatAppearance.BorderSize = 0;
             this.Btnprint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.Btnprint.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Btnprint.Location = new System.Drawing.Point(541, 3);
+            this.Btnprint.Location = new System.Drawing.Point(562, 3);
             this.Btnprint.Name = "Btnprint";
             this.Btnprint.Size = new System.Drawing.Size(75, 25);
             this.Btnprint.TabIndex = 11;
@@ -1523,7 +1565,7 @@
             this.btnsaveaspending.FlatAppearance.BorderSize = 0;
             this.btnsaveaspending.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnsaveaspending.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnsaveaspending.Location = new System.Drawing.Point(772, 3);
+            this.btnsaveaspending.Location = new System.Drawing.Point(793, 3);
             this.btnsaveaspending.Name = "btnsaveaspending";
             this.btnsaveaspending.Size = new System.Drawing.Size(103, 25);
             this.btnsaveaspending.TabIndex = 9;
@@ -1550,7 +1592,7 @@
             this.btnclear.FlatAppearance.BorderSize = 0;
             this.btnclear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnclear.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnclear.Location = new System.Drawing.Point(877, 3);
+            this.btnclear.Location = new System.Drawing.Point(898, 3);
             this.btnclear.Name = "btnclear";
             this.btnclear.Size = new System.Drawing.Size(75, 25);
             this.btnclear.TabIndex = 10;
@@ -1565,7 +1607,7 @@
             this.btnProductSave.FlatAppearance.BorderSize = 0;
             this.btnProductSave.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnProductSave.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnProductSave.Location = new System.Drawing.Point(695, 3);
+            this.btnProductSave.Location = new System.Drawing.Point(716, 3);
             this.btnProductSave.Name = "btnProductSave";
             this.btnProductSave.Size = new System.Drawing.Size(75, 25);
             this.btnProductSave.TabIndex = 8;
@@ -1580,7 +1622,7 @@
             this.btnnew.FlatAppearance.BorderSize = 0;
             this.btnnew.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnnew.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnnew.Location = new System.Drawing.Point(618, 3);
+            this.btnnew.Location = new System.Drawing.Point(639, 3);
             this.btnnew.Name = "btnnew";
             this.btnnew.Size = new System.Drawing.Size(75, 25);
             this.btnnew.TabIndex = 12;
@@ -1598,10 +1640,23 @@
             this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 698);
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 825);
             this.pnlLabelSearch.TabIndex = 111;
             this.pnlLabelSearch.Visible = false;
             this.pnlLabelSearch.Click += new System.EventHandler(this.vLabel1_Click);
+            // 
+            // pnlOrder
+            // 
+            this.pnlOrder.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pnlOrder.BackgroundImage")));
+            this.pnlOrder.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlOrder.Controls.Add(this.vLabel2);
+            this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
+            this.pnlOrder.Location = new System.Drawing.Point(1321, 0);
+            this.pnlOrder.Name = "pnlOrder";
+            this.pnlOrder.Size = new System.Drawing.Size(25, 825);
+            this.pnlOrder.TabIndex = 31;
+            this.pnlOrder.Visible = false;
             // 
             // vLabel3
             // 
@@ -1612,23 +1667,10 @@
             this.vLabel3.ForeColor = System.Drawing.Color.White;
             this.vLabel3.Location = new System.Drawing.Point(0, 0);
             this.vLabel3.Name = "vLabel3";
-            this.vLabel3.Size = new System.Drawing.Size(23, 696);
+            this.vLabel3.Size = new System.Drawing.Size(23, 823);
             this.vLabel3.TabIndex = 0;
             this.vLabel3.Text = "Search";
             this.vLabel3.Click += new System.EventHandler(this.vLabel1_Click);
-            // 
-            // pnlOrder
-            // 
-            this.pnlOrder.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pnlOrder.BackgroundImage")));
-            this.pnlOrder.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnlOrder.Controls.Add(this.vLabel2);
-            this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlOrder.Location = new System.Drawing.Point(1294, 0);
-            this.pnlOrder.Name = "pnlOrder";
-            this.pnlOrder.Size = new System.Drawing.Size(25, 698);
-            this.pnlOrder.TabIndex = 31;
-            this.pnlOrder.Visible = false;
             // 
             // vLabel2
             // 
@@ -1640,7 +1682,7 @@
             this.vLabel2.ForeColor = System.Drawing.Color.White;
             this.vLabel2.Location = new System.Drawing.Point(0, 0);
             this.vLabel2.Name = "vLabel2";
-            this.vLabel2.Size = new System.Drawing.Size(23, 696);
+            this.vLabel2.Size = new System.Drawing.Size(23, 823);
             this.vLabel2.TabIndex = 0;
             this.vLabel2.Text = "View Product";
             this.vLabel2.Visible = false;
@@ -1660,24 +1702,11 @@
             this.vLabel1.Text = "Search";
             this.vLabel1.Click += new System.EventHandler(this.vLabel1_Click);
             // 
-            // chkArchive
-            // 
-            this.chkArchive.AutoSize = true;
-            this.chkArchive.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.chkArchive.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Bold);
-            this.chkArchive.ForeColor = System.Drawing.Color.Red;
-            this.chkArchive.Location = new System.Drawing.Point(190, 193);
-            this.chkArchive.Name = "chkArchive";
-            this.chkArchive.Size = new System.Drawing.Size(137, 19);
-            this.chkArchive.TabIndex = 909;
-            this.chkArchive.Text = "Archive This Product";
-            this.chkArchive.UseVisualStyleBackColor = true;
-            // 
             // Product
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1319, 698);
+            this.ClientSize = new System.Drawing.Size(1346, 825);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.pnlLabelSearch);
             this.Controls.Add(this.pnlOrder);
@@ -1801,6 +1830,8 @@
         private System.Windows.Forms.TextBox txtSalesPrice;
         private System.Windows.Forms.Label label21;
         private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.TextBox txtMRP;
+        private System.Windows.Forms.Label label38;
         private VSM.Q_and_A.VLabel vLabel3;
         private System.Windows.Forms.Panel pnlSearch;
         private System.Windows.Forms.ComboBox cbxVendor;
