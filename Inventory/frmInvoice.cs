@@ -176,6 +176,10 @@ namespace Inventory
                     {
                         cmd.CommandText = "SalesPipesBillPrint_1";
                     }
+                    if (Program.Company == "RR TRADERS")
+                    {
+                        cmd.CommandText = "SalesTradersBillPrint_1";
+                    }
                     cmd.Connection = con;
                     SqlDataAdapter ad = new SqlDataAdapter(cmd);
                     ad.Fill(ds);
@@ -381,6 +385,10 @@ namespace Inventory
                     if (Program.Company == "R.R. PIPES")
                     {
                         cmd.CommandText = "SalesPipesBillPrint_1";
+                    }
+                    if (Program.Company == "RR TRADERS")
+                    {
+                        cmd.CommandText = "SalesTradersBillPrint_1";
                     }
                     cmd.Connection = con;
                     SqlDataAdapter ad = new SqlDataAdapter(cmd);

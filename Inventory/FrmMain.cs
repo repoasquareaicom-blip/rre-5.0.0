@@ -31,10 +31,15 @@ namespace Inventory
         QuotationBal objQuotationbal = new QuotationBal();
         private ToolStripMenuItem productSyncQueueToolStripMenuItem;
         private ToolStripMenuItem remembranceReportToolStripMenuItem;
+        private ToolStripMenuItem deliveryNoteToolStripMenuItem;
+        private ToolStripMenuItem deliveryNoteApprovalToolStripMenuItem;
+        private ToolStripMenuItem receiptNoteToolStripMenuItem;
+        private ToolStripMenuItem receiptNoteApprovalToolStripMenuItem;
         public FrmMain(string userid)
         {
             InitializeComponent();
             RemoveRetiredReportMenuItems();
+            AddDeliveryNoteMenuItem();
             AddProductSyncQueueMenuItem();
             AddRemembranceReportMenuItem();
             ApplyCloudEyeDelightMainTheme();
@@ -64,6 +69,126 @@ namespace Inventory
             this.IsMdiContainer = true;
             this.MainMenuStrip = this.menuStrip1;
             this.menuStrip1.Dock = DockStyle.Top;
+        }
+
+        private void AddDeliveryNoteMenuItem()
+        {
+            if (movementToolStripMenuItem == null || deliveryNoteToolStripMenuItem != null)
+                return;
+
+            deliveryNoteToolStripMenuItem = new ToolStripMenuItem();
+            deliveryNoteToolStripMenuItem.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            deliveryNoteToolStripMenuItem.Image = Inventory.Properties.Resources.matmove;
+            deliveryNoteToolStripMenuItem.Name = "deliveryNoteToolStripMenuItem";
+            deliveryNoteToolStripMenuItem.Size = new Size(195, 22);
+            deliveryNoteToolStripMenuItem.Text = "Delivery Note";
+            deliveryNoteToolStripMenuItem.Click += new EventHandler(deliveryNoteToolStripMenuItem_Click);
+            deliveryNoteToolStripMenuItem.MouseEnter += new EventHandler(materialMovementToolStripMenuItem1_MouseEnter);
+            deliveryNoteToolStripMenuItem.MouseLeave += new EventHandler(materialMovementToolStripMenuItem1_MouseLeave);
+
+            movementToolStripMenuItem.DropDownItems.Add(deliveryNoteToolStripMenuItem);
+
+            deliveryNoteApprovalToolStripMenuItem = new ToolStripMenuItem();
+            deliveryNoteApprovalToolStripMenuItem.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            deliveryNoteApprovalToolStripMenuItem.Image = Inventory.Properties.Resources.matmove;
+            deliveryNoteApprovalToolStripMenuItem.Name = "deliveryNoteApprovalToolStripMenuItem";
+            deliveryNoteApprovalToolStripMenuItem.Size = new Size(195, 22);
+            deliveryNoteApprovalToolStripMenuItem.Text = "Delivery Note Approval";
+            deliveryNoteApprovalToolStripMenuItem.Click += new EventHandler(deliveryNoteApprovalToolStripMenuItem_Click);
+            deliveryNoteApprovalToolStripMenuItem.MouseEnter += new EventHandler(materialMovementToolStripMenuItem1_MouseEnter);
+            deliveryNoteApprovalToolStripMenuItem.MouseLeave += new EventHandler(materialMovementToolStripMenuItem1_MouseLeave);
+
+            movementToolStripMenuItem.DropDownItems.Add(deliveryNoteApprovalToolStripMenuItem);
+
+            receiptNoteToolStripMenuItem = new ToolStripMenuItem();
+            receiptNoteToolStripMenuItem.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            receiptNoteToolStripMenuItem.Image = Inventory.Properties.Resources.matmove;
+            receiptNoteToolStripMenuItem.Name = "receiptNoteToolStripMenuItem";
+            receiptNoteToolStripMenuItem.Size = new Size(195, 22);
+            receiptNoteToolStripMenuItem.Text = "Receipt Note";
+            receiptNoteToolStripMenuItem.Click += new EventHandler(receiptNoteToolStripMenuItem_Click);
+            receiptNoteToolStripMenuItem.MouseEnter += new EventHandler(materialMovementToolStripMenuItem1_MouseEnter);
+            receiptNoteToolStripMenuItem.MouseLeave += new EventHandler(materialMovementToolStripMenuItem1_MouseLeave);
+            movementToolStripMenuItem.DropDownItems.Add(receiptNoteToolStripMenuItem);
+
+            receiptNoteApprovalToolStripMenuItem = new ToolStripMenuItem();
+            receiptNoteApprovalToolStripMenuItem.Font = new Font("Microsoft Sans Serif", 9.75F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            receiptNoteApprovalToolStripMenuItem.Image = Inventory.Properties.Resources.matmove;
+            receiptNoteApprovalToolStripMenuItem.Name = "receiptNoteApprovalToolStripMenuItem";
+            receiptNoteApprovalToolStripMenuItem.Size = new Size(195, 22);
+            receiptNoteApprovalToolStripMenuItem.Text = "Receipt Note Approval";
+            receiptNoteApprovalToolStripMenuItem.Click += new EventHandler(receiptNoteApprovalToolStripMenuItem_Click);
+            receiptNoteApprovalToolStripMenuItem.MouseEnter += new EventHandler(materialMovementToolStripMenuItem1_MouseEnter);
+            receiptNoteApprovalToolStripMenuItem.MouseLeave += new EventHandler(materialMovementToolStripMenuItem1_MouseLeave);
+            movementToolStripMenuItem.DropDownItems.Add(receiptNoteApprovalToolStripMenuItem);
+        }
+
+        private void deliveryNoteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objDeliveryNote == null)
+            {
+                DeliveryNote deliveryNote = new DeliveryNote();
+                Program.objDeliveryNote = deliveryNote;
+            }
+            else
+            {
+                Program.objDeliveryNote.Close();
+                DeliveryNote deliveryNote = new DeliveryNote();
+                Program.objDeliveryNote = deliveryNote;
+            }
+            Program.objDeliveryNote.MdiParent = this;
+            Program.objDeliveryNote.Show();
+        }
+
+        private void deliveryNoteApprovalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objDeliveryNoteApproval == null)
+            {
+                DeliveryNote deliveryNote = new DeliveryNote(true);
+                Program.objDeliveryNoteApproval = deliveryNote;
+            }
+            else
+            {
+                Program.objDeliveryNoteApproval.Close();
+                DeliveryNote deliveryNote = new DeliveryNote(true);
+                Program.objDeliveryNoteApproval = deliveryNote;
+            }
+            Program.objDeliveryNoteApproval.MdiParent = this;
+            Program.objDeliveryNoteApproval.Show();
+        }
+
+        private void receiptNoteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objReceiptNote == null)
+            {
+                DeliveryNote receiptNote = new DeliveryNote(false, true);
+                Program.objReceiptNote = receiptNote;
+            }
+            else
+            {
+                Program.objReceiptNote.Close();
+                DeliveryNote receiptNote = new DeliveryNote(false, true);
+                Program.objReceiptNote = receiptNote;
+            }
+            Program.objReceiptNote.MdiParent = this;
+            Program.objReceiptNote.Show();
+        }
+
+        private void receiptNoteApprovalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objReceiptNoteApproval == null)
+            {
+                DeliveryNote receiptNote = new DeliveryNote(true, true);
+                Program.objReceiptNoteApproval = receiptNote;
+            }
+            else
+            {
+                Program.objReceiptNoteApproval.Close();
+                DeliveryNote receiptNote = new DeliveryNote(true, true);
+                Program.objReceiptNoteApproval = receiptNote;
+            }
+            Program.objReceiptNoteApproval.MdiParent = this;
+            Program.objReceiptNoteApproval.Show();
         }
 
         private void RemoveRetiredReportMenuItems()
@@ -346,10 +471,6 @@ namespace Inventory
                 return;
             }
 
-            productsToolStripMenuItem.Enabled = false;
-            productsToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
-            priceUploadToolStripMenuItem.Enabled = false;
-            priceUploadToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
             if (productSyncQueueToolStripMenuItem != null)
             {
                 productSyncQueueToolStripMenuItem.Enabled = false;
@@ -417,12 +538,6 @@ namespace Inventory
 
         private void productsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-                return;
-            }
-
             if (Program.objProduct == null)
             {
                 Masters.Product Product = new Masters.Product();
@@ -1085,6 +1200,10 @@ namespace Inventory
             materialMovementToolStripMenuItem.Visible = false;
             issuedReceivedToolStripMenuItem.Visible = false;
             materialMovementToolStripMenuItem.Visible = false;
+            deliveryNoteToolStripMenuItem.Visible = false;
+            deliveryNoteApprovalToolStripMenuItem.Visible = false;
+            receiptNoteToolStripMenuItem.Visible = false;
+            receiptNoteApprovalToolStripMenuItem.Visible = false;
 
             // issuedReceivedReportToolStripMenuItem.Visible = false;
 
@@ -1213,6 +1332,10 @@ namespace Inventory
             materialMovementToolStripMenuItem.Visible = true;
             issuedReceivedToolStripMenuItem.Visible = true;
             materialMovementToolStripMenuItem.Visible = true;
+            deliveryNoteToolStripMenuItem.Visible = true;
+            deliveryNoteApprovalToolStripMenuItem.Visible = true;
+            receiptNoteToolStripMenuItem.Visible = true;
+            receiptNoteApprovalToolStripMenuItem.Visible = true;
             // issuedReceivedReportToolStripMenuItem.Visible = true;
 
 
@@ -1291,7 +1414,6 @@ namespace Inventory
                 {
                     purchaseOrderListToolStripMenuItem.Visible = true;
                 }
-
                 //else if (menu == "PurchaseAgingReport")
                 //{
                 //    purchaseAgeingToolStripMenuItem.Visible = true;
@@ -1536,6 +1658,10 @@ namespace Inventory
                 else if (menu == "Movement")
                 {
                     movementToolStripMenuItem.Visible = true;
+                    deliveryNoteToolStripMenuItem.Visible = true;
+                    deliveryNoteApprovalToolStripMenuItem.Visible = true;
+                    receiptNoteToolStripMenuItem.Visible = true;
+                    receiptNoteApprovalToolStripMenuItem.Visible = true;
                 }
                 else if (menu == "MaterialMovement")
                 {
@@ -3449,12 +3575,6 @@ namespace Inventory
 
         private void priceUploadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-                return;
-            }
-
             if (Program.PriceUpload == null)
             {
                 PriceUpload objpriceupload = new PriceUpload();
@@ -3541,6 +3661,23 @@ namespace Inventory
             }
             Program.ObjHsnstockreport.MdiParent = this;
             Program.ObjHsnstockreport.Show();
+        }
+
+        private void hSNSummaryReportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.ObjHsnSummaryReport == null)
+            {
+                HsnSummaryReport objHsnSummaryReport = new HsnSummaryReport();
+                Program.ObjHsnSummaryReport = objHsnSummaryReport;
+            }
+            else
+            {
+                Program.ObjHsnSummaryReport.Dispose();
+                HsnSummaryReport objHsnSummaryReport = new HsnSummaryReport();
+                Program.ObjHsnSummaryReport = objHsnSummaryReport;
+            }
+            Program.ObjHsnSummaryReport.MdiParent = this;
+            Program.ObjHsnSummaryReport.Show();
         }
 
         private void customerWiseLedgerReportToolStripMenuItem_Click(object sender, EventArgs e)

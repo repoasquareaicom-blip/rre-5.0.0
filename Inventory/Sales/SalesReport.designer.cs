@@ -35,6 +35,8 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.pnlOrder = new System.Windows.Forms.Panel();
+            this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.splitContainer1 = new Inventory.DesignerSafeSplitContainer();
             this.pnlSearch = new System.Windows.Forms.Panel();
             this.DTPTodate = new System.Windows.Forms.DateTimePicker();
@@ -170,10 +172,10 @@
             this.lblperare = new System.Windows.Forms.Label();
             this.dgvOrder = new System.Windows.Forms.DataGridView();
             this.lblTotal = new System.Windows.Forms.Label();
-            this.pnlOrder = new System.Windows.Forms.Panel();
             this.vLabel2 = new VSM.Q_and_A.VLabel();
-            this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
+            this.pnlOrder.SuspendLayout();
+            this.pnlLabelSearch.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -198,9 +200,34 @@
             this.Pnloading.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pcloading)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvOrder)).BeginInit();
-            this.pnlOrder.SuspendLayout();
-            this.pnlLabelSearch.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // pnlOrder
+            // 
+            this.pnlOrder.BackgroundImage = global::Inventory.Properties.Resources._5;
+            this.pnlOrder.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlOrder.Controls.Add(this.vLabel2);
+            this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
+            this.pnlOrder.Location = new System.Drawing.Point(1251, 0);
+            this.pnlOrder.Name = "pnlOrder";
+            this.pnlOrder.Size = new System.Drawing.Size(25, 815);
+            this.pnlOrder.TabIndex = 113;
+            this.pnlOrder.Visible = false;
+            // 
+            // pnlLabelSearch
+            // 
+            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
+            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
+            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlLabelSearch.Controls.Add(this.vLabel1);
+            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
+            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
+            this.pnlLabelSearch.Name = "pnlLabelSearch";
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 815);
+            this.pnlLabelSearch.TabIndex = 112;
+            this.pnlLabelSearch.Visible = false;
             // 
             // splitContainer1
             // 
@@ -222,6 +249,7 @@
             this.splitContainer1.Size = new System.Drawing.Size(1226, 815);
             this.splitContainer1.SplitterDistance = 315;
             this.splitContainer1.TabIndex = 115;
+            this.splitContainer1.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer1_SplitterMoved);
             // 
             // pnlSearch
             // 
@@ -1584,7 +1612,6 @@
             this.lblShop.Size = new System.Drawing.Size(41, 13);
             this.lblShop.TabIndex = 461;
             this.lblShop.Text = "label26";
-            this.lblShop.Visible = false;
             // 
             // Txtothers
             // 
@@ -1954,7 +1981,7 @@
             this.label6.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.Location = new System.Drawing.Point(45, 27);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(160, 16);
+            this.label6.Size = new System.Drawing.Size(159, 16);
             this.label6.TabIndex = 51;
             this.label6.Text = "Saving   Please Wait ....";
             // 
@@ -2037,19 +2064,6 @@
             this.lblTotal.Text = "Total  :";
             this.lblTotal.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // pnlOrder
-            // 
-            this.pnlOrder.BackgroundImage = global::Inventory.Properties.Resources._5;
-            this.pnlOrder.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnlOrder.Controls.Add(this.vLabel2);
-            this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlOrder.Location = new System.Drawing.Point(1251, 0);
-            this.pnlOrder.Name = "pnlOrder";
-            this.pnlOrder.Size = new System.Drawing.Size(25, 815);
-            this.pnlOrder.TabIndex = 113;
-            this.pnlOrder.Visible = false;
-            // 
             // vLabel2
             // 
             this.vLabel2.BackColor = System.Drawing.Color.Transparent;
@@ -2065,20 +2079,6 @@
             this.vLabel2.Text = "View Sales Quotation";
             this.vLabel2.Visible = false;
             this.vLabel2.Click += new System.EventHandler(this.vLabel2_Click);
-            // 
-            // pnlLabelSearch
-            // 
-            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
-            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
-            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnlLabelSearch.Controls.Add(this.vLabel1);
-            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
-            this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 815);
-            this.pnlLabelSearch.TabIndex = 112;
-            this.pnlLabelSearch.Visible = false;
             // 
             // vLabel1
             // 
@@ -2105,6 +2105,8 @@
             this.Name = "SalesReport";
             this.Text = "Sales";
             this.Load += new System.EventHandler(this.SalesReport_Load);
+            this.pnlOrder.ResumeLayout(false);
+            this.pnlLabelSearch.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -2140,8 +2142,6 @@
             this.Pnloading.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pcloading)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvOrder)).EndInit();
-            this.pnlOrder.ResumeLayout(false);
-            this.pnlLabelSearch.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

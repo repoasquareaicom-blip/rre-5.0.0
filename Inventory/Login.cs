@@ -439,8 +439,7 @@ namespace Inventory
                 if (string.IsNullOrEmpty(apiUrl) || string.IsNullOrEmpty(branch) || string.IsNullOrEmpty(apiKey))
                     return;
 
-                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
-
+                Program.ConfigureApiSecurity();
 
                 string escUser = EscapeJsonString(userName);
                 string escExternal = EscapeJsonString(externalId);

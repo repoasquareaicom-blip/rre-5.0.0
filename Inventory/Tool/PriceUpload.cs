@@ -28,11 +28,6 @@ namespace Inventory.Tool
         public PriceUpload()
         {
             InitializeComponent();
-            if (!BranchAccess.IsMainOffice)
-            {
-                button2.Enabled = false;
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-            }
         }
 
         private void PriceUpload_Load(object sender, EventArgs e)
@@ -417,12 +412,6 @@ namespace Inventory.Tool
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-                return;
-            }
-
             DataTable rsDatacheck = (DataTable)(dataGridView1.DataSource);
             var tables = (DataTable)(dataGridView1.DataSource);
             if (tables != null)
@@ -468,7 +457,10 @@ namespace Inventory.Tool
 
                             rsData1 = CashEndCloseBAL.UpdateSalesPrices(tvp, rsData, Convert.ToInt16(UserId));
                             MessageBox.Show(rsData1.Rows[0]["Result"].ToString());
-                            ProductMasterCloudQueue.EnqueueAndTryPushProducts(rsData, "Price");
+                            if (ShouldSyncPriceChanges())
+                            {
+                                ProductMasterCloudQueue.EnqueueAndTryPushProducts(rsData, "Price");
+                            }
                             rsData.Columns.Add("Comments");
                             rsData.Columns.Add("OldPrice");
                             rsData.Columns.Add("ItemName");
@@ -492,6 +484,22 @@ namespace Inventory.Tool
             {
                 MessageBox.Show("Please Select the Excel File");
             }
+        }
+
+        private bool ShouldSyncPriceChanges()
+        {
+            if (!BranchAccess.IsMainOffice)
+            {
+                return false;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Do you want to upload these price changes to sync other branches?",
+                "Price Sync",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            return result == DialogResult.Yes;
         }
     }
 }

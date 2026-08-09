@@ -34,6 +34,8 @@
             this.vLabel1 = new VSM.Q_and_A.VLabel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pnlSearch = new System.Windows.Forms.Panel();
+            this.txtprodname = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.label107 = new System.Windows.Forms.Label();
             this.lblItemCount = new System.Windows.Forms.Label();
             this.btnSearch = new System.Windows.Forms.Button();
@@ -74,8 +76,6 @@
             this.Btnprint = new System.Windows.Forms.Button();
             this.label20 = new System.Windows.Forms.Label();
             this.btnClear = new System.Windows.Forms.Button();
-            this.txtprodname = new System.Windows.Forms.TextBox();
-            this.label8 = new System.Windows.Forms.Label();
             this.pnlOrder.SuspendLayout();
             this.pnlLabelSearch.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -99,9 +99,9 @@
             this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlOrder.Controls.Add(this.vLabel2);
             this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlOrder.Location = new System.Drawing.Point(981, 0);
+            this.pnlOrder.Location = new System.Drawing.Point(1113, 0);
             this.pnlOrder.Name = "pnlOrder";
-            this.pnlOrder.Size = new System.Drawing.Size(25, 642);
+            this.pnlOrder.Size = new System.Drawing.Size(25, 711);
             this.pnlOrder.TabIndex = 114;
             this.pnlOrder.Visible = false;
             // 
@@ -115,7 +115,7 @@
             this.vLabel2.ForeColor = System.Drawing.Color.White;
             this.vLabel2.Location = new System.Drawing.Point(0, 0);
             this.vLabel2.Name = "vLabel2";
-            this.vLabel2.Size = new System.Drawing.Size(23, 640);
+            this.vLabel2.Size = new System.Drawing.Size(23, 709);
             this.vLabel2.TabIndex = 2;
             this.vLabel2.Text = "View Purchase Order";
             this.vLabel2.Visible = false;
@@ -131,7 +131,7 @@
             this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 642);
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 711);
             this.pnlLabelSearch.TabIndex = 115;
             this.pnlLabelSearch.Visible = false;
             // 
@@ -144,7 +144,7 @@
             this.vLabel1.ForeColor = System.Drawing.Color.White;
             this.vLabel1.Location = new System.Drawing.Point(0, 0);
             this.vLabel1.Name = "vLabel1";
-            this.vLabel1.Size = new System.Drawing.Size(23, 640);
+            this.vLabel1.Size = new System.Drawing.Size(23, 709);
             this.vLabel1.TabIndex = 1;
             this.vLabel1.Click += new System.EventHandler(this.vLabel1_Click);
             // 
@@ -162,8 +162,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.pnlCollapse2);
-            this.splitContainer1.Size = new System.Drawing.Size(956, 642);
-            this.splitContainer1.SplitterDistance = 230;
+            this.splitContainer1.Size = new System.Drawing.Size(1088, 711);
+            this.splitContainer1.SplitterDistance = 261;
             this.splitContainer1.TabIndex = 116;
             // 
             // pnlSearch
@@ -189,8 +189,27 @@
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlSearch.Name = "pnlSearch";
-            this.pnlSearch.Size = new System.Drawing.Size(230, 642);
+            this.pnlSearch.Size = new System.Drawing.Size(261, 711);
             this.pnlSearch.TabIndex = 0;
+            // 
+            // txtprodname
+            // 
+            this.txtprodname.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtprodname.Location = new System.Drawing.Point(102, 51);
+            this.txtprodname.Name = "txtprodname";
+            this.txtprodname.Size = new System.Drawing.Size(154, 20);
+            this.txtprodname.TabIndex = 402;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(5, 54);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(74, 14);
+            this.label8.TabIndex = 401;
+            this.label8.Text = "Product Name";
             // 
             // label107
             // 
@@ -218,7 +237,7 @@
             this.btnSearch.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSearch.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSearch.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSearch.Location = new System.Drawing.Point(149, 173);
+            this.btnSearch.Location = new System.Drawing.Point(180, 173);
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(75, 25);
             this.btnSearch.TabIndex = 114;
@@ -254,7 +273,7 @@
             this.dgvSearch.ReadOnly = true;
             this.dgvSearch.RowHeadersVisible = false;
             this.dgvSearch.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvSearch.Size = new System.Drawing.Size(224, 429);
+            this.dgvSearch.Size = new System.Drawing.Size(255, 498);
             this.dgvSearch.TabIndex = 113;
             this.dgvSearch.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellClick);
             this.dgvSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvSearch_KeyDown);
@@ -268,7 +287,7 @@
             this.cmbstatus3.FormattingEnabled = true;
             this.cmbstatus3.Location = new System.Drawing.Point(101, 119);
             this.cmbstatus3.Name = "cmbstatus3";
-            this.cmbstatus3.Size = new System.Drawing.Size(123, 21);
+            this.cmbstatus3.Size = new System.Drawing.Size(154, 21);
             this.cmbstatus3.TabIndex = 112;
             // 
             // dateTimePicker2
@@ -279,7 +298,7 @@
             this.dateTimePicker2.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker2.Location = new System.Drawing.Point(101, 96);
             this.dateTimePicker2.Name = "dateTimePicker2";
-            this.dateTimePicker2.Size = new System.Drawing.Size(123, 20);
+            this.dateTimePicker2.Size = new System.Drawing.Size(154, 20);
             this.dateTimePicker2.TabIndex = 10;
             // 
             // dateTimePicker1
@@ -290,7 +309,7 @@
             this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker1.Location = new System.Drawing.Point(101, 73);
             this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(123, 20);
+            this.dateTimePicker1.Size = new System.Drawing.Size(154, 20);
             this.dateTimePicker1.TabIndex = 9;
             // 
             // txtOrderNo
@@ -299,7 +318,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtOrderNo.Location = new System.Drawing.Point(101, 28);
             this.txtOrderNo.Name = "txtOrderNo";
-            this.txtOrderNo.Size = new System.Drawing.Size(123, 20);
+            this.txtOrderNo.Size = new System.Drawing.Size(154, 20);
             this.txtOrderNo.TabIndex = 8;
             // 
             // lblOrderDateTo
@@ -352,7 +371,7 @@
             this.pnlSearchHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSearchHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlSearchHeader.Name = "pnlSearchHeader";
-            this.pnlSearchHeader.Size = new System.Drawing.Size(228, 25);
+            this.pnlSearchHeader.Size = new System.Drawing.Size(259, 25);
             this.pnlSearchHeader.TabIndex = 1;
             // 
             // pbxRightCollapse
@@ -362,7 +381,7 @@
             this.pbxRightCollapse.BackgroundImage = global::Inventory.Properties.Resources.right_collapse;
             this.pbxRightCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxRightCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxRightCollapse.Location = new System.Drawing.Point(202, 0);
+            this.pbxRightCollapse.Location = new System.Drawing.Point(233, 0);
             this.pbxRightCollapse.Name = "pbxRightCollapse";
             this.pbxRightCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxRightCollapse.TabIndex = 1;
@@ -376,7 +395,7 @@
             this.pbxCollapse.BackgroundImage = global::Inventory.Properties.Resources.left_expand;
             this.pbxCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxCollapse.Location = new System.Drawing.Point(177, -1);
+            this.pbxCollapse.Location = new System.Drawing.Point(208, -1);
             this.pbxCollapse.Name = "pbxCollapse";
             this.pbxCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxCollapse.TabIndex = 0;
@@ -415,7 +434,7 @@
             this.pnlCollapse2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlCollapse2.Location = new System.Drawing.Point(0, 0);
             this.pnlCollapse2.Name = "pnlCollapse2";
-            this.pnlCollapse2.Size = new System.Drawing.Size(722, 642);
+            this.pnlCollapse2.Size = new System.Drawing.Size(823, 711);
             this.pnlCollapse2.TabIndex = 0;
             // 
             // lbltotalquantity
@@ -425,7 +444,7 @@
             this.lbltotalquantity.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbltotalquantity.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lbltotalquantity.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbltotalquantity.Location = new System.Drawing.Point(590, 518);
+            this.lbltotalquantity.Location = new System.Drawing.Point(691, 587);
             this.lbltotalquantity.Name = "lbltotalquantity";
             this.lbltotalquantity.Size = new System.Drawing.Size(124, 29);
             this.lbltotalquantity.TabIndex = 32;
@@ -439,7 +458,7 @@
             this.lbtotal.BackColor = System.Drawing.Color.Transparent;
             this.lbtotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbtotal.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbtotal.Location = new System.Drawing.Point(487, 518);
+            this.lbtotal.Location = new System.Drawing.Point(588, 587);
             this.lbtotal.Name = "lbtotal";
             this.lbtotal.Size = new System.Drawing.Size(97, 29);
             this.lbtotal.TabIndex = 31;
@@ -452,7 +471,7 @@
             this.dateTimePicker4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.dateTimePicker4.Enabled = false;
             this.dateTimePicker4.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dateTimePicker4.Location = new System.Drawing.Point(130, 580);
+            this.dateTimePicker4.Location = new System.Drawing.Point(130, 649);
             this.dateTimePicker4.MaxDate = new System.DateTime(3000, 12, 31, 0, 0, 0, 0);
             this.dateTimePicker4.Name = "dateTimePicker4";
             this.dateTimePicker4.Size = new System.Drawing.Size(102, 20);
@@ -463,7 +482,7 @@
             this.cbxStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbxStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.cbxStatus.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbxStatus.Location = new System.Drawing.Point(130, 608);
+            this.cbxStatus.Location = new System.Drawing.Point(130, 677);
             this.cbxStatus.Name = "cbxStatus";
             this.cbxStatus.Size = new System.Drawing.Size(102, 25);
             this.cbxStatus.TabIndex = 29;
@@ -474,7 +493,7 @@
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(9, 604);
+            this.label3.Location = new System.Drawing.Point(9, 673);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 14);
             this.label3.TabIndex = 27;
@@ -484,7 +503,7 @@
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(9, 580);
+            this.label6.Location = new System.Drawing.Point(9, 649);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(115, 13);
             this.label6.TabIndex = 28;
@@ -494,7 +513,7 @@
             // 
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(10, 539);
+            this.label9.Location = new System.Drawing.Point(10, 608);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(49, 13);
             this.label9.TabIndex = 24;
@@ -505,7 +524,7 @@
             this.txtRemarks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtRemarks.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtRemarks.Enabled = false;
-            this.txtRemarks.Location = new System.Drawing.Point(70, 515);
+            this.txtRemarks.Location = new System.Drawing.Point(70, 584);
             this.txtRemarks.MaxLength = 1000;
             this.txtRemarks.Multiline = true;
             this.txtRemarks.Name = "txtRemarks";
@@ -526,7 +545,7 @@
             this.dgvOrder.Name = "dgvOrder";
             this.dgvOrder.ReadOnly = true;
             this.dgvOrder.RowHeadersVisible = false;
-            this.dgvOrder.Size = new System.Drawing.Size(716, 404);
+            this.dgvOrder.Size = new System.Drawing.Size(817, 473);
             this.dgvOrder.TabIndex = 22;
             // 
             // panel2
@@ -538,7 +557,7 @@
             this.panel2.Controls.Add(this.label4);
             this.panel2.Controls.Add(this.label5);
             this.panel2.Enabled = false;
-            this.panel2.Location = new System.Drawing.Point(486, 34);
+            this.panel2.Location = new System.Drawing.Point(587, 34);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(233, 67);
             this.panel2.TabIndex = 19;
@@ -633,7 +652,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(722, 32);
+            this.panel1.Size = new System.Drawing.Size(823, 32);
             this.panel1.TabIndex = 2;
             // 
             // Btnprint
@@ -643,7 +662,7 @@
             this.Btnprint.FlatAppearance.BorderSize = 0;
             this.Btnprint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.Btnprint.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Btnprint.Location = new System.Drawing.Point(565, 2);
+            this.Btnprint.Location = new System.Drawing.Point(666, 2);
             this.Btnprint.Name = "Btnprint";
             this.Btnprint.Size = new System.Drawing.Size(75, 25);
             this.Btnprint.TabIndex = 3;
@@ -670,7 +689,7 @@
             this.btnClear.FlatAppearance.BorderSize = 0;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnClear.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnClear.Location = new System.Drawing.Point(642, 2);
+            this.btnClear.Location = new System.Drawing.Point(743, 2);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(75, 25);
             this.btnClear.TabIndex = 1;
@@ -678,30 +697,11 @@
             this.btnClear.UseVisualStyleBackColor = true;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 
-            // txtprodname
-            // 
-            this.txtprodname.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtprodname.Location = new System.Drawing.Point(102, 51);
-            this.txtprodname.Name = "txtprodname";
-            this.txtprodname.Size = new System.Drawing.Size(123, 20);
-            this.txtprodname.TabIndex = 402;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(5, 54);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(74, 14);
-            this.label8.TabIndex = 401;
-            this.label8.Text = "Product Name";
-            // 
             // SearchPurchaseOrder
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1006, 642);
+            this.ClientSize = new System.Drawing.Size(1138, 711);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.pnlLabelSearch);
             this.Controls.Add(this.pnlOrder);

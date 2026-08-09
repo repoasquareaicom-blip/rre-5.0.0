@@ -29,6 +29,8 @@ namespace Inventory.Sales
         string fileName;
         string test;
         string company = string.Empty;
+        string currentState = string.Empty;
+        string currentGstText = string.Empty;
         string firstname, firstvalue, secondname, secondvalue, thirdname, thirdvalue;
         public SalesReportForm()
         {
@@ -462,10 +464,19 @@ namespace Inventory.Sales
                     cmd = new SqlCommand("searchsale_Direct1", con);
                 }
 
-                if (shop == 2)
+                else if (shop == 2)
                 {
                     cmd = new SqlCommand("searchsalepipes_Direct1", con);
-
+                }
+                else if (shop == 3)
+                {
+                    cmd = new SqlCommand("searchsaletraders_Direct1", con);
+                }
+                else
+                {
+                    lblItemCount.Text = "0";
+                    clear();
+                    return;
                 }
 
                 //SqlCommand cmd = new SqlCommand("searchsale", con);
@@ -509,15 +520,27 @@ namespace Inventory.Sales
                 if (shop == 1)
                 {
 
-                    cmd = new SqlCommand("getsaleamount", con);
+                    cmd = new SqlCommand("getsaleamount_1", con);
                 }
 
-                if (shop == 2)
+                else if (shop == 2)
                 {
-                    cmd = new SqlCommand("getsaleamountPipes_Direct1", con);
+                    cmd = new SqlCommand("getsaleamount_2", con);
 
                 }
-                //SqlCommand cmd = new SqlCommand("getsaleamountPipes", con);
+
+                else if (shop == 3)
+                {
+                    cmd = new SqlCommand("getsaleamount_3", con);
+
+                }
+
+                else
+                {
+                    lbltodaysales.Text = "0";
+                    return;
+                }
+
                 cmd.CommandType = CommandType.StoredProcedure;
                 values = Convert.ToString(cmd.ExecuteScalar());
                 con.Close();
@@ -564,10 +587,20 @@ namespace Inventory.Sales
                     cmd = new SqlCommand("Getsaleslist_Direct2", con);
                 }
 
-                if (shop == 2)
+                else if (shop == 2)
                 {
                     cmd = new SqlCommand("Getsaleslistpipes_Direct2", con);
 
+                }
+                else if (shop == 3)
+                {
+                    cmd = new SqlCommand("Getsaleslisttraders_Direct2", con);
+
+                }
+                else
+                {
+                    clear();
+                    return;
                 }
                 //SqlCommand cmd = new SqlCommand("Getsaleslistpipes", con);
                 // SqlCommand cmd = new SqlCommand("Getsaleslist", con);
@@ -608,6 +641,8 @@ namespace Inventory.Sales
                 txttin.Text = Convert.ToString(ds.Tables[0].Rows[0]["Tin"]);
                 txtmobile.Text = Convert.ToString(ds.Tables[0].Rows[0]["Mobile"]);
                 Txtothers.Text = Convert.ToString(ds.Tables[0].Rows[0]["others"]);
+                currentState = ds.Tables[0].Columns.Contains("State") ? Convert.ToString(ds.Tables[0].Rows[0]["State"]) : string.Empty;
+                currentGstText = ds.Tables[0].Columns.Contains("GstText") ? Convert.ToString(ds.Tables[0].Rows[0]["GstText"]) : string.Empty;
 
 
 
@@ -696,6 +731,8 @@ namespace Inventory.Sales
             txtmobile.Clear();
             txtdate.Value = DateTime.Now.Date;
             Txtothers.Text = "0";
+            currentState = string.Empty;
+            currentGstText = string.Empty;
 
         }
 
@@ -988,13 +1025,25 @@ namespace Inventory.Sales
                     if (shop == 1)
                     {
 
-                        cmd = new SqlCommand("updateQuotationsales", con);
+                        cmd = new SqlCommand("updateQuotationsales_1", con);
                     }
 
-                    if (shop == 2)
+                    else if (shop == 2)
                     {
-                        cmd = new SqlCommand("updateQuotationsalespipes_Direct", con);
+                        cmd = new SqlCommand("updateQuotationsales_2", con);
 
+                    }
+
+                    else if (shop == 3)
+                    {
+                        cmd = new SqlCommand("updateQuotationsales_3", con);
+
+                    }
+
+                    else
+                    {
+                        MessageBox.Show("Invalid shop selected. Unable to update sales bill.", "Sales Update", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
                     }
 
                     //SqlCommand cmd = new SqlCommand("updateQuotationsalespipes", con);
@@ -1040,6 +1089,8 @@ namespace Inventory.Sales
                     }
                     cmd.Parameters.AddWithValue("@tin", txttin.Text);
                     cmd.Parameters.AddWithValue("@mobile", txtmobile.Text);
+                    cmd.Parameters.AddWithValue("@State", currentState);
+                    cmd.Parameters.AddWithValue("@GstText", currentGstText);
                     cmd.Parameters.AddWithValue("@QuotationDetails", dt);
                     cmd.Parameters.Add("@result", SqlDbType.VarChar, 100);
                     cmd.Parameters["@result"].Direction = ParameterDirection.Output;
@@ -1465,6 +1516,11 @@ namespace Inventory.Sales
             {
             try
             {
+                if (keyData == (Keys.Control | Keys.C) && CopyCurrentProductName())
+                {
+                    return true;
+                }
+
                 if (textSearchQty.Focused)
                 {
                     if (keyData == (Keys.Tab))
@@ -1794,9 +1850,32 @@ namespace Inventory.Sales
 
 
 
-           
+
             return base.ProcessCmdKey(ref msg, keyData);
         }
+
+        private bool CopyCurrentProductName()
+        {
+            if (dgvOrder.CurrentRow == null || !dgvOrder.Columns.Contains("Items"))
+            {
+                return false;
+            }
+
+            string productName = Convert.ToString(dgvOrder.CurrentRow.Cells["Items"].Value).Trim();
+            if (string.IsNullOrEmpty(productName))
+            {
+                return false;
+            }
+
+            Clipboard.SetText(productName);
+            return true;
+        }
+
+        private void btnCopySelectedItem_Click(object sender, EventArgs e)
+        {
+            CopyCurrentProductName();
+        }
+
         private void textbox_Change(object sender, EventArgs e)
         {
             //try

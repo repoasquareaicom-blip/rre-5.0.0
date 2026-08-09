@@ -82,6 +82,8 @@ namespace Inventory
 
             string json = "{\"records\":[" + RowToJson(record) + "]}";
 
+            Program.ConfigureApiSecurity();
+
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(apiUrl);
             request.Method = "POST";
             request.ContentType = "application/json";

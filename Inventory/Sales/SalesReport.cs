@@ -68,10 +68,11 @@ namespace Inventory
             Bindcompany();
             cmbcompanychange.SelectedIndex = Convert.ToInt32(lblShop.Text);
             BindDropDown();
-            comboBox1.SelectedValue = 31;
+            comboBox1.SelectedValue = 0;
           
             BindDropDown1();
-            comboBox2.SelectedValue = 0;
+            comboBox2.SelectedValue = 31;
+            SGST_CheckedChanged(SGSTval, EventArgs.Empty);
 
         }
 
@@ -1127,6 +1128,17 @@ namespace Inventory
             // else
             // {
             int shop = Convert.ToInt32(lblShop.Text);
+            string selectedState = SGSTval.Checked ? comboBox2.Text : comboBox1.Text;
+            string selectedGstText = IGSTval.Checked ? "IGST" : "";
+
+            if (IGSTval.Checked && Convert.ToString(comboBox1.SelectedValue) == "0")
+            {
+                MessageBox.Show("Please select state for IGST sales bill.", "Sales Save", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                panel1.Enabled = true;
+                panel2.Enabled = true;
+                Pnloading.Visible = false;
+                return;
+            }
 
             string value;
 
@@ -1139,13 +1151,25 @@ namespace Inventory
                 if (shop == 1)
                 {
 
-                    cmd = new SqlCommand("SaveQuotationsales_GST", con);
+                    cmd = new SqlCommand("SaveQuotationsales_1", con);
                 }
 
-                if (shop == 2)
+                else if (shop == 2)
                 {
-                    cmd = new SqlCommand("SaveQuotationsalesPipes_Direct_GST", con);
+                    cmd = new SqlCommand("SaveQuotationsales_2", con);
 
+                }
+
+                else if (shop == 3)
+                {
+                    cmd = new SqlCommand("SaveQuotationsales_3", con);
+
+                }
+
+                else
+                {
+                    MessageBox.Show("Invalid shop selected. Unable to save sales bill.", "Sales Save", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
 
 
@@ -1195,6 +1219,8 @@ namespace Inventory
                 }
                 cmd.Parameters.AddWithValue("@tin", txttin.Text);
                 cmd.Parameters.AddWithValue("@mobile", txtmobile.Text);
+                cmd.Parameters.AddWithValue("@State", selectedState);
+                cmd.Parameters.AddWithValue("@GstText", selectedGstText);
 
 
 
@@ -1549,7 +1575,6 @@ namespace Inventory
             dtblDataSource.Rows.Add("Punjab", 28);
             dtblDataSource.Rows.Add("Rajasthan", 29);
             dtblDataSource.Rows.Add("Sikkim", 30);
-            dtblDataSource.Rows.Add("Tamil Nadu", 31);
             dtblDataSource.Rows.Add("Telangana", 32);
             dtblDataSource.Rows.Add("Tripura", 33);
             dtblDataSource.Rows.Add("Uttar Pradesh", 34);
@@ -1567,43 +1592,7 @@ namespace Inventory
             dtblDataSource.Columns.Add("Text");
             dtblDataSource.Columns.Add("Value");
 
-            dtblDataSource.Rows.Add("--Select--", 0);
-            dtblDataSource.Rows.Add("Andaman and Nicobar Islands", 1);
-            dtblDataSource.Rows.Add("Andhra Pradesh", 2);
-            dtblDataSource.Rows.Add("Arunachal Pradesh", 3);
-            dtblDataSource.Rows.Add("Assam", 4);
-            dtblDataSource.Rows.Add("Bihar", 5);
-            dtblDataSource.Rows.Add("Chandigarh", 6);
-            dtblDataSource.Rows.Add("Chhattisgarh", 7);
-            dtblDataSource.Rows.Add("Dadar and Nagar Haveli", 8);
-            dtblDataSource.Rows.Add("Daman and Diu", 9);
-            dtblDataSource.Rows.Add("Delhi", 10);
-            dtblDataSource.Rows.Add("Goa", 11);
-            dtblDataSource.Rows.Add("Gujarat", 12);
-            dtblDataSource.Rows.Add("Haryana", 13);
-            dtblDataSource.Rows.Add("Himachal Pradesh", 14);
-            dtblDataSource.Rows.Add("Jammu and Kashmir", 15);
-            dtblDataSource.Rows.Add("Jharkhand", 16);
-            dtblDataSource.Rows.Add("Karnataka", 17);
-            dtblDataSource.Rows.Add("Kerala", 18);
-            dtblDataSource.Rows.Add("Lakshadweep", 19);
-            dtblDataSource.Rows.Add("Madhya Pradesh", 20);
-            dtblDataSource.Rows.Add("Maharashtra", 21);
-            dtblDataSource.Rows.Add("Manipur", 22);
-            dtblDataSource.Rows.Add("Meghalaya", 23);
-            dtblDataSource.Rows.Add("Mizoram", 24);
-            dtblDataSource.Rows.Add("Nagaland", 25);
-            dtblDataSource.Rows.Add("Odisha", 26);
-            dtblDataSource.Rows.Add("Puducherry", 27);
-            dtblDataSource.Rows.Add("Punjab", 28);
-            dtblDataSource.Rows.Add("Rajasthan", 29);
-            dtblDataSource.Rows.Add("Sikkim", 30);
-
-            dtblDataSource.Rows.Add("Telangana", 31);
-            dtblDataSource.Rows.Add("Tripura", 32);
-            dtblDataSource.Rows.Add("Uttar Pradesh", 33);
-            dtblDataSource.Rows.Add("Uttarakhand", 34);
-            dtblDataSource.Rows.Add("West Bengal", 35);
+            dtblDataSource.Rows.Add("Tamil Nadu", 31);
 
             comboBox2.Items.Clear();
             comboBox2.DataSource = dtblDataSource;
@@ -2648,15 +2637,27 @@ namespace Inventory
                 if (shop == 1)
                 {
 
-                    cmd = new SqlCommand("getsaleamount", con);
+                    cmd = new SqlCommand("getsaleamount_1", con);
                 }
 
-                if (shop == 2)
+                else if (shop == 2)
                 {
-                    cmd = new SqlCommand("getsaleamountPipes_Direct1", con);
+                    cmd = new SqlCommand("getsaleamount_2", con);
 
                 }
-                //SqlCommand cmd = new SqlCommand("getsaleamountPipes", con);
+
+                else if (shop == 3)
+                {
+                    cmd = new SqlCommand("getsaleamount_3", con);
+
+                }
+
+                else
+                {
+                    lbltodaysales.Text = "0";
+                    return;
+                }
+
                 cmd.CommandType = CommandType.StoredProcedure;
                 values = Convert.ToString(cmd.ExecuteScalar());
                 con.Close();
@@ -2895,6 +2896,11 @@ namespace Inventory
 
         }
 
+        private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+
+        }
+
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
             textBox1.Visible = false;
@@ -3023,6 +3029,8 @@ namespace Inventory
             comboBox1.Visible = true;
             if (SGSTval.Checked)
             {
+                comboBox2.SelectedValue = 31;
+                comboBox2.Enabled = false;
                 comboBox2.Visible = true;
                 comboBox1.Visible = false;
 
@@ -3030,6 +3038,8 @@ namespace Inventory
 
             else if (IGSTval.Checked)
             {
+                comboBox1.SelectedValue = 0;
+                comboBox1.Enabled = true;
                 comboBox2.Visible = false;
                 comboBox1.Visible = true;
 

@@ -479,7 +479,7 @@ namespace BranchSync
 
             try
             {
-                long afterId = ReadProductCursor();
+                long afterId = ReadProductCursor(branch);
                 string separator = url.IndexOf('?') >= 0 ? "&" : "?";
                 string fetchUrl = url + separator + "after_id=" + afterId.ToString(CultureInfo.InvariantCulture) + "&limit=100";
 
@@ -524,7 +524,7 @@ namespace BranchSync
 
                 if (maxChangeId > afterId)
                 {
-                    WriteProductCursor(maxChangeId);
+                    WriteProductCursor(branch, maxChangeId);
                 }
 
                 Log("Products completed=" + applied);
@@ -674,11 +674,11 @@ namespace BranchSync
             }
         }
 
-        static long ReadProductCursor()
+        static long ReadProductCursor(string branch)
         {
             try
             {
-                string path = ProductCursorPath();
+                string path = ProductCursorPath(branch);
                 if (!File.Exists(path))
                 {
                     return 0;
@@ -697,11 +697,11 @@ namespace BranchSync
             return 0;
         }
 
-        static void WriteProductCursor(long changeId)
+        static void WriteProductCursor(string branch, long changeId)
         {
             try
             {
-                File.WriteAllText(ProductCursorPath(), changeId.ToString(CultureInfo.InvariantCulture), Encoding.UTF8);
+                File.WriteAllText(ProductCursorPath(branch), changeId.ToString(CultureInfo.InvariantCulture), Encoding.UTF8);
             }
             catch (Exception ex)
             {
@@ -709,9 +709,18 @@ namespace BranchSync
             }
         }
 
-        static string ProductCursorPath()
+        static string ProductCursorPath(string branch)
         {
-            return Path.Combine(LogDirectory, "product-master.cursor");
+            string safeBranch = string.IsNullOrEmpty(branch)
+                ? "unknown"
+                : branch.Trim().ToUpperInvariant();
+
+            foreach (char invalidChar in Path.GetInvalidFileNameChars())
+            {
+                safeBranch = safeBranch.Replace(invalidChar, '_');
+            }
+
+            return Path.Combine(LogDirectory, "product-master-" + safeBranch + ".cursor");
         }
 
         static string GetField(IDataRecord r, string name)

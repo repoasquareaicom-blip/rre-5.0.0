@@ -35,12 +35,6 @@ namespace Inventory.Masters
         {
             InitializeComponent();
             this.WindowState = FormWindowState.Maximized;
-            if (!BranchAccess.IsMainOffice)
-            {
-                btnProductSave.Enabled = false;
-                btnnew.Enabled = false;
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-            }
             SearchCreteria1();
             SearchCreteria2();
             SearchCreteria3();
@@ -1253,12 +1247,6 @@ namespace Inventory.Masters
 
         private void btnProductSave_Click(object sender, EventArgs e)
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-                return;
-            }
-
             bool Val = Validation();
             if (Val == true)
             {
@@ -1721,10 +1709,26 @@ namespace Inventory.Masters
 
         private void QueueProductMasterChange(int productId)
         {
-            if (productId > 0)
+            if (productId > 0 && ShouldSyncProductMasterChange())
             {
                 ProductMasterCloudQueue.EnqueueAndTryPush(Convert.ToString(productId), "Product", true);
             }
+        }
+
+        private bool ShouldSyncProductMasterChange()
+        {
+            if (!BranchAccess.IsMainOffice)
+            {
+                return false;
+            }
+
+            DialogResult result = MessageBox.Show(
+                "Do you want to upload this product change to sync other branches?",
+                "Product Sync",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            return result == DialogResult.Yes;
         }
 
         private void UpdateProductMRP(int productId)

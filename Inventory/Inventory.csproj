@@ -613,6 +613,12 @@
     <Compile Include="Report\HsnStockReport.Designer.cs">
       <DependentUpon>HsnStockReport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Report\HsnSummaryReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Report\HsnSummaryReport.Designer.cs">
+      <DependentUpon>HsnSummaryReport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Report\IncentiveReport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -782,6 +788,12 @@
     </Compile>
     <Compile Include="Sales\SalesQuotation.designer.cs">
       <DependentUpon>SalesQuotation.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sales\DeliveryNote.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sales\DeliveryNote.designer.cs">
+      <DependentUpon>DeliveryNote.cs</DependentUpon>
     </Compile>
     <Compile Include="Sales\FollowupQuotationReport.cs">
       <SubType>Form</SubType>
@@ -1192,6 +1204,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Sales\SalesQuotation.resx">
       <DependentUpon>SalesQuotation.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Sales\DeliveryNote.resx">
+      <DependentUpon>DeliveryNote.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Sales\SalesReport.resx">
       <DependentUpon>SalesReport.cs</DependentUpon>

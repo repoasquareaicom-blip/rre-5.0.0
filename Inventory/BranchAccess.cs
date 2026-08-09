@@ -22,7 +22,7 @@ namespace Inventory
 
         public static string MainOfficeOnlyMessage
         {
-            get { return "Product master and price changes are allowed only in main office (Salem)."; }
+            get { return "Product sync to other branches is allowed only in main office (Salem)."; }
         }
     }
 }

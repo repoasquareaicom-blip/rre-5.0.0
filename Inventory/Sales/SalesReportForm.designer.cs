@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SalesReportForm));
             this.txtmobile = new System.Windows.Forms.TextBox();
             this.label25 = new System.Windows.Forms.Label();
@@ -72,6 +72,7 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label67 = new System.Windows.Forms.Label();
             this.lblperare = new System.Windows.Forms.Label();
+            this.btnCopySelectedItem = new System.Windows.Forms.Button();
             this.dgvOrder = new System.Windows.Forms.DataGridView();
             this.lblTotal = new System.Windows.Forms.Label();
             this.date = new System.Windows.Forms.DateTimePicker();
@@ -101,6 +102,8 @@
             this.pnlCollapse2 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
             this.pnsearch = new System.Windows.Forms.Panel();
+            this.label116 = new System.Windows.Forms.Label();
+            this.label117 = new System.Windows.Forms.Label();
             this.label36 = new System.Windows.Forms.Label();
             this.label35 = new System.Windows.Forms.Label();
             this.HSNPrice = new System.Windows.Forms.Label();
@@ -179,8 +182,6 @@
             this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
-            this.label116 = new System.Windows.Forms.Label();
-            this.label117 = new System.Windows.Forms.Label();
             this.pntab.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvOrder)).BeginInit();
@@ -284,11 +285,12 @@
             this.pntab.Controls.Add(this.lbltotalquantity);
             this.pntab.Controls.Add(this.groupBox5);
             this.pntab.Controls.Add(this.lblperare);
+            this.pntab.Controls.Add(this.btnCopySelectedItem);
             this.pntab.Controls.Add(this.dgvOrder);
             this.pntab.Controls.Add(this.lblTotal);
             this.pntab.Location = new System.Drawing.Point(0, 0);
             this.pntab.Name = "pntab";
-            this.pntab.Size = new System.Drawing.Size(734, 734);
+            this.pntab.Size = new System.Drawing.Size(823, 815);
             this.pntab.TabIndex = 112;
             // 
             // dateTimePicker1
@@ -304,10 +306,11 @@
             // 
             // label30
             // 
+            this.label30.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label30.AutoSize = true;
             this.label30.Font = new System.Drawing.Font("Times New Roman", 12F, System.Drawing.FontStyle.Bold);
             this.label30.ForeColor = System.Drawing.Color.Red;
-            this.label30.Location = new System.Drawing.Point(302, 603);
+            this.label30.Location = new System.Drawing.Point(16, 756);
             this.label30.Name = "label30";
             this.label30.Size = new System.Drawing.Size(200, 19);
             this.label30.TabIndex = 467;
@@ -316,10 +319,11 @@
             // 
             // label109
             // 
+            this.label109.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label109.AutoSize = true;
             this.label109.Font = new System.Drawing.Font("Times New Roman", 12F, System.Drawing.FontStyle.Bold);
             this.label109.ForeColor = System.Drawing.Color.Red;
-            this.label109.Location = new System.Drawing.Point(302, 567);
+            this.label109.Location = new System.Drawing.Point(16, 720);
             this.label109.Name = "label109";
             this.label109.Size = new System.Drawing.Size(208, 19);
             this.label109.TabIndex = 466;
@@ -331,7 +335,7 @@
             this.label29.AutoSize = true;
             this.label29.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label29.ForeColor = System.Drawing.Color.Teal;
-            this.label29.Location = new System.Drawing.Point(343, 7);
+            this.label29.Location = new System.Drawing.Point(432, 7);
             this.label29.Name = "label29";
             this.label29.Size = new System.Drawing.Size(134, 23);
             this.label29.TabIndex = 465;
@@ -344,7 +348,7 @@
             this.cmbcompanychange.Items.AddRange(new object[] {
             "--Select--",
             "R.R.LIGHTS"});
-            this.cmbcompanychange.Location = new System.Drawing.Point(480, 6);
+            this.cmbcompanychange.Location = new System.Drawing.Point(569, 6);
             this.cmbcompanychange.Name = "cmbcompanychange";
             this.cmbcompanychange.Size = new System.Drawing.Size(169, 21);
             this.cmbcompanychange.TabIndex = 464;
@@ -352,7 +356,7 @@
             // button4
             // 
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button4.Location = new System.Drawing.Point(652, 5);
+            this.button4.Location = new System.Drawing.Point(741, 5);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(75, 23);
             this.button4.TabIndex = 463;
@@ -365,7 +369,7 @@
             this.Txtothers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.Txtothers.BackColor = System.Drawing.Color.White;
             this.Txtothers.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold);
-            this.Txtothers.Location = new System.Drawing.Point(544, 592);
+            this.Txtothers.Location = new System.Drawing.Point(633, 673);
             this.Txtothers.Name = "Txtothers";
             this.Txtothers.Size = new System.Drawing.Size(179, 31);
             this.Txtothers.TabIndex = 462;
@@ -381,7 +385,7 @@
             this.label27.BackColor = System.Drawing.Color.Transparent;
             this.label27.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.label27.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label27.Location = new System.Drawing.Point(386, 592);
+            this.label27.Location = new System.Drawing.Point(475, 673);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(152, 31);
             this.label27.TabIndex = 461;
@@ -436,7 +440,7 @@
             this.lbltotalamount.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbltotalamount.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lbltotalamount.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbltotalamount.Location = new System.Drawing.Point(543, 555);
+            this.lbltotalamount.Location = new System.Drawing.Point(632, 636);
             this.lbltotalamount.Name = "lbltotalamount";
             this.lbltotalamount.Size = new System.Drawing.Size(180, 31);
             this.lbltotalamount.TabIndex = 48;
@@ -518,7 +522,7 @@
             this.txtless.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtless.BackColor = System.Drawing.Color.White;
             this.txtless.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold);
-            this.txtless.Location = new System.Drawing.Point(544, 627);
+            this.txtless.Location = new System.Drawing.Point(633, 708);
             this.txtless.Name = "txtless";
             this.txtless.Size = new System.Drawing.Size(179, 31);
             this.txtless.TabIndex = 386;
@@ -545,7 +549,7 @@
             this.lblless.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.lblless.AutoSize = true;
             this.lblless.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold);
-            this.lblless.Location = new System.Drawing.Point(468, 631);
+            this.lblless.Location = new System.Drawing.Point(557, 712);
             this.lblless.Name = "lblless";
             this.lblless.Size = new System.Drawing.Size(53, 23);
             this.lblless.TabIndex = 387;
@@ -568,7 +572,7 @@
             this.lblgrandtotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblgrandtotal.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lblgrandtotal.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblgrandtotal.Location = new System.Drawing.Point(544, 670);
+            this.lblgrandtotal.Location = new System.Drawing.Point(633, 751);
             this.lblgrandtotal.Name = "lblgrandtotal";
             this.lblgrandtotal.Size = new System.Drawing.Size(180, 31);
             this.lblgrandtotal.TabIndex = 385;
@@ -591,7 +595,7 @@
             this.label13.BackColor = System.Drawing.Color.Transparent;
             this.label13.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.label13.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(386, 670);
+            this.label13.Location = new System.Drawing.Point(475, 751);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(152, 31);
             this.label13.TabIndex = 384;
@@ -620,7 +624,7 @@
             this.lbltotalquantity.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lbltotalquantity.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lbltotalquantity.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbltotalquantity.Location = new System.Drawing.Point(110, 644);
+            this.lbltotalquantity.Location = new System.Drawing.Point(299, 720);
             this.lbltotalquantity.Name = "lbltotalquantity";
             this.lbltotalquantity.Size = new System.Drawing.Size(97, 31);
             this.lbltotalquantity.TabIndex = 362;
@@ -630,13 +634,14 @@
             // 
             // groupBox5
             // 
+            this.groupBox5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.groupBox5.Controls.Add(this.label18);
             this.groupBox5.Controls.Add(this.cmbpaymode);
             this.groupBox5.Controls.Add(this.label63);
             this.groupBox5.Controls.Add(this.textBox2);
             this.groupBox5.Controls.Add(this.label67);
             this.groupBox5.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox5.Location = new System.Drawing.Point(19, 538);
+            this.groupBox5.Location = new System.Drawing.Point(11, 637);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(278, 72);
             this.groupBox5.TabIndex = 383;
@@ -712,6 +717,19 @@
             this.lblperare.TabIndex = 354;
             this.lblperare.Text = "1";
             // 
+            // btnCopySelectedItem
+            // 
+            this.btnCopySelectedItem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCopySelectedItem.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnCopySelectedItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCopySelectedItem.Location = new System.Drawing.Point(659, 137);
+            this.btnCopySelectedItem.Name = "btnCopySelectedItem";
+            this.btnCopySelectedItem.Size = new System.Drawing.Size(151, 25);
+            this.btnCopySelectedItem.TabIndex = 468;
+            this.btnCopySelectedItem.Text = "Copy Selected Item";
+            this.btnCopySelectedItem.UseVisualStyleBackColor = true;
+            this.btnCopySelectedItem.Click += new System.EventHandler(this.btnCopySelectedItem_Click);
+            // 
             // dgvOrder
             // 
             this.dgvOrder.AllowUserToOrderColumns = true;
@@ -721,18 +739,18 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvOrder.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvOrder.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvOrder.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvOrder.DefaultCellStyle = dataGridViewCellStyle1;
             this.dgvOrder.Location = new System.Drawing.Point(12, 168);
             this.dgvOrder.Name = "dgvOrder";
             this.dgvOrder.RowHeadersVisible = false;
-            this.dgvOrder.Size = new System.Drawing.Size(715, 375);
+            this.dgvOrder.Size = new System.Drawing.Size(804, 456);
             this.dgvOrder.TabIndex = 7;
             this.dgvOrder.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrder_CellContentClick);
             this.dgvOrder.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrder_CellEndEdit);
@@ -749,7 +767,7 @@
             this.lblTotal.BackColor = System.Drawing.Color.Transparent;
             this.lblTotal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblTotal.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotal.Location = new System.Drawing.Point(441, 556);
+            this.lblTotal.Location = new System.Drawing.Point(530, 637);
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(97, 31);
             this.lblTotal.TabIndex = 47;
@@ -808,7 +826,7 @@
             this.panel3.Controls.Add(this.label3);
             this.panel3.Controls.Add(this.cmbstatus);
             this.panel3.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.panel3.Location = new System.Drawing.Point(573, 15);
+            this.panel3.Location = new System.Drawing.Point(662, 15);
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(151, 85);
             this.panel3.TabIndex = 44;
@@ -854,7 +872,7 @@
             this.DTPTodate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.DTPTodate.Location = new System.Drawing.Point(93, 55);
             this.DTPTodate.Name = "DTPTodate";
-            this.DTPTodate.Size = new System.Drawing.Size(172, 20);
+            this.DTPTodate.Size = new System.Drawing.Size(204, 20);
             this.DTPTodate.TabIndex = 402;
             // 
             // dtfromdate
@@ -864,7 +882,7 @@
             this.dtfromdate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtfromdate.Location = new System.Drawing.Point(93, 29);
             this.dtfromdate.Name = "dtfromdate";
-            this.dtfromdate.Size = new System.Drawing.Size(172, 20);
+            this.dtfromdate.Size = new System.Drawing.Size(204, 20);
             this.dtfromdate.TabIndex = 401;
             // 
             // lblOrderDateTo
@@ -928,19 +946,19 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvSearch.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvSearch.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvSearch.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvSearch.DefaultCellStyle = dataGridViewCellStyle2;
             this.dgvSearch.Location = new System.Drawing.Point(2, 232);
             this.dgvSearch.Name = "dgvSearch";
             this.dgvSearch.ReadOnly = true;
             this.dgvSearch.RowHeadersVisible = false;
-            this.dgvSearch.Size = new System.Drawing.Size(265, 506);
+            this.dgvSearch.Size = new System.Drawing.Size(297, 587);
             this.dgvSearch.TabIndex = 104;
             this.dgvSearch.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSearch_CellClick);
             this.dgvSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvSearch_KeyDown);
@@ -959,7 +977,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(737, 32);
+            this.panel1.Size = new System.Drawing.Size(826, 32);
             this.panel1.TabIndex = 1;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
@@ -980,7 +998,7 @@
             this.button1.FlatAppearance.BorderSize = 0;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button1.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.button1.Location = new System.Drawing.Point(436, 2);
+            this.button1.Location = new System.Drawing.Point(525, 2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(135, 25);
             this.button1.TabIndex = 8;
@@ -1017,7 +1035,7 @@
             this.btnPrint.FlatAppearance.BorderSize = 0;
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPrint.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnPrint.Location = new System.Drawing.Point(577, 2);
+            this.btnPrint.Location = new System.Drawing.Point(666, 2);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(75, 25);
             this.btnPrint.TabIndex = 4;
@@ -1032,7 +1050,7 @@
             this.btnClear.FlatAppearance.BorderSize = 0;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnClear.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnClear.Location = new System.Drawing.Point(355, 2);
+            this.btnClear.Location = new System.Drawing.Point(444, 2);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(75, 25);
             this.btnClear.TabIndex = 2;
@@ -1048,7 +1066,7 @@
             this.btnSave.FlatAppearance.BorderSize = 0;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSave.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnSave.Location = new System.Drawing.Point(657, 3);
+            this.btnSave.Location = new System.Drawing.Point(746, 3);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 25);
             this.btnSave.TabIndex = 0;
@@ -1063,7 +1081,7 @@
             this.pnlCollapse2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlCollapse2.Location = new System.Drawing.Point(2, 2);
             this.pnlCollapse2.Name = "pnlCollapse2";
-            this.pnlCollapse2.Size = new System.Drawing.Size(737, 738);
+            this.pnlCollapse2.Size = new System.Drawing.Size(826, 819);
             this.pnlCollapse2.TabIndex = 1;
             // 
             // panel2
@@ -1080,7 +1098,7 @@
             this.panel2.Controls.Add(this.pntab);
             this.panel2.Location = new System.Drawing.Point(3, 32);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(734, 740);
+            this.panel2.Size = new System.Drawing.Size(823, 821);
             this.panel2.TabIndex = 0;
             // 
             // pnsearch
@@ -1114,11 +1132,35 @@
             this.pnsearch.Controls.Add(this.Txtitem);
             this.pnsearch.Controls.Add(this.Btnsubmit);
             this.pnsearch.Controls.Add(this.tableLayoutPanel2);
-            this.pnsearch.Location = new System.Drawing.Point(252, 169);
+            this.pnsearch.Location = new System.Drawing.Point(341, 169);
             this.pnsearch.Name = "pnsearch";
             this.pnsearch.Size = new System.Drawing.Size(470, 460);
             this.pnsearch.TabIndex = 361;
             this.pnsearch.Visible = false;
+            // 
+            // label116
+            // 
+            this.label116.AutoSize = true;
+            this.label116.BackColor = System.Drawing.Color.Transparent;
+            this.label116.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Bold);
+            this.label116.ForeColor = System.Drawing.Color.Red;
+            this.label116.Location = new System.Drawing.Point(125, 441);
+            this.label116.Name = "label116";
+            this.label116.Size = new System.Drawing.Size(83, 14);
+            this.label116.TabIndex = 483;
+            this.label116.Text = "Alt + H  -->HSN";
+            // 
+            // label117
+            // 
+            this.label117.AutoSize = true;
+            this.label117.BackColor = System.Drawing.Color.Transparent;
+            this.label117.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Bold);
+            this.label117.ForeColor = System.Drawing.Color.Red;
+            this.label117.Location = new System.Drawing.Point(3, 441);
+            this.label117.Name = "label117";
+            this.label117.Size = new System.Drawing.Size(93, 14);
+            this.label117.TabIndex = 482;
+            this.label117.Text = "Alt + I  -->Product";
             // 
             // label36
             // 
@@ -1688,7 +1730,7 @@
             this.btnSearch.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnSearch.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnSearch.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnSearch.Location = new System.Drawing.Point(187, 185);
+            this.btnSearch.Location = new System.Drawing.Point(219, 185);
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(75, 25);
             this.btnSearch.TabIndex = 5;
@@ -1720,7 +1762,7 @@
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlSearch.Name = "pnlSearch";
-            this.pnlSearch.Size = new System.Drawing.Size(271, 742);
+            this.pnlSearch.Size = new System.Drawing.Size(303, 823);
             this.pnlSearch.TabIndex = 0;
             // 
             // Quantity
@@ -1739,7 +1781,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textSearchQty.Location = new System.Drawing.Point(93, 157);
             this.textSearchQty.Name = "textSearchQty";
-            this.textSearchQty.Size = new System.Drawing.Size(169, 20);
+            this.textSearchQty.Size = new System.Drawing.Size(201, 20);
             this.textSearchQty.TabIndex = 409;
             // 
             // label33
@@ -1758,7 +1800,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtSearchProduct.Location = new System.Drawing.Point(93, 130);
             this.txtSearchProduct.Name = "txtSearchProduct";
-            this.txtSearchProduct.Size = new System.Drawing.Size(169, 20);
+            this.txtSearchProduct.Size = new System.Drawing.Size(201, 20);
             this.txtSearchProduct.TabIndex = 407;
             // 
             // textBox5
@@ -1805,7 +1847,7 @@
             this.pnlSearchHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSearchHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlSearchHeader.Name = "pnlSearchHeader";
-            this.pnlSearchHeader.Size = new System.Drawing.Size(269, 25);
+            this.pnlSearchHeader.Size = new System.Drawing.Size(301, 25);
             this.pnlSearchHeader.TabIndex = 0;
             // 
             // pbxRightCollapse
@@ -1815,7 +1857,7 @@
             this.pbxRightCollapse.BackgroundImage = global::Inventory.Properties.Resources.right_collapse;
             this.pbxRightCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxRightCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxRightCollapse.Location = new System.Drawing.Point(243, 0);
+            this.pbxRightCollapse.Location = new System.Drawing.Point(275, 0);
             this.pbxRightCollapse.Name = "pbxRightCollapse";
             this.pbxRightCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxRightCollapse.TabIndex = 1;
@@ -1829,7 +1871,7 @@
             this.pbxCollapse.BackgroundImage = global::Inventory.Properties.Resources.left_expand;
             this.pbxCollapse.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pbxCollapse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbxCollapse.Location = new System.Drawing.Point(218, 0);
+            this.pbxCollapse.Location = new System.Drawing.Point(250, 0);
             this.pbxCollapse.Name = "pbxCollapse";
             this.pbxCollapse.Size = new System.Drawing.Size(25, 26);
             this.pbxCollapse.TabIndex = 0;
@@ -1866,8 +1908,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.panel4);
             this.splitContainer1.Panel2.Controls.Add(this.pnlCollapse2);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(2);
-            this.splitContainer1.Size = new System.Drawing.Size(1016, 742);
-            this.splitContainer1.SplitterDistance = 271;
+            this.splitContainer1.Size = new System.Drawing.Size(1137, 823);
+            this.splitContainer1.SplitterDistance = 303;
             this.splitContainer1.TabIndex = 118;
             // 
             // panel4
@@ -2046,9 +2088,9 @@
             this.pnlOrder.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlOrder.Controls.Add(this.vLabel2);
             this.pnlOrder.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlOrder.Location = new System.Drawing.Point(1041, 0);
+            this.pnlOrder.Location = new System.Drawing.Point(1162, 0);
             this.pnlOrder.Name = "pnlOrder";
-            this.pnlOrder.Size = new System.Drawing.Size(25, 742);
+            this.pnlOrder.Size = new System.Drawing.Size(25, 823);
             this.pnlOrder.TabIndex = 117;
             this.pnlOrder.Visible = false;
             // 
@@ -2062,7 +2104,7 @@
             this.vLabel2.ForeColor = System.Drawing.Color.White;
             this.vLabel2.Location = new System.Drawing.Point(0, 0);
             this.vLabel2.Name = "vLabel2";
-            this.vLabel2.Size = new System.Drawing.Size(23, 740);
+            this.vLabel2.Size = new System.Drawing.Size(23, 821);
             this.vLabel2.TabIndex = 1;
             this.vLabel2.Text = "View Sales Quotation";
             this.vLabel2.Visible = false;
@@ -2078,7 +2120,7 @@
             this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
             this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 742);
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 823);
             this.pnlLabelSearch.TabIndex = 116;
             this.pnlLabelSearch.Visible = false;
             // 
@@ -2091,40 +2133,16 @@
             this.vLabel1.ForeColor = System.Drawing.Color.White;
             this.vLabel1.Location = new System.Drawing.Point(0, 0);
             this.vLabel1.Name = "vLabel1";
-            this.vLabel1.Size = new System.Drawing.Size(23, 740);
+            this.vLabel1.Size = new System.Drawing.Size(23, 821);
             this.vLabel1.TabIndex = 0;
             this.vLabel1.Text = "Search";
             this.vLabel1.Click += new System.EventHandler(this.vLabel1_Click);
-            // 
-            // label116
-            // 
-            this.label116.AutoSize = true;
-            this.label116.BackColor = System.Drawing.Color.Transparent;
-            this.label116.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Bold);
-            this.label116.ForeColor = System.Drawing.Color.Red;
-            this.label116.Location = new System.Drawing.Point(125, 441);
-            this.label116.Name = "label116";
-            this.label116.Size = new System.Drawing.Size(83, 14);
-            this.label116.TabIndex = 483;
-            this.label116.Text = "Alt + H  -->HSN";
-            // 
-            // label117
-            // 
-            this.label117.AutoSize = true;
-            this.label117.BackColor = System.Drawing.Color.Transparent;
-            this.label117.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Bold);
-            this.label117.ForeColor = System.Drawing.Color.Red;
-            this.label117.Location = new System.Drawing.Point(3, 441);
-            this.label117.Name = "label117";
-            this.label117.Size = new System.Drawing.Size(93, 14);
-            this.label117.TabIndex = 482;
-            this.label117.Text = "Alt + I  -->Product";
             // 
             // SalesReportForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1066, 742);
+            this.ClientSize = new System.Drawing.Size(1187, 823);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.pnlOrder);
             this.Controls.Add(this.pnlLabelSearch);
@@ -2324,5 +2342,6 @@
         private System.Windows.Forms.Label label36;
         private System.Windows.Forms.Label label116;
         private System.Windows.Forms.Label label117;
+        private System.Windows.Forms.Button btnCopySelectedItem;
     }
 }

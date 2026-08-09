@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Windows.Forms;
 
@@ -146,6 +147,10 @@ namespace Inventory
         public static Purchase_Ageing objPurchase_Ageing;
         public static ExpressSales objExpressSales;
         public static SalesPDI objSalesPDI;
+        public static DeliveryNote objDeliveryNote;
+        public static DeliveryNote objDeliveryNoteApproval;
+        public static DeliveryNote objReceiptNote;
+        public static DeliveryNote objReceiptNoteApproval;
 
 
         public static Userestimation objUserestimation;
@@ -156,6 +161,7 @@ namespace Inventory
         public static CashRequestlist objCashRequestlist;
 
         public static HsnStockReport ObjHsnstockreport;
+        public static HsnSummaryReport ObjHsnSummaryReport;
 
         public static UploadFile UploadFile;
 
@@ -163,8 +169,6 @@ namespace Inventory
 
         public static PriceUpload PriceUpload;
         public static ProductSyncQueue ProductSyncQueue;
-
-
         public static GstFormReport GstFormReports;
 
         public static string Service;
@@ -174,11 +178,19 @@ namespace Inventory
         [STAThread]
         static void Main()
         {
+            ConfigureApiSecurity();
             itemdetails("");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Mainform());
         }
+
+        public static void ConfigureApiSecurity()
+        {
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+        }
+
         public static void itemdetails(string s)
         {
 

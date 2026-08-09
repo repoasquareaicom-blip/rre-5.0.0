@@ -767,6 +767,7 @@
             this.label108.Size = new System.Drawing.Size(227, 20);
             this.label108.TabIndex = 395;
             this.label108.Text = "Alt + Insert  --> Insert Rows";
+            this.label108.Visible = false;
             // 
             // label109
             // 
@@ -778,6 +779,7 @@
             this.label109.Size = new System.Drawing.Size(233, 20);
             this.label109.TabIndex = 394;
             this.label109.Text = "Alt + Delete  -->Delete  Rows";
+            this.label109.Visible = false;
             // 
             // lblhiddenproduct
             // 
