@@ -200,16 +200,25 @@ SELECT
     ISNULL(NULLIF(LTRIM(RTRIM(pm.HSN)), ''), '') AS HSN,
     MAX(ISNULL(um.UOM, pm.UOM)) AS UOM,
     CAST(SUM(CASE WHEN ISNUMERIC(sd.Quantity) = 1 THEN CONVERT(decimal(18, 3), sd.Quantity) ELSE 0 END) AS decimal(18, 3)) AS [Total Quantity],
-    CAST(SUM(CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END)
-        + SUM((CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END) * ISNULL(sd.gst, 0) / 100) AS decimal(18, 2)) AS TotalAmount,
-    CAST(SUM(CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END) AS decimal(18, 2)) AS TaxableValue,
-    CAST(SUM((CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END) * ISNULL(sd.gst, 0) / 200) AS decimal(18, 2)) AS CGST,
-    CAST(SUM((CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END) * ISNULL(sd.gst, 0) / 200) AS decimal(18, 2)) AS SGST,
+    CAST(SUM(line.AmountIncludingTax) AS decimal(18, 2)) AS TotalAmount,
+    CAST(SUM(line.TaxableAmount) AS decimal(18, 2)) AS TaxableValue,
+    CAST(SUM((line.AmountIncludingTax - line.TaxableAmount) / 2) AS decimal(18, 2)) AS CGST,
+    CAST(SUM((line.AmountIncludingTax - line.TaxableAmount) / 2) AS decimal(18, 2)) AS SGST,
     CAST(MAX(ISNULL(sd.gst, 0)) AS decimal(18, 2)) AS [Tax %]
 FROM " + salesTable + @" s
 INNER JOIN " + detailsTable + @" sd ON sd.Salesid = s.Salesid
 LEFT JOIN ProductMaster pm ON CONVERT(varchar(50), pm.id) = LTRIM(RTRIM(sd.Productid))
 LEFT JOIN UOM um ON CONVERT(varchar(50), um.Uomid) = LTRIM(RTRIM(pm.UOM)) AND ISNULL(um.IsDeleted, 0) = 0
+CROSS APPLY (
+    SELECT
+        CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END AS AmountIncludingTax,
+        CASE
+            WHEN ISNULL(sd.gst, 0) > 0 AND ISNUMERIC(sd.Amount) = 1
+                THEN CONVERT(decimal(18, 6), sd.Amount) * 100 / (100 + ISNULL(sd.gst, 0))
+            WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 6), sd.Amount)
+            ELSE 0
+        END AS TaxableAmount
+) line
 WHERE s.Updatedon >= @fromdate
   AND s.Updatedon < @todate
   AND (

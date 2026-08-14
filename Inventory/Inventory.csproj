@@ -176,6 +176,7 @@
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -195,6 +196,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BranchAccess.cs" />
+    <Compile Include="BranchStockWidget.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="BranchStockWidget.Designer.cs">
+      <DependentUpon>BranchStockWidget.cs</DependentUpon>
+    </Compile>
     <Compile Include="DesignerSafeSplitContainer.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -973,6 +980,9 @@
     <EmbeddedResource Include="Accounts\CustomerAccount.resx">
       <DependentUpon>CustomerAccount.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="BranchStockWidget.resx">
+      <DependentUpon>BranchStockWidget.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Adjustment\AdjustmentforPurchaseBill.resx">
       <DependentUpon>AdjustmentforPurchaseBill.cs</DependentUpon>
     </EmbeddedResource>
@@ -1134,6 +1144,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Report\HsnStockReport.resx">
       <DependentUpon>HsnStockReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Report\HsnSummaryReport.resx">
+      <DependentUpon>HsnSummaryReport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Report\IncentiveReport.resx">
       <DependentUpon>IncentiveReport.cs</DependentUpon>

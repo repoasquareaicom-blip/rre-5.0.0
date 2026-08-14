@@ -87,6 +87,10 @@ namespace Inventory.Tool
                 {
                     grid.Columns["QueueId"].Visible = false;
                 }
+                if (grid.Columns.Contains("TargetBranchCode"))
+                {
+                    grid.Columns["TargetBranchCode"].HeaderText = "TargetBranch";
+                }
                 if (grid.Columns.Contains("LastError"))
                 {
                     grid.Columns["LastError"].Width = 360;

@@ -35,6 +35,8 @@ namespace Inventory
         private ToolStripMenuItem deliveryNoteApprovalToolStripMenuItem;
         private ToolStripMenuItem receiptNoteToolStripMenuItem;
         private ToolStripMenuItem receiptNoteApprovalToolStripMenuItem;
+        private ToolStripMenuItem branchStockStatusToolStripMenuItem;
+        private BranchStockWidget branchStockWidget;
         public FrmMain(string userid)
         {
             InitializeComponent();
@@ -42,12 +44,14 @@ namespace Inventory
             AddDeliveryNoteMenuItem();
             AddProductSyncQueueMenuItem();
             AddRemembranceReportMenuItem();
+            AddBranchStockStatusMenuItem();
             ApplyCloudEyeDelightMainTheme();
             ApplyMainOfficeProductRestrictions();
             FixMdiClientArea();
             this.WindowState = FormWindowState.Maximized;
             Btndelete.Cursor = Cursors.Hand;
             getmenu(userid);
+            ApplyMainOfficeProductRestrictions();
             this.ActiveControl = menuStrip1;
             string configvalue2 = ConfigurationManager.AppSettings["Delete"];
             if (configvalue2 == "Yes")
@@ -69,6 +73,88 @@ namespace Inventory
             this.IsMdiContainer = true;
             this.MainMenuStrip = this.menuStrip1;
             this.menuStrip1.Dock = DockStyle.Top;
+        }
+
+        private void AddBranchStockStatusMenuItem()
+        {
+            if (menuStrip1 == null || branchStockStatusToolStripMenuItem != null)
+                return;
+
+            branchStockStatusToolStripMenuItem = new ToolStripMenuItem();
+            branchStockStatusToolStripMenuItem.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            branchStockStatusToolStripMenuItem.ForeColor = Color.White;
+            branchStockStatusToolStripMenuItem.Image = Inventory.Properties.Resources.STOCK_REPORT;
+            branchStockStatusToolStripMenuItem.Name = "branchStockStatusToolStripMenuItem";
+            branchStockStatusToolStripMenuItem.Size = new Size(120, 33);
+            branchStockStatusToolStripMenuItem.Text = "Branch Stock";
+            branchStockStatusToolStripMenuItem.Click += new EventHandler(branchStockStatusToolStripMenuItem_Click);
+            branchStockStatusToolStripMenuItem.MouseEnter += new EventHandler(branchStockStatusToolStripMenuItem_MouseEnter);
+            branchStockStatusToolStripMenuItem.MouseLeave += new EventHandler(branchStockStatusToolStripMenuItem_MouseLeave);
+
+            menuStrip1.Items.Add(branchStockStatusToolStripMenuItem);
+        }
+
+        private void branchStockStatusToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ToggleBranchStockWidget();
+        }
+
+        private void ToggleBranchStockWidget()
+        {
+            if (branchStockWidget != null && !branchStockWidget.IsDisposed && branchStockWidget.Visible)
+            {
+                branchStockWidget.Visible = false;
+                return;
+            }
+
+            ShowBranchStockWidget();
+        }
+
+        private void ShowBranchStockWidget()
+        {
+            if (branchStockWidget == null || branchStockWidget.IsDisposed)
+            {
+                branchStockWidget = new BranchStockWidget();
+                branchStockWidget.Name = "branchStockWidget";
+                branchStockWidget.CloseRequested += new EventHandler(branchStockWidget_CloseRequested);
+                Controls.Add(branchStockWidget);
+            }
+
+            branchStockWidget.Location = new Point(8, menuStrip1.Bottom + 4);
+            branchStockWidget.Width = Math.Min(720, Math.Max(520, ClientSize.Width - 16));
+            branchStockWidget.Height = 225;
+            branchStockWidget.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            branchStockWidget.Visible = true;
+            branchStockWidget.BringToFront();
+            menuStrip1.BringToFront();
+        }
+
+        private void branchStockWidget_CloseRequested(object sender, EventArgs e)
+        {
+            if (branchStockWidget != null)
+            {
+                branchStockWidget.Visible = false;
+            }
+        }
+
+        private void branchStockStatusToolStripMenuItem_MouseEnter(object sender, EventArgs e)
+        {
+            inventoryToolStripMenuItem.ForeColor = Color.White;
+            productToolStripMenuItem.ForeColor = Color.White;
+            transactionToolStripMenuItem.ForeColor = Color.White;
+            adjustmentToolStripMenuItem.ForeColor = Color.White;
+            accountsToolStripMenuItem.ForeColor = Color.White;
+            movementToolStripMenuItem.ForeColor = Color.White;
+            toolsToolStripMenuItem.ForeColor = Color.White;
+            mastersToolStripMenuItem.ForeColor = Color.White;
+            reportsToolStripMenuItem.ForeColor = Color.White;
+            servicesToolStripMenuItem.ForeColor = Color.White;
+            branchStockStatusToolStripMenuItem.ForeColor = Color.Black;
+        }
+
+        private void branchStockStatusToolStripMenuItem_MouseLeave(object sender, EventArgs e)
+        {
+            branchStockStatusToolStripMenuItem.ForeColor = Color.White;
         }
 
         private void AddDeliveryNoteMenuItem()
@@ -476,6 +562,16 @@ namespace Inventory
                 productSyncQueueToolStripMenuItem.Enabled = false;
                 productSyncQueueToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
             }
+            if (productsToolStripMenuItem != null)
+            {
+                productsToolStripMenuItem.Enabled = false;
+                productsToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
+            }
+            if (priceUploadToolStripMenuItem != null)
+            {
+                priceUploadToolStripMenuItem.Enabled = false;
+                priceUploadToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
+            }
         }
 
         private void AddProductSyncQueueMenuItem()
@@ -538,6 +634,12 @@ namespace Inventory
 
         private void productsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!BranchAccess.IsMainOffice)
+            {
+                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+                return;
+            }
+
             if (Program.objProduct == null)
             {
                 Masters.Product Product = new Masters.Product();
@@ -3575,6 +3677,12 @@ namespace Inventory
 
         private void priceUploadToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!BranchAccess.IsMainOffice)
+            {
+                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+                return;
+            }
+
             if (Program.PriceUpload == null)
             {
                 PriceUpload objpriceupload = new PriceUpload();

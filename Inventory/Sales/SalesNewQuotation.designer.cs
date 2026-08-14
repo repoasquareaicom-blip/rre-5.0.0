@@ -165,9 +165,10 @@
             this.cmbassistbys = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.pnlOrder = new System.Windows.Forms.Panel();
-            this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.vLabel2 = new VSM.Q_and_A.VLabel();
+            this.pnlLabelSearch = new System.Windows.Forms.Panel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -1765,7 +1766,6 @@
             // 
             this.cmbcustomernames.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbcustomernames.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbcustomernames.Cursor = System.Windows.Forms.Cursors.Default;
             this.cmbcustomernames.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cmbcustomernames.Font = new System.Drawing.Font("Calibri", 9.75F);
             this.cmbcustomernames.FormattingEnabled = true;
@@ -1814,7 +1814,7 @@
             this.label6.Font = new System.Drawing.Font("Arial", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.Location = new System.Drawing.Point(45, 27);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(159, 16);
+            this.label6.Size = new System.Drawing.Size(160, 16);
             this.label6.TabIndex = 51;
             this.label6.Text = "Saving   Please Wait ....";
             // 
@@ -1935,20 +1935,6 @@
             this.pnlOrder.TabIndex = 113;
             this.pnlOrder.Visible = false;
             // 
-            // pnlLabelSearch
-            // 
-            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
-            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
-            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnlLabelSearch.Controls.Add(this.vLabel1);
-            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
-            this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 768);
-            this.pnlLabelSearch.TabIndex = 112;
-            this.pnlLabelSearch.Visible = false;
-            // 
             // vLabel2
             // 
             this.vLabel2.BackColor = System.Drawing.Color.Transparent;
@@ -1964,6 +1950,20 @@
             this.vLabel2.Text = "View Sales Quotation";
             this.vLabel2.Visible = false;
             this.vLabel2.Click += new System.EventHandler(this.vLabel2_Click);
+            // 
+            // pnlLabelSearch
+            // 
+            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
+            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
+            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlLabelSearch.Controls.Add(this.vLabel1);
+            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
+            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
+            this.pnlLabelSearch.Name = "pnlLabelSearch";
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 768);
+            this.pnlLabelSearch.TabIndex = 112;
+            this.pnlLabelSearch.Visible = false;
             // 
             // vLabel1
             // 
@@ -1988,11 +1988,12 @@
             this.Controls.Add(this.pnlOrder);
             this.Controls.Add(this.pnlLabelSearch);
             this.Name = "SalesNewQuotation";
-            this.Text = "SalesQuotation";
+            this.Text = "Quotation";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SalesQuotation1_FormClosing);
             this.Load += new System.EventHandler(this.SalesQuotation1_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.pnlSearch.ResumeLayout(false);
             this.pnlSearch.PerformLayout();

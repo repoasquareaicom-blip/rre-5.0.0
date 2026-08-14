@@ -1511,6 +1511,12 @@ namespace Inventory.Masters
 
         private void InsertUpdateRightToInformation()
         {
+            if (!BranchAccess.IsMainOffice)
+            {
+                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+                return;
+            }
+
             int Status = 0;
             if (string.IsNullOrEmpty(Convert.ToString(lblhidden.Text)))
             {
@@ -1717,18 +1723,7 @@ namespace Inventory.Masters
 
         private bool ShouldSyncProductMasterChange()
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                return false;
-            }
-
-            DialogResult result = MessageBox.Show(
-                "Do you want to upload this product change to sync other branches?",
-                "Product Sync",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            return result == DialogResult.Yes;
+            return BranchAccess.IsMainOffice;
         }
 
         private void UpdateProductMRP(int productId)
@@ -1827,6 +1822,12 @@ namespace Inventory.Masters
 
         private void InsertUpdatepending()
         {
+            if (!BranchAccess.IsMainOffice)
+            {
+                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+                return;
+            }
+
             int Status = 0;
             if (string.IsNullOrEmpty(Convert.ToString(lblhidden.Text)))
             {

@@ -412,6 +412,12 @@ namespace Inventory.Tool
         }
         private void button2_Click(object sender, EventArgs e)
         {
+            if (!BranchAccess.IsMainOffice)
+            {
+                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+                return;
+            }
+
             DataTable rsDatacheck = (DataTable)(dataGridView1.DataSource);
             var tables = (DataTable)(dataGridView1.DataSource);
             if (tables != null)

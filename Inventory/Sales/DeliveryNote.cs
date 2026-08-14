@@ -52,6 +52,19 @@ namespace Inventory
         private int currentDeliveryNoteId;
         private TextBox txtReference;
         private Label lblReference;
+        private TextBox txtEWayBillNo;
+        private TextBox txtModeTermsOfPayment;
+        private TextBox txtOtherReferences;
+        private TextBox txtBuyerOrderNo;
+        private TextBox txtBuyerBillNo;
+        private TextBox txtDestinationStateName;
+        private DateTimePicker dtBuyerOrderDate;
+        private TextBox txtDispatchDocNo;
+        private TextBox txtDispatchedThrough;
+        private TextBox txtBillOfLadingNo;
+        private TextBox txtMotorVehicleNo;
+        private TextBox txtTermsOfDelivery;
+        private TableLayoutPanel tblDeliveryDetails;
         public DeliveryNote()
             : this(false, false)
         {
@@ -167,13 +180,14 @@ namespace Inventory
             lblOrderNumber.Text = NoteTitle();
             lblVendor.Text = "To";
             ConfigureReferenceField();
+            ConfigureDeliveryNoteFields();
 
             cmbcustomername.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbcustomername.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
             cmbcustomername.AutoCompleteSource = AutoCompleteSource.ListItems;
             cmbcustomername.SelectedIndexChanged -= new EventHandler(cmbcustomername_SelectedIndexChanged);
 
-            dgvOrder.Top = 128;
+            dgvOrder.Top = receiptMode ? 128 : 240;
             dgvOrder.Height = pntab.Height - dgvOrder.Top - 42;
         }
 
@@ -209,6 +223,132 @@ namespace Inventory
             label14.BringToFront();
 
             lblReference = label14;
+        }
+
+        private void ConfigureDeliveryNoteFields()
+        {
+            if (receiptMode)
+                return;
+
+            tblDeliveryDetails = new TableLayoutPanel();
+            tblDeliveryDetails.ColumnCount = 4;
+            tblDeliveryDetails.RowCount = 7;
+            tblDeliveryDetails.Location = new Point(270, 38);
+            tblDeliveryDetails.Margin = new Padding(0);
+            tblDeliveryDetails.Name = "tblDeliveryDetails";
+            tblDeliveryDetails.Size = new Size(445, 188);
+            tblDeliveryDetails.TabIndex = 5;
+
+            tblDeliveryDetails.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108F));
+            tblDeliveryDetails.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tblDeliveryDetails.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112F));
+            tblDeliveryDetails.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            for (int i = 0; i < tblDeliveryDetails.RowCount; i++)
+                tblDeliveryDetails.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
+
+            pntab.Controls.Add(tblDeliveryDetails);
+            tblDeliveryDetails.BringToFront();
+
+            txtEWayBillNo = AddDeliveryTableTextBox("txtEWayBillNo", "e-Way Bill No", 0, 0, 5);
+            txtModeTermsOfPayment = AddDeliveryTableTextBox("txtModeTermsOfPayment", "Mode/Terms", 2, 0, 6);
+            txtReference = AddDeliveryTableTextBox("txtReference", "Reference No/Date", 0, 1, 7);
+            txtOtherReferences = AddDeliveryTableTextBox("txtOtherReferences", "Other Reference", 2, 1, 8);
+            txtBuyerOrderNo = AddDeliveryTableTextBox("txtBuyerOrderNo", "Buyer Order No", 0, 2, 9);
+            dtBuyerOrderDate = AddDeliveryTableDate("dtBuyerOrderDate", "Order Date", 2, 2, 10);
+            txtBuyerBillNo = AddDeliveryTableTextBox("txtBuyerBillNo", "Buyer Bill No", 0, 3, 11);
+            txtDestinationStateName = AddDeliveryTableTextBox("txtDestinationStateName", "State Name", 2, 3, 12);
+            txtDispatchDocNo = AddDeliveryTableTextBox("txtDispatchDocNo", "Dispatch Doc No", 0, 4, 13);
+            txtDispatchedThrough = AddDeliveryTableTextBox("txtDispatchedThrough", "Dispatched Through", 2, 4, 14);
+            txtBillOfLadingNo = AddDeliveryTableTextBox("txtBillOfLadingNo", "LR-RR No", 0, 5, 15);
+            txtMotorVehicleNo = AddDeliveryTableTextBox("txtMotorVehicleNo", "Vehicle No", 2, 5, 16);
+            txtTermsOfDelivery = AddDeliveryTableTextBox("txtTermsOfDelivery", "Terms", 0, 6, 17);
+            tblDeliveryDetails.SetColumnSpan(txtTermsOfDelivery, 3);
+        }
+
+        private TextBox AddDeliveryTableTextBox(string name, string labelText, int labelColumn, int row, int tabIndex)
+        {
+            AddDeliveryTableLabel(labelText, labelColumn, row);
+            TextBox textBox = new TextBox();
+            textBox.Dock = DockStyle.Fill;
+            textBox.Font = cmbToLocation.Font;
+            textBox.Margin = new Padding(3, 2, 3, 1);
+            textBox.MaxLength = 100;
+            textBox.Name = name;
+            textBox.TabIndex = tabIndex;
+            tblDeliveryDetails.Controls.Add(textBox, labelColumn + 1, row);
+            return textBox;
+        }
+
+        private DateTimePicker AddDeliveryTableDate(string name, string labelText, int labelColumn, int row, int tabIndex)
+        {
+            AddDeliveryTableLabel(labelText, labelColumn, row);
+            DateTimePicker picker = new DateTimePicker();
+            picker.Checked = false;
+            picker.CustomFormat = "dd-MM-yyyy";
+            picker.Dock = DockStyle.Fill;
+            picker.Font = cmbToLocation.Font;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.Margin = new Padding(3, 2, 3, 1);
+            picker.Name = name;
+            picker.ShowCheckBox = true;
+            picker.TabIndex = tabIndex;
+            tblDeliveryDetails.Controls.Add(picker, labelColumn + 1, row);
+            return picker;
+        }
+
+        private void AddDeliveryTableLabel(string text, int column, int row)
+        {
+            Label label = new Label();
+            label.Dock = DockStyle.Fill;
+            label.Font = label2.Font;
+            label.Margin = new Padding(0, 0, 4, 0);
+            label.Text = text;
+            label.TextAlign = ContentAlignment.MiddleRight;
+            tblDeliveryDetails.Controls.Add(label, column, row);
+        }
+
+        private TextBox AddDeliveryTextBox(string name, string labelText, int labelX, int inputX, int y, Size size, int tabIndex)
+        {
+            AddDeliveryLabel(labelText, labelX, y + 3);
+            TextBox textBox = new TextBox();
+            textBox.Font = cmbToLocation.Font;
+            textBox.Location = new Point(inputX, y);
+            textBox.MaxLength = 100;
+            textBox.Name = name;
+            textBox.Size = size;
+            textBox.TabIndex = tabIndex;
+            pntab.Controls.Add(textBox);
+            textBox.BringToFront();
+            return textBox;
+        }
+
+        private DateTimePicker AddDeliveryDate(string name, string labelText, int labelX, int inputX, int y, Size size, int tabIndex)
+        {
+            AddDeliveryLabel(labelText, labelX, y + 3);
+            DateTimePicker picker = new DateTimePicker();
+            picker.Checked = false;
+            picker.CustomFormat = "dd-MM-yyyy";
+            picker.Font = cmbToLocation.Font;
+            picker.Format = DateTimePickerFormat.Custom;
+            picker.Location = new Point(inputX, y);
+            picker.Name = name;
+            picker.ShowCheckBox = true;
+            picker.Size = size;
+            picker.TabIndex = tabIndex;
+            pntab.Controls.Add(picker);
+            picker.BringToFront();
+            return picker;
+        }
+
+        private void AddDeliveryLabel(string text, int x, int y)
+        {
+            Label label = new Label();
+            label.AutoSize = true;
+            label.Font = label2.Font;
+            label.Location = new Point(x, y);
+            label.Text = text;
+            pntab.Controls.Add(label);
+            label.BringToFront();
         }
 
         private string NoteTitle()
@@ -263,9 +403,37 @@ namespace Inventory
 
         private object GetReferenceValue()
         {
-            if (!receiptMode || txtReference == null || string.IsNullOrEmpty(txtReference.Text.Trim()))
+            if (txtReference == null || string.IsNullOrEmpty(txtReference.Text.Trim()))
                 return DBNull.Value;
             return txtReference.Text.Trim();
+        }
+
+        private object DeliveryTextValue(TextBox textBox)
+        {
+            if (textBox == null || string.IsNullOrEmpty(textBox.Text.Trim()))
+                return DBNull.Value;
+            return textBox.Text.Trim();
+        }
+
+        private object DeliveryDateValue(DateTimePicker picker)
+        {
+            if (picker == null || !picker.Checked)
+                return DBNull.Value;
+            return picker.Value.Date;
+        }
+
+        private string DeliveryText(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+                return string.Empty;
+            return Convert.ToString(row[columnName]);
+        }
+
+        private DateTime? DeliveryDate(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+                return null;
+            return Convert.ToDateTime(row[columnName]);
         }
 
         private int GetSelectedBranchId(ComboBox comboBox)
@@ -337,6 +505,18 @@ IF COL_LENGTH('dbo.DeliveryNote', 'IsDeleted') IS NULL ALTER TABLE dbo.DeliveryN
 IF COL_LENGTH('dbo.DeliveryNote', 'FromLocationId') IS NOT NULL ALTER TABLE dbo.DeliveryNote ALTER COLUMN FromLocationId INT NULL;
 IF COL_LENGTH('dbo.DeliveryNote', 'ToLocationId') IS NOT NULL ALTER TABLE dbo.DeliveryNote ALTER COLUMN ToLocationId INT NULL;
 IF COL_LENGTH('dbo.DeliveryNote', 'ReferenceNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD ReferenceNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'EWayBillNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD EWayBillNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'ModeTermsOfPayment') IS NULL ALTER TABLE dbo.DeliveryNote ADD ModeTermsOfPayment VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'OtherReferences') IS NULL ALTER TABLE dbo.DeliveryNote ADD OtherReferences VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'BuyerOrderNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD BuyerOrderNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'BuyerBillNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD BuyerBillNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'DestinationStateName') IS NULL ALTER TABLE dbo.DeliveryNote ADD DestinationStateName VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'BuyerOrderDate') IS NULL ALTER TABLE dbo.DeliveryNote ADD BuyerOrderDate DATETIME NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'DispatchDocNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD DispatchDocNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'DispatchedThrough') IS NULL ALTER TABLE dbo.DeliveryNote ADD DispatchedThrough VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'BillOfLadingNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD BillOfLadingNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'MotorVehicleNo') IS NULL ALTER TABLE dbo.DeliveryNote ADD MotorVehicleNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo.DeliveryNote', 'TermsOfDelivery') IS NULL ALTER TABLE dbo.DeliveryNote ADD TermsOfDelivery VARCHAR(250) NULL;
 IF OBJECT_ID('dbo.DeliveryNoteDetail', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.DeliveryNoteDetail
@@ -349,6 +529,7 @@ BEGIN
     );
 END");
                 EnsureNoteTables(con, "Receipt");
+                EnsureAvailableStockProcedure(con);
             }
         }
 
@@ -386,6 +567,18 @@ IF COL_LENGTH('dbo." + headerTable + @"', 'ApprovedBy') IS NULL ALTER TABLE dbo.
 IF COL_LENGTH('dbo." + headerTable + @"', 'ApprovedOn') IS NULL ALTER TABLE dbo." + headerTable + @" ADD ApprovedOn DATETIME NULL;
 IF COL_LENGTH('dbo." + headerTable + @"', 'IsDeleted') IS NULL ALTER TABLE dbo." + headerTable + @" ADD IsDeleted BIT NULL;
 IF COL_LENGTH('dbo." + headerTable + @"', 'ReferenceNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD ReferenceNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'EWayBillNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD EWayBillNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'ModeTermsOfPayment') IS NULL ALTER TABLE dbo." + headerTable + @" ADD ModeTermsOfPayment VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'OtherReferences') IS NULL ALTER TABLE dbo." + headerTable + @" ADD OtherReferences VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'BuyerOrderNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD BuyerOrderNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'BuyerBillNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD BuyerBillNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'DestinationStateName') IS NULL ALTER TABLE dbo." + headerTable + @" ADD DestinationStateName VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'BuyerOrderDate') IS NULL ALTER TABLE dbo." + headerTable + @" ADD BuyerOrderDate DATETIME NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'DispatchDocNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD DispatchDocNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'DispatchedThrough') IS NULL ALTER TABLE dbo." + headerTable + @" ADD DispatchedThrough VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'BillOfLadingNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD BillOfLadingNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'MotorVehicleNo') IS NULL ALTER TABLE dbo." + headerTable + @" ADD MotorVehicleNo VARCHAR(100) NULL;
+IF COL_LENGTH('dbo." + headerTable + @"', 'TermsOfDelivery') IS NULL ALTER TABLE dbo." + headerTable + @" ADD TermsOfDelivery VARCHAR(250) NULL;
 IF COL_LENGTH('dbo." + headerTable + @"', 'FromLocationId') IS NOT NULL ALTER TABLE dbo." + headerTable + @" ALTER COLUMN FromLocationId INT NULL;
 IF COL_LENGTH('dbo." + headerTable + @"', 'ToLocationId') IS NOT NULL ALTER TABLE dbo." + headerTable + @" ALTER COLUMN ToLocationId INT NULL;
 IF OBJECT_ID('dbo." + detailTable + @"', 'U') IS NULL
@@ -401,6 +594,40 @@ BEGIN
 END");
         }
 
+        private void EnsureAvailableStockProcedure(SqlConnection con)
+        {
+            ExecuteDeliveryNonQuery(con, null, @"
+IF OBJECT_ID('dbo.GetAvailableStockByProductId', 'P') IS NULL
+BEGIN
+    EXEC('CREATE PROCEDURE dbo.GetAvailableStockByProductId AS BEGIN SET NOCOUNT ON; END');
+END");
+
+            ExecuteDeliveryNonQuery(con, null, @"
+ALTER PROCEDURE dbo.GetAvailableStockByProductId
+    @ProductId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        @ProductId AS ProductId,
+        CAST(
+            ISNULL(SUM(
+                CASE
+                    WHEN UPPER(ISNULL([Type], '')) = 'IN'
+                        THEN ISNULL(Quantity, 0)
+                    WHEN UPPER(ISNULL([Type], '')) = 'OUT'
+                        THEN -ISNULL(Quantity, 0)
+                    ELSE 0
+                END
+            ), 0)
+        AS DECIMAL(18, 3)) AS AvailableStock
+    FROM dbo.MaterialTranscation
+    WHERE MaterailId = @ProductId
+      AND LocationId = 6;
+END");
+        }
+
         private string SaveDeliveryNotePending()
         {
             using (SqlConnection con = new SqlConnection(Conn))
@@ -412,8 +639,8 @@ END");
                     string noteNo = GenerateDeliveryNoteNo(con, tran, date.Value);
                     int noteId;
                     using (SqlCommand cmd = new SqlCommand(@"
-INSERT INTO dbo." + HeaderTable() + @" (" + NoteNoColumn() + @", " + NoteDateColumn() + @", FromBranchId, ToBranchId, ReferenceNo, Status, EnteredBy, EnteredOn, IsDeleted)
-VALUES (@No, @Date, @FromBranchId, @ToBranchId, @ReferenceNo, 'PENDING', @User, GETDATE(), 0);
+INSERT INTO dbo." + HeaderTable() + @" (" + NoteNoColumn() + @", " + NoteDateColumn() + @", FromBranchId, ToBranchId, ReferenceNo, EWayBillNo, ModeTermsOfPayment, OtherReferences, BuyerOrderNo, BuyerBillNo, DestinationStateName, BuyerOrderDate, DispatchDocNo, DispatchedThrough, BillOfLadingNo, MotorVehicleNo, TermsOfDelivery, Status, EnteredBy, EnteredOn, IsDeleted)
+VALUES (@No, @Date, @FromBranchId, @ToBranchId, @ReferenceNo, @EWayBillNo, @ModeTermsOfPayment, @OtherReferences, @BuyerOrderNo, @BuyerBillNo, @DestinationStateName, @BuyerOrderDate, @DispatchDocNo, @DispatchedThrough, @BillOfLadingNo, @MotorVehicleNo, @TermsOfDelivery, 'PENDING', @User, GETDATE(), 0);
 SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                     {
                         cmd.Parameters.AddWithValue("@No", noteNo);
@@ -421,6 +648,18 @@ SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                         cmd.Parameters.AddWithValue("@FromBranchId", Convert.ToInt32(cmbcustomername.SelectedValue));
                         cmd.Parameters.AddWithValue("@ToBranchId", Convert.ToInt32(cmbToLocation.SelectedValue));
                         cmd.Parameters.AddWithValue("@ReferenceNo", GetReferenceValue());
+                        cmd.Parameters.AddWithValue("@EWayBillNo", DeliveryTextValue(txtEWayBillNo));
+                        cmd.Parameters.AddWithValue("@ModeTermsOfPayment", DeliveryTextValue(txtModeTermsOfPayment));
+                        cmd.Parameters.AddWithValue("@OtherReferences", DeliveryTextValue(txtOtherReferences));
+                        cmd.Parameters.AddWithValue("@BuyerOrderNo", DeliveryTextValue(txtBuyerOrderNo));
+                        cmd.Parameters.AddWithValue("@BuyerBillNo", DeliveryTextValue(txtBuyerBillNo));
+                        cmd.Parameters.AddWithValue("@DestinationStateName", DeliveryTextValue(txtDestinationStateName));
+                        cmd.Parameters.AddWithValue("@BuyerOrderDate", DeliveryDateValue(dtBuyerOrderDate));
+                        cmd.Parameters.AddWithValue("@DispatchDocNo", DeliveryTextValue(txtDispatchDocNo));
+                        cmd.Parameters.AddWithValue("@DispatchedThrough", DeliveryTextValue(txtDispatchedThrough));
+                        cmd.Parameters.AddWithValue("@BillOfLadingNo", DeliveryTextValue(txtBillOfLadingNo));
+                        cmd.Parameters.AddWithValue("@MotorVehicleNo", DeliveryTextValue(txtMotorVehicleNo));
+                        cmd.Parameters.AddWithValue("@TermsOfDelivery", DeliveryTextValue(txtTermsOfDelivery));
                         cmd.Parameters.AddWithValue("@User", CurrentUser());
                         noteId = Convert.ToInt32(cmd.ExecuteScalar());
                     }
@@ -458,10 +697,22 @@ SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                     string deliveryNoteNo = Convert.ToString(ExecuteDeliveryScalar(con, tran, "SELECT " + NoteNoColumn() + " FROM dbo." + HeaderTable() + " WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", currentDeliveryNoteId)));
                     DeleteMaterialTransactionRows(con, tran, deliveryNoteNo);
                     InsertMaterialTransactionRows(con, tran, currentDeliveryNoteId, deliveryNoteNo);
-                    ExecuteDeliveryNonQuery(con, tran, "UPDATE dbo." + HeaderTable() + " SET FromBranchId = @FromBranchId, ToBranchId = @ToBranchId, ReferenceNo = @ReferenceNo, Status = 'APPROVED', ApprovedBy = @User, ApprovedOn = GETDATE() WHERE " + HeaderIdColumn() + " = @Id",
+                    ExecuteDeliveryNonQuery(con, tran, "UPDATE dbo." + HeaderTable() + " SET FromBranchId = @FromBranchId, ToBranchId = @ToBranchId, ReferenceNo = @ReferenceNo, EWayBillNo = @EWayBillNo, ModeTermsOfPayment = @ModeTermsOfPayment, OtherReferences = @OtherReferences, BuyerOrderNo = @BuyerOrderNo, BuyerBillNo = @BuyerBillNo, DestinationStateName = @DestinationStateName, BuyerOrderDate = @BuyerOrderDate, DispatchDocNo = @DispatchDocNo, DispatchedThrough = @DispatchedThrough, BillOfLadingNo = @BillOfLadingNo, MotorVehicleNo = @MotorVehicleNo, TermsOfDelivery = @TermsOfDelivery, Status = 'APPROVED', ApprovedBy = @User, ApprovedOn = GETDATE() WHERE " + HeaderIdColumn() + " = @Id",
                         new SqlParameter("@FromBranchId", Convert.ToInt32(cmbcustomername.SelectedValue)),
                         new SqlParameter("@ToBranchId", Convert.ToInt32(cmbToLocation.SelectedValue)),
                         new SqlParameter("@ReferenceNo", GetReferenceValue()),
+                        new SqlParameter("@EWayBillNo", DeliveryTextValue(txtEWayBillNo)),
+                        new SqlParameter("@ModeTermsOfPayment", DeliveryTextValue(txtModeTermsOfPayment)),
+                        new SqlParameter("@OtherReferences", DeliveryTextValue(txtOtherReferences)),
+                        new SqlParameter("@BuyerOrderNo", DeliveryTextValue(txtBuyerOrderNo)),
+                        new SqlParameter("@BuyerBillNo", DeliveryTextValue(txtBuyerBillNo)),
+                        new SqlParameter("@DestinationStateName", DeliveryTextValue(txtDestinationStateName)),
+                        new SqlParameter("@BuyerOrderDate", DeliveryDateValue(dtBuyerOrderDate)),
+                        new SqlParameter("@DispatchDocNo", DeliveryTextValue(txtDispatchDocNo)),
+                        new SqlParameter("@DispatchedThrough", DeliveryTextValue(txtDispatchedThrough)),
+                        new SqlParameter("@BillOfLadingNo", DeliveryTextValue(txtBillOfLadingNo)),
+                        new SqlParameter("@MotorVehicleNo", DeliveryTextValue(txtMotorVehicleNo)),
+                        new SqlParameter("@TermsOfDelivery", DeliveryTextValue(txtTermsOfDelivery)),
                         new SqlParameter("@User", CurrentUser()),
                         new SqlParameter("@Id", currentDeliveryNoteId));
                     tran.Commit();
@@ -545,6 +796,14 @@ VALUES (@TransId, @TransactionType, @Date, @MaterialId, @Quantity, @LocationId, 
 
         private string GenerateDeliveryNoteNo(SqlConnection con, SqlTransaction tran, DateTime noteDate)
         {
+            if (!receiptMode)
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CASE WHEN " + NoteNoColumn() + " NOT LIKE '%[^0-9]%' THEN CAST(" + NoteNoColumn() + " AS int) END), 0) + 1 FROM dbo." + HeaderTable() + " WITH (UPDLOCK, HOLDLOCK)", con, tran))
+                {
+                    return Convert.ToInt32(cmd.ExecuteScalar()).ToString();
+                }
+            }
+
             string prefix = NotePrefix() + "/" + FinancialYear(noteDate) + "/";
             using (SqlCommand cmd = new SqlCommand("SELECT ISNULL(MAX(CAST(RIGHT(" + NoteNoColumn() + ", 6) AS int)), 0) + 1 FROM dbo." + HeaderTable() + " WITH (UPDLOCK, HOLDLOCK) WHERE " + NoteNoColumn() + " LIKE @Prefix", con, tran))
             {
@@ -598,8 +857,9 @@ ORDER BY dn." + NoteDateColumn() + @" DESC, dn." + HeaderIdColumn() + @" DESC";
             cmbcustomername.SelectedValue = Convert.ToInt32(header.Rows[0]["FromBranchId"]);
             cmbToLocation.SelectedValue = Convert.ToInt32(header.Rows[0]["ToBranchId"]);
             cmbstatus.Text = Convert.ToString(header.Rows[0]["Status"]);
-            if (receiptMode && txtReference != null && header.Columns.Contains("ReferenceNo"))
+            if (txtReference != null && header.Columns.Contains("ReferenceNo"))
                 txtReference.Text = Convert.ToString(header.Rows[0]["ReferenceNo"]);
+            LoadDeliveryHeaderFields(header.Rows[0]);
 
             DataTable details = ExecuteDeliveryTable(@"
 SELECT d.MaterialId, ISNULL(NULLIF(p.DisplayName, ''), p.ItemName) AS DisplayName, ISNULL(p.UOM, '') AS UOM, d.Quantity
@@ -678,6 +938,64 @@ ORDER BY d." + DetailIdColumn(), new SqlParameter("@Id", noteId));
             return name;
         }
 
+        private void LoadDeliveryHeaderFields(DataRow row)
+        {
+            SetTextBox(txtEWayBillNo, DeliveryText(row, "EWayBillNo"));
+            SetTextBox(txtModeTermsOfPayment, DeliveryText(row, "ModeTermsOfPayment"));
+            SetTextBox(txtOtherReferences, DeliveryText(row, "OtherReferences"));
+            SetTextBox(txtBuyerOrderNo, DeliveryText(row, "BuyerOrderNo"));
+            SetTextBox(txtBuyerBillNo, DeliveryText(row, "BuyerBillNo"));
+            SetTextBox(txtDestinationStateName, DeliveryText(row, "DestinationStateName"));
+            SetDatePicker(dtBuyerOrderDate, DeliveryDate(row, "BuyerOrderDate"));
+            SetTextBox(txtDispatchDocNo, DeliveryText(row, "DispatchDocNo"));
+            SetTextBox(txtDispatchedThrough, DeliveryText(row, "DispatchedThrough"));
+            SetTextBox(txtBillOfLadingNo, DeliveryText(row, "BillOfLadingNo"));
+            SetTextBox(txtMotorVehicleNo, DeliveryText(row, "MotorVehicleNo"));
+            SetTextBox(txtTermsOfDelivery, DeliveryText(row, "TermsOfDelivery"));
+        }
+
+        private void ClearDeliveryHeaderFields()
+        {
+            SetTextBox(txtEWayBillNo, string.Empty);
+            SetTextBox(txtModeTermsOfPayment, string.Empty);
+            SetTextBox(txtOtherReferences, string.Empty);
+            SetTextBox(txtBuyerOrderNo, string.Empty);
+            SetTextBox(txtBuyerBillNo, string.Empty);
+            SetTextBox(txtDestinationStateName, string.Empty);
+            SetDatePicker(dtBuyerOrderDate, null);
+            SetTextBox(txtDispatchDocNo, string.Empty);
+            SetTextBox(txtDispatchedThrough, string.Empty);
+            SetTextBox(txtBillOfLadingNo, string.Empty);
+            SetTextBox(txtMotorVehicleNo, string.Empty);
+            SetTextBox(txtTermsOfDelivery, string.Empty);
+        }
+
+        private void SetTextBox(TextBox textBox, string value)
+        {
+            if (textBox != null)
+                textBox.Text = value;
+        }
+
+        private void SetDatePicker(DateTimePicker picker, DateTime? value)
+        {
+            if (picker == null)
+                return;
+            picker.Checked = value.HasValue;
+            if (value.HasValue)
+                picker.Value = value.Value;
+        }
+
+        private void RequireDeliveryText(TextBox textBox, string label, ref int count, ref string message)
+        {
+            if (textBox != null && string.IsNullOrEmpty(textBox.Text.Trim()))
+            {
+                count++;
+                message = message + "* Please Enter " + label + "\n";
+                if (count == 1)
+                    this.ActiveControl = textBox;
+            }
+        }
+
         private DataTable ExecuteDeliveryTable(string sql, params SqlParameter[] parameters)
         {
             using (SqlConnection con = new SqlConnection(Conn))
@@ -710,6 +1028,30 @@ ORDER BY d." + DetailIdColumn(), new SqlParameter("@Id", noteId));
                     cmd.Parameters.AddRange(parameters);
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        private decimal GetAvailableStockByProductId(int productId)
+        {
+            DataTable stock = new DataTable();
+            using (SqlConnection con = new SqlConnection(Conn))
+            using (SqlCommand cmd = new SqlCommand("GetAvailableStockByProductId", con))
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@ProductId", productId);
+                adapter.Fill(stock);
+            }
+
+            if (stock.Rows.Count == 0)
+                return 0;
+
+            if (stock.Columns.Contains("AvailableStock"))
+                return Convert.ToDecimal(stock.Rows[0]["AvailableStock"]);
+
+            if (stock.Columns.Count > 1)
+                return Convert.ToDecimal(stock.Rows[0][1]);
+
+            return Convert.ToDecimal(stock.Rows[0][0]);
         }
 
         private string GetFirstColumn(string tableName, string[] candidates)
@@ -1758,6 +2100,29 @@ END", con))
                     this.ActiveControl = cmbToLocation;
             }
 
+            if (!receiptMode)
+            {
+                RequireDeliveryText(txtEWayBillNo, "e-Way Bill No", ref i, ref message);
+                RequireDeliveryText(txtModeTermsOfPayment, "Mode/Terms of Payment", ref i, ref message);
+                RequireDeliveryText(txtOtherReferences, "Other References", ref i, ref message);
+                RequireDeliveryText(txtBuyerOrderNo, "Buyer Order No", ref i, ref message);
+                RequireDeliveryText(txtBuyerBillNo, "Buyer Bill No", ref i, ref message);
+                RequireDeliveryText(txtDestinationStateName, "State Name", ref i, ref message);
+                if (dtBuyerOrderDate == null || !dtBuyerOrderDate.Checked)
+                {
+                    i++;
+                    message = message + "* Please Enter Buyer Order Date" + "\n";
+                    if (i == 1)
+                        this.ActiveControl = dtBuyerOrderDate;
+                }
+                RequireDeliveryText(txtDispatchDocNo, "Dispatch Doc No", ref i, ref message);
+                RequireDeliveryText(txtDispatchedThrough, "Dispatched Through", ref i, ref message);
+                RequireDeliveryText(txtBillOfLadingNo, "LR-RR No", ref i, ref message);
+                RequireDeliveryText(txtMotorVehicleNo, "Motor Vehicle No", ref i, ref message);
+                RequireDeliveryText(txtReference, "Reference No/Date", ref i, ref message);
+                RequireDeliveryText(txtTermsOfDelivery, "Terms of Delivery", ref i, ref message);
+            }
+
 
 
 
@@ -1824,6 +2189,7 @@ END", con))
                 string Items = Convert.ToString(dgvOrder.Rows[k].Cells["Quantity"].Value);
 
                 string Received = Convert.ToString(dgvOrder.Rows[k].Cells["Items"].Value);
+                string productText = Convert.ToString(dgvOrder.Rows[k].Cells["productid"].Value);
                 string rate = Convert.ToString(dgvOrder.Rows[k].Cells["Rate"].Value);
 
 
@@ -1850,32 +2216,22 @@ END", con))
                 }
                 else
                 {
-                    if (!string.IsNullOrEmpty(Received))
+                    if (!receiptMode && !string.IsNullOrEmpty(Received))
                     {
-                        DataTable StockList = new DataTable();
-                        using (SqlConnection con = new SqlConnection(Conn))
+                        int productId = 0;
+                        if (!int.TryParse(productText, out productId) || productId <= 0)
                         {
-                            con.Open();
-                            SqlCommand cmd = new SqlCommand();
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Connection = con;
-                            cmd.CommandText = "LocationstockinPanal";
-                            cmd.Parameters.AddWithValue("@Productname", Received);
-                            SqlDataAdapter ad = new SqlDataAdapter(cmd);
-                            ad.Fill(StockList);
-                            con.Close();
-                        }
-                        double valstock = 0.00;
-
-                        for (int s = 0; s < StockList.Rows.Count; s++)
-                        {
-                            valstock = valstock + (Convert.ToDouble(StockList.Rows[s][0].ToString()));
+                            sas = true;
+                            break;
                         }
 
-                        if (Convert.ToDouble(Items) > valstock)
+                        decimal requestedQty = Convert.ToDecimal(Items);
+                        decimal availableStock = GetAvailableStockByProductId(productId);
+
+                        if (requestedQty > availableStock)
                         {
-                            double diff = Convert.ToDouble(Items) - Convert.ToDouble(valstock);
-                            StockCheck.Rows.Add(Received, valstock, Items, diff);
+                            decimal diff = requestedQty - availableStock;
+                            StockCheck.Rows.Add(Received, availableStock, requestedQty, diff);
                         }
                     }
 
@@ -1894,6 +2250,27 @@ END", con))
             {
                 i++;
                 message = message + "* Product or Rate or Quantity should not be empty." + "\n";
+                if (i == 1)
+                    this.ActiveControl = dgvOrder;
+            }
+
+            if (!receiptMode && StockCheck.Rows.Count > 0)
+            {
+                i++;
+                StringBuilder stockMessage = new StringBuilder();
+                foreach (DataRow row in StockCheck.Rows)
+                {
+                    stockMessage.Append("* Insufficient stock for ");
+                    stockMessage.Append(Convert.ToString(row["ItemsLessStock"]));
+                    stockMessage.Append(". Available: ");
+                    stockMessage.Append(Convert.ToString(row["Avalavbe"]));
+                    stockMessage.Append(", Requested: ");
+                    stockMessage.Append(Convert.ToString(row["Order"]));
+                    stockMessage.Append(", Need to add: ");
+                    stockMessage.Append(Convert.ToString(row["Need"]));
+                    stockMessage.Append("\n");
+                }
+                message = message + stockMessage.ToString();
                 if (i == 1)
                     this.ActiveControl = dgvOrder;
             }
@@ -1947,6 +2324,7 @@ END", con))
             cmdcity.Text = string.Empty;
             if (txtReference != null)
                 txtReference.Text = string.Empty;
+            ClearDeliveryHeaderFields();
             SafeResetCombo(cmbassistby);
             SafeResetCombo(cmbreference);
             SafeResetCombo(comboBox1);
@@ -2051,43 +2429,60 @@ END", con))
 
             Font titleFont = new Font("Arial", 16, FontStyle.Bold);
             Font headerFont = new Font("Arial", 10, FontStyle.Bold);
+            Font duplicateFont = new Font("Arial", 9, FontStyle.Italic);
             Font normalFont = new Font("Arial", 9);
-            Font smallFont = new Font("Arial", 8);
             Pen linePen = Pens.Black;
 
             string companyName = BranchValue(fromBranch, "AddressLine1");
             if (string.IsNullOrEmpty(companyName))
                 companyName = BranchDisplayName(fromBranch, cmbcustomername);
 
-            g.DrawString(companyName, titleFont, Brushes.Black, left, y);
+            DrawCentered(g, "DELIVERY NOTE", titleFont, left, y, bounds.Width);
+            string copyText = "(DUPLICATE FOR TRANSPORTER)";
+            SizeF copySize = g.MeasureString(copyText, duplicateFont);
+            g.DrawString(copyText, duplicateFont, Brushes.Black, right - copySize.Width, y + 4);
+            y += 28;
+            g.DrawLine(linePen, left, y, right, y);
+            y += 12;
+
+            int bodyTop = y;
+            int customerLeft = left;
+            int detailsLeft = left + (bounds.Width / 2);
+            int detailsWidth = bounds.Width - (bounds.Width / 2);
+            int customerWidth = detailsLeft - left - 12;
+
+            g.DrawString("From", headerFont, Brushes.Black, left, y);
+            y += 18;
+            g.DrawString(companyName, headerFont, Brushes.Black, left, y);
             y += 26;
             y = DrawBranchAddress(g, fromBranch, normalFont, left, y, true);
-
-            int infoLeft = right - 220;
-            int infoY = bounds.Top;
-            g.DrawString("DELIVERY NOTE", headerFont, Brushes.Black, infoLeft, infoY);
-            infoY += 24;
-            DrawLabelValue(g, "No", txtorder.Text, normalFont, infoLeft, infoY);
-            infoY += 20;
-            DrawLabelValue(g, "Date", date.Value.ToString("dd-MM-yyyy"), normalFont, infoLeft, infoY);
-            infoY += 20;
-            DrawLabelValue(g, "Status", cmbstatus.Text, normalFont, infoLeft, infoY);
-
-            y = Math.Max(y, infoY + 18);
-            g.DrawLine(linePen, left, y, right, y);
+            g.DrawLine(linePen, left, y, left + customerWidth, y);
             y += 16;
 
-            g.DrawString("To", headerFont, Brushes.Black, left, y);
+            g.DrawString("To", headerFont, Brushes.Black, customerLeft, y);
             y += 18;
+            string buyerBillNo = DeliveryControlText(txtBuyerBillNo);
+            if (!string.IsNullOrEmpty(buyerBillNo))
+            {
+                g.DrawString("Buyer Bill No : " + buyerBillNo, normalFont, Brushes.Black, customerLeft, y);
+                y += 16;
+            }
             string toName = BranchDisplayName(toBranch, cmbToLocation);
             if (!string.IsNullOrEmpty(toName))
             {
-                g.DrawString(toName, headerFont, Brushes.Black, left, y);
+                g.DrawString(toName, headerFont, Brushes.Black, customerLeft, y);
                 y += 18;
             }
-            y = DrawBranchAddress(g, toBranch, normalFont, left, y, false);
-            y += 12;
+            int customerBottom = DrawBranchAddress(g, toBranch, normalFont, customerLeft, y, false);
+            string stateName = DeliveryControlText(txtDestinationStateName);
+            if (!string.IsNullOrEmpty(stateName))
+            {
+                g.DrawString("State Name : " + stateName, normalFont, Brushes.Black, customerLeft, customerBottom);
+                customerBottom += 16;
+            }
+            int detailsBottom = DrawDeliveryParameters(g, new Rectangle(detailsLeft, bodyTop, detailsWidth, bounds.Height), bodyTop, headerFont, normalFont);
 
+            y = Math.Max(customerBottom, detailsBottom) + 12;
             y = DrawDeliveryProductGrid(g, bounds, y, headerFont, normalFont);
 
             int footerY = bounds.Bottom - 70;
@@ -2099,6 +2494,12 @@ END", con))
             g.DrawString("Authorized Signatory", normalFont, Brushes.Black, right - 160, footerY);
 
             e.HasMorePages = false;
+        }
+
+        private void DrawCentered(Graphics g, string text, Font font, int x, int y, int width)
+        {
+            SizeF size = g.MeasureString(text, font);
+            g.DrawString(text, font, Brushes.Black, x + ((width - size.Width) / 2), y);
         }
 
         private int DrawBranchAddress(Graphics g, DataRow branch, Font font, int x, int y, bool skipAddressLine1)
@@ -2116,7 +2517,25 @@ END", con))
                     y += 16;
                 }
             }
+
+            string gst = FirstBranchValue(branch, new string[] { "GSTIN", "GSTNo", "GST", "Tin", "TinNumber", "CustomerTin" });
+            if (!string.IsNullOrEmpty(gst))
+            {
+                g.DrawString("GSTIN/UIN : " + gst, font, Brushes.Black, x, y);
+                y += 16;
+            }
             return y;
+        }
+
+        private string FirstBranchValue(DataRow branch, string[] columns)
+        {
+            for (int i = 0; i < columns.Length; i++)
+            {
+                string value = BranchValue(branch, columns[i]);
+                if (!string.IsNullOrEmpty(value))
+                    return value;
+            }
+            return string.Empty;
         }
 
         private void DrawLabelValue(Graphics g, string label, string value, Font font, int x, int y)
@@ -2125,12 +2544,196 @@ END", con))
             g.DrawString(value, font, Brushes.Black, x + 55, y);
         }
 
+        private string DeliveryControlText(TextBox textBox)
+        {
+            return textBox == null ? string.Empty : textBox.Text.Trim();
+        }
+
+        private string DeliveryControlDate(DateTimePicker picker)
+        {
+            if (picker == null || !picker.Checked)
+                return string.Empty;
+            return picker.Value.ToString("dd-MM-yyyy");
+        }
+
+        private int DrawDeliveryParameters(Graphics g, Rectangle bounds, int y, Font headerFont, Font normalFont)
+        {
+            int left = bounds.Left;
+            int half = bounds.Width / 2;
+
+            y = DrawThreeColumnParameterRow(g, left, y, bounds.Width, normalFont,
+                "Delivery Note No", txtorder.Text,
+                "e-Way Bill.no", DeliveryControlText(txtEWayBillNo),
+                "Dated", date.Value.ToString("dd-MM-yyyy"));
+
+            y = DrawCompactLabelValueRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Mode/Terms Of Payment", DeliveryControlText(txtModeTermsOfPayment));
+
+            y = DrawTwoColumnParameterRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Reference No & Date", DeliveryControlText(txtReference),
+                "Other Reference", DeliveryControlText(txtOtherReferences));
+
+            y = DrawCompactBuyerOrderRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Buyer's Order No / Dated", DeliveryControlText(txtBuyerOrderNo), DeliveryControlDate(dtBuyerOrderDate));
+
+            y = DrawCompactLabelValueRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Despatch Doc No", DeliveryControlText(txtDispatchDocNo));
+
+            y = DrawTwoColumnParameterRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Despatched Through", DeliveryControlText(txtDispatchedThrough),
+                "Destination", cmbToLocation.Text);
+
+            y = DrawTwoColumnParameterRow(g, left, y, half, bounds.Width - half, normalFont,
+                "Bill of Landing/LR-RR No", DeliveryControlText(txtBillOfLadingNo),
+                "Motor Vehicle No", DeliveryControlText(txtMotorVehicleNo));
+
+            y = DrawMergedParameterRow(g, left, y, bounds.Width, normalFont,
+                "Terms of Delivery", DeliveryControlText(txtTermsOfDelivery));
+            return y;
+        }
+
+        private int DrawThreeColumnParameterRow(Graphics g, int x, int y, int width, Font font, string label1, string value1, string label2, string value2, string label3, string value3)
+        {
+            int firstWidth = width / 3;
+            int secondWidth = width / 3;
+            int thirdWidth = width - firstWidth - secondWidth;
+            int height = Math.Max(28, Math.Max(
+                MeasureParameterCellHeight(g, font, firstWidth, label1, value1),
+                Math.Max(
+                    MeasureParameterCellHeight(g, font, secondWidth, label2, value2),
+                    MeasureParameterCellHeight(g, font, thirdWidth, label3, value3))));
+            DrawParameterCell(g, x, y, firstWidth, height, font, label1, value1);
+            DrawParameterCell(g, x + firstWidth, y, secondWidth, height, font, label2, value2);
+            DrawParameterCell(g, x + firstWidth + secondWidth, y, thirdWidth, height, font, label3, value3);
+            return y + height;
+        }
+
+        private int DrawTwoColumnParameterRow(Graphics g, int x, int y, int leftWidth, int rightWidth, Font font, string leftLabel, string leftValue, string rightLabel, string rightValue)
+        {
+            int height = Math.Max(28, Math.Max(
+                MeasureParameterCellHeight(g, font, leftWidth, leftLabel, leftValue),
+                MeasureParameterCellHeight(g, font, rightWidth, rightLabel, rightValue)));
+            DrawParameterCell(g, x, y, leftWidth, height, font, leftLabel, leftValue);
+            DrawParameterCell(g, x + leftWidth, y, rightWidth, height, font, rightLabel, rightValue);
+            return y + height;
+        }
+
+        private int DrawCompactLabelValueRow(Graphics g, int x, int y, int leftWidth, int rightWidth, Font font, string label, string value)
+        {
+            int height = Math.Max(18, Math.Max(
+                MeasureTopAlignedCellHeight(g, font, leftWidth, label),
+                MeasureTopAlignedCellHeight(g, font, rightWidth, value)));
+            DrawTopAlignedCell(g, x, y, leftWidth, height, font, label);
+            DrawTopAlignedCell(g, x + leftWidth, y, rightWidth, height, font, value);
+            return y + height;
+        }
+
+        private int DrawCompactBuyerOrderRow(Graphics g, int x, int y, int leftWidth, int rightWidth, Font font, string label, string orderNo, string orderDate)
+        {
+            int orderWidth = rightWidth / 2;
+            int height = Math.Max(18, Math.Max(
+                MeasureTopAlignedCellHeight(g, font, leftWidth, label),
+                Math.Max(
+                    MeasureTopAlignedCellHeight(g, font, orderWidth, orderNo),
+                    MeasureTopAlignedCellHeight(g, font, rightWidth - orderWidth, orderDate))));
+            DrawTopAlignedCell(g, x, y, leftWidth, height, font, label);
+            g.DrawRectangle(Pens.Black, x + leftWidth, y, rightWidth, height);
+            DrawTopAlignedText(g, orderNo, font, x + leftWidth, y, orderWidth, height);
+            DrawTopAlignedText(g, orderDate, font, x + leftWidth + orderWidth, y, rightWidth - orderWidth, height);
+            return y + height;
+        }
+
+        private int DrawMergedParameterRow(Graphics g, int x, int y, int width, Font font, string label, string value)
+        {
+            int height = Math.Max(28, MeasureParameterCellHeight(g, font, width, label, value));
+            DrawParameterCell(g, x, y, width, height, font, label, value);
+            return y + height;
+        }
+
+        private void DrawParameterCell(Graphics g, int x, int y, int width, int height, Font font, string label, string value)
+        {
+            g.DrawRectangle(Pens.Black, x, y, width, height);
+            float textY = y + 2;
+            if (!string.IsNullOrEmpty(label))
+            {
+                int labelHeight = MeasureWrappedTextHeight(g, font, width, label);
+                g.DrawString(label, font, Brushes.Black, new RectangleF(x + 3, textY, width - 6, labelHeight));
+                textY += labelHeight + 1;
+            }
+            if (!string.IsNullOrEmpty(value))
+            {
+                float valueHeight = Math.Max(0, y + height - textY - 2);
+                g.DrawString(value, font, Brushes.Black, new RectangleF(x + 3, textY, width - 6, valueHeight));
+            }
+        }
+
+        private void DrawTopAlignedCell(Graphics g, int x, int y, int width, int height, Font font, string text)
+        {
+            g.DrawRectangle(Pens.Black, x, y, width, height);
+            DrawTopAlignedText(g, text, font, x, y, width, height);
+        }
+
+        private void DrawTopAlignedText(Graphics g, string text, Font font, int x, int y, int width, int height)
+        {
+            if (!string.IsNullOrEmpty(text))
+                g.DrawString(text, font, Brushes.Black, new RectangleF(x + 3, y + 2, width - 6, height - 4));
+        }
+
+        private int MeasureParameterCellHeight(Graphics g, Font font, int width, string label, string value)
+        {
+            int height = 4;
+            if (!string.IsNullOrEmpty(label))
+                height += MeasureWrappedTextHeight(g, font, width, label) + 1;
+            if (!string.IsNullOrEmpty(value))
+                height += MeasureWrappedTextHeight(g, font, width, value) + 1;
+            return height + 2;
+        }
+
+        private int MeasureTopAlignedCellHeight(Graphics g, Font font, int width, string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return 18;
+            return MeasureWrappedTextHeight(g, font, width, text) + 4;
+        }
+
+        private int MeasureWrappedTextHeight(Graphics g, Font font, int width, string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return 0;
+            int textWidth = Math.Max(1, width - 6);
+            return (int)Math.Ceiling(g.MeasureString(text, font, textWidth).Height);
+        }
+
+        private void DrawPrintPair(Graphics g, string label, string value, Font font, int x, int y, int width)
+        {
+            string text = label + " : " + value;
+            g.DrawString(text, font, Brushes.Black, new RectangleF(x, y, width, 18));
+        }
+
+        private string ProductPriceIncludingTax(DataGridViewRow row)
+        {
+            string amount = Convert.ToString(row.Cells["Amount"].Value);
+            if (!string.IsNullOrEmpty(amount) && amount != "0" && amount != "0.00")
+                return FormatPrintAmount(amount);
+
+            string rate = Convert.ToString(row.Cells["Rate"].Value);
+            return FormatPrintAmount(rate);
+        }
+
+        private string FormatPrintAmount(string value)
+        {
+            decimal amount;
+            if (decimal.TryParse(value, out amount))
+                return amount.ToString("0.00");
+            return value;
+        }
+
         private int DrawDeliveryProductGrid(Graphics g, Rectangle bounds, int y, Font headerFont, Font normalFont)
         {
-            int[] widths = new int[] { 45, 360, 80, 90 };
+            int[] widths = new int[] { 45, 280, 70, 80, 100 };
             int rowHeight = 24;
             int x = bounds.Left;
-            string[] headers = new string[] { "S.No", "Items", "UOM", "Quantity" };
+            string[] headers = new string[] { "S.No", "Items", "UOM", "Quantity", "Price Incl. Tax" };
 
             for (int i = 0; i < headers.Length; i++)
             {
@@ -2158,7 +2761,8 @@ END", con))
                     serialNo.ToString(),
                     item,
                     Convert.ToString(row.Cells["UOM"].Value),
-                    quantity
+                    quantity,
+                    ProductPriceIncludingTax(row)
                 };
 
                 for (int i = 0; i < values.Length; i++)
@@ -4610,6 +5214,7 @@ END", con))
             cmdcity.Text = string.Empty;
             if (txtReference != null)
                 txtReference.Text = string.Empty;
+            ClearDeliveryHeaderFields();
             SafeResetCombo(cmbassistby);
             SafeResetCombo(cmbreference);
             txtorder.Clear();
