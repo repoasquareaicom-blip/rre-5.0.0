@@ -97,7 +97,7 @@ public static class TallyNameHelper
     public static string GetSalesLedgerName(decimal gstRate, string? prefix)
     {
         string cleanPrefix = CleanTallyName(prefix);
-        if (string.IsNullOrWhiteSpace(cleanPrefix)) cleanPrefix = "SALES";
-        return cleanPrefix + " " + gstRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "%";
+        if (string.IsNullOrWhiteSpace(cleanPrefix)) cleanPrefix = "Sales";
+        return cleanPrefix;
     }
 }

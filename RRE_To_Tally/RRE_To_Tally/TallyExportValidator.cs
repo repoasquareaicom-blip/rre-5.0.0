@@ -33,8 +33,9 @@ public sealed class TallyExportValidator
             }
         }
 
-        decimal positiveTotal = invoice.TaxableAmount + invoice.Cgst + invoice.Sgst + invoice.Igst - invoice.Discount + invoice.OtherCharges + invoice.RoundOff;
-        decimal balance = Math.Round(positiveTotal - invoice.CalculatedTotal, 2, MidpointRounding.AwayFromZero);
+        decimal grossDetailTotal = invoice.TaxableAmount + invoice.Cgst + invoice.Sgst + invoice.Igst;
+        decimal expectedInvoiceTotal = Math.Round(grossDetailTotal - invoice.Discount + invoice.OtherCharges + invoice.RoundOff, 2, MidpointRounding.AwayFromZero);
+        decimal balance = Math.Round(expectedInvoiceTotal - invoice.CalculatedTotal, 2, MidpointRounding.AwayFromZero);
         if (Math.Abs(balance) > 0.01m)
         {
             result.Errors.Add("Unbalanced voucher difference " + TallyNumericHelper.FormatAmount(balance) + ".");

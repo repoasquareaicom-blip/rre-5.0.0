@@ -45,6 +45,28 @@ public sealed class TallyExportOptions
     public TallyCompanySettings CompanySettings { get; set; } = TallyCompanySettings.Load();
 }
 
+public sealed class SalesDivisionConfig
+{
+    public string Key { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string CompanyName { get; set; } = "";
+    public string HeaderTable { get; set; } = "";
+    public string DetailTable { get; set; } = "";
+    public string FilePrefix { get; set; } = "";
+
+    public static IReadOnlyList<SalesDivisionConfig> All { get; } = new List<SalesDivisionConfig>
+    {
+        new SalesDivisionConfig { Key = "Electricals", DisplayName = "Electricals", CompanyName = "RRE Electricals", HeaderTable = "Sales", DetailTable = "SalesDetails", FilePrefix = "RRE_Electricals" },
+        new SalesDivisionConfig { Key = "Pipes", DisplayName = "Pipes", CompanyName = "RRE Pipes", HeaderTable = "SalesPipes", DetailTable = "SalesPipesDetails", FilePrefix = "RRE_Pipes" },
+        new SalesDivisionConfig { Key = "Traders", DisplayName = "Traders", CompanyName = "RRE Traders", HeaderTable = "SalesTraders", DetailTable = "SalesTradersDetails", FilePrefix = "RRE_Traders" }
+    };
+
+    public static SalesDivisionConfig Find(string key)
+    {
+        return All.FirstOrDefault(d => string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase)) ?? All[0];
+    }
+}
+
 public sealed class TallyCompanySettings
 {
     public string CompanyName { get; set; } = "";
@@ -63,8 +85,10 @@ public sealed class TallyCompanySettings
     public string SGSTLedgerName { get; set; } = "SGST";
     public string IGSTLedgerName { get; set; } = "IGST";
     public string RoundOffLedgerName { get; set; } = "Round Off";
+    public string DiscountLedgerName { get; set; } = "Discount";
+    public string OtherChargesLedgerName { get; set; } = "Other Charges";
     public string CashLedgerName { get; set; } = "CASH";
-    public string SalesLedgerPrefix { get; set; } = "SALES";
+    public string SalesLedgerPrefix { get; set; } = "Sales";
     public string MasterApplicableFrom { get; set; } = "20260401";
 
     public static TallyCompanySettings Load()
@@ -87,6 +111,8 @@ public sealed class TallyCompanySettings
         settings.SGSTLedgerName = Read(app, "TallyCompany.SGSTLedgerName", settings.SGSTLedgerName);
         settings.IGSTLedgerName = Read(app, "TallyCompany.IGSTLedgerName", settings.IGSTLedgerName);
         settings.RoundOffLedgerName = Read(app, "TallyCompany.RoundOffLedgerName", settings.RoundOffLedgerName);
+        settings.DiscountLedgerName = Read(app, "TallyCompany.DiscountLedgerName", settings.DiscountLedgerName);
+        settings.OtherChargesLedgerName = Read(app, "TallyCompany.OtherChargesLedgerName", settings.OtherChargesLedgerName);
         settings.CashLedgerName = Read(app, "TallyCompany.CashLedgerName", settings.CashLedgerName);
         settings.SalesLedgerPrefix = Read(app, "TallyCompany.SalesLedgerPrefix", settings.SalesLedgerPrefix);
         settings.MasterApplicableFrom = Read(app, "TallyCompany.MasterApplicableFrom", settings.MasterApplicableFrom);
@@ -102,6 +128,9 @@ public sealed class TallyCompanySettings
 
 public sealed class SalesExportRow
 {
+    public string DivisionKey { get; set; } = "";
+    public string DivisionName { get; set; } = "";
+    public string DivisionCompanyName { get; set; } = "";
     public int Sino { get; set; }
     public string SalesId { get; set; } = "";
     public string ReferenceId { get; set; } = "";
@@ -151,6 +180,9 @@ public sealed class SalesExportInvoice : INotifyPropertyChanged
     }
 
     public string Status { get; set; } = "Ready";
+    public string DivisionKey { get; set; } = "";
+    public string DivisionName { get; set; } = "";
+    public string DivisionCompanyName { get; set; } = "";
     public string SalesId { get; set; } = "";
     public string ReferenceId { get; set; } = "";
     public DateTime Date { get; set; }
@@ -264,6 +296,7 @@ public sealed class ExportSummary
     public int Errors { get; set; }
     public string MastersXmlPath { get; set; } = "";
     public string SalesXmlPath { get; set; } = "";
+    public List<string> SalesXmlPaths { get; } = new List<string>();
     public string ErrorCsvPath { get; set; } = "";
     public string LogPath { get; set; } = "";
 }

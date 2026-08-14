@@ -30,12 +30,15 @@ public sealed class TallyExportService
         HashSet<string> usedCustomerNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         HashSet<string> usedProductNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (IGrouping<string, SalesExportRow> group in rows.GroupBy(r => r.SalesId ?? "", StringComparer.OrdinalIgnoreCase))
+        foreach (IGrouping<string, SalesExportRow> group in rows.GroupBy(r => (r.DivisionKey ?? "") + "|" + (r.SalesId ?? ""), StringComparer.OrdinalIgnoreCase))
         {
             List<SalesExportRow> invoiceRows = group.ToList();
             SalesExportRow first = invoiceRows[0];
             SalesExportInvoice invoice = new SalesExportInvoice
             {
+                DivisionKey = first.DivisionKey,
+                DivisionName = first.DivisionName,
+                DivisionCompanyName = first.DivisionCompanyName,
                 SalesId = first.SalesId,
                 ReferenceId = first.ReferenceId,
                 Date = first.TransactionDate,
@@ -53,7 +56,7 @@ public sealed class TallyExportService
             decimal storedGrandTotal = numeric.ParseDecimal(first.GrandTotal);
             invoice.StoredGrandTotal = storedGrandTotal > 0m ? Round(storedGrandTotal) : 0m;
 
-            invoice.CustomerLedgerName = ResolveUniqueName(customerNameByIdentity, usedCustomerNames, first.CustomerId, invoice.CustomerName, first.CustomerId, package.Warnings, "Duplicate normalized customer name");
+            invoice.CustomerLedgerName = ResolveUniqueName(customerNameByIdentity, usedCustomerNames, first.DivisionKey + "|" + first.CustomerId, invoice.CustomerName, first.CustomerId, package.Warnings, "Duplicate normalized customer name");
             string gstin = (first.CustomerGSTIN ?? "").Trim().ToUpperInvariant();
             if (gstin.Length > 0 && TallyNameHelper.IsBasicValidGstin(gstin))
             {
@@ -88,15 +91,19 @@ public sealed class TallyExportService
                 }
 
                 decimal gstRate = ResolveGstRate(row, numeric);
-                decimal rate = numeric.ParseDecimal(row.Rate);
+                decimal grossAmount = Round(numeric.ParseDecimal(row.Amount));
+                decimal taxable = CalculateTaxableFromInclusive(grossAmount, gstRate);
+                decimal gstAmount = Round(grossAmount - taxable);
                 decimal quantity = numeric.ParseDecimal(row.Quantity);
-                decimal taxable = Round(numeric.ParseDecimal(row.Amount));
-                if (rate == 0m && quantity != 0m && taxable != 0m)
+                decimal rate = numeric.ParseDecimal(row.Rate);
+                if (quantity != 0m)
                 {
                     rate = Round(taxable / quantity);
-                    package.Warnings.Add(invoice.SalesId + ": rate missing for " + productName + ", derived from Amount / Quantity");
                 }
-                decimal gstAmount = Round(taxable * gstRate / 100m);
+                else if (rate == 0m && taxable != 0m)
+                {
+                    package.Warnings.Add(invoice.SalesId + ": quantity missing for " + productName + ", cannot derive taxable unit rate");
+                }
                 decimal cgst = isInterstate ? 0m : Round(gstAmount / 2m);
                 decimal sgst = isInterstate ? 0m : Round(gstAmount - cgst);
                 decimal igst = isInterstate ? gstAmount : 0m;
@@ -105,7 +112,7 @@ public sealed class TallyExportService
                 if (string.IsNullOrWhiteSpace(row.Hsn)) package.Warnings.Add(invoice.SalesId + ": missing HSN for " + productName);
                 if (!IsSupportedGstRate(gstRate)) package.Warnings.Add(invoice.SalesId + ": unsupported GST rate " + gstRate.ToString("0.##", CultureInfo.InvariantCulture));
 
-                string productKey = !string.IsNullOrWhiteSpace(row.ProductId) ? row.ProductId : row.ItemCode;
+                string productKey = row.DivisionKey + "|" + (!string.IsNullOrWhiteSpace(row.ProductId) ? row.ProductId : row.ItemCode);
                 string productTallyName = ResolveUniqueName(productNameByIdentity, usedProductNames, productKey, productName, row.ItemCode.Length > 0 ? row.ItemCode : row.ProductId, package.Warnings, "Duplicate normalized product name");
 
                 SalesExportItem item = new SalesExportItem
@@ -140,7 +147,8 @@ public sealed class TallyExportService
             invoice.Cgst = Round(invoice.Cgst);
             invoice.Sgst = Round(invoice.Sgst);
             invoice.Igst = Round(invoice.Igst);
-            decimal unroundedVoucherTotal = Round(invoice.TaxableAmount + invoice.Cgst + invoice.Sgst + invoice.Igst - invoice.Discount + invoice.OtherCharges);
+            decimal grossDetailsTotal = Round(invoice.TaxableAmount + invoice.Cgst + invoice.Sgst + invoice.Igst);
+            decimal unroundedVoucherTotal = Round(grossDetailsTotal - invoice.Discount + invoice.OtherCharges);
             decimal targetGrandTotal = invoice.StoredGrandTotal > 0m ? invoice.StoredGrandTotal : RoundWhole(unroundedVoucherTotal);
             invoice.RoundOff = Round(targetGrandTotal - unroundedVoucherTotal);
             invoice.CalculatedTotal = Round(unroundedVoucherTotal + invoice.RoundOff);
@@ -194,9 +202,15 @@ public sealed class TallyExportService
 
             if (writeSales)
             {
-                string salesPath = GetExportPath(exportFolder, "RRE_Tally_Sales", fromDate, toDate);
-                writer.WriteSalesXml(salesPath, selected, options);
-                summary.SalesXmlPath = salesPath;
+                foreach (IGrouping<string, SalesExportInvoice> divisionGroup in selected.GroupBy(i => i.DivisionKey, StringComparer.OrdinalIgnoreCase))
+                {
+                    SalesDivisionConfig division = SalesDivisionConfig.Find(divisionGroup.Key);
+                    string salesPath = GetExportPath(exportFolder, division.FilePrefix + "_Sales", fromDate, toDate);
+                    writer.WriteSalesXml(salesPath, divisionGroup.ToList(), options);
+                    summary.SalesXmlPaths.Add(salesPath);
+                }
+
+                summary.SalesXmlPath = string.Join(Environment.NewLine, summary.SalesXmlPaths.ToArray());
                 summary.InvoicesExported = selected.Count;
             }
 
@@ -210,7 +224,7 @@ public sealed class TallyExportService
         return summary;
     }
 
-    // SalesDetails.Amount is treated as taxable value excluding GST for Tally voucher posting.
+    // SalesDetails.Amount is GST-inclusive. Tally inventory allocation receives the extracted taxable value.
     public decimal ResolveGstRate(SalesExportRow row, TallyNumericHelper numeric)
     {
         if (row.SalesDetailGst > 0m) return row.SalesDetailGst;
@@ -234,6 +248,8 @@ public sealed class TallyExportService
         bool needsSgst = false;
         bool needsIgst = false;
         bool needsRoundOff = false;
+        bool needsDiscount = false;
+        bool needsOtherCharges = false;
         bool needsCash = false;
 
         foreach (SalesExportInvoice invoice in package.Invoices)
@@ -256,6 +272,8 @@ public sealed class TallyExportService
             }
 
             if (invoice.RoundOff != 0m) needsRoundOff = true;
+            if (invoice.Discount != 0m) needsDiscount = true;
+            if (invoice.OtherCharges != 0m) needsOtherCharges = true;
             if (options.CashSalesLedgerBehaviour == CashSalesLedgerBehaviour.UseRreCashLedger && invoice.PaymentMode.IndexOf("cash", StringComparison.OrdinalIgnoreCase) >= 0) needsCash = true;
 
             foreach (SalesExportItem item in invoice.Items)
@@ -285,6 +303,8 @@ public sealed class TallyExportService
             if (needsIgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.IGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "Integrated Tax" });
         }
         if (needsRoundOff) package.Ledgers.Add(new LedgerMasterExport { Name = settings.RoundOffLedgerName, Parent = "Indirect Expenses" });
+        if (needsDiscount) package.Ledgers.Add(new LedgerMasterExport { Name = settings.DiscountLedgerName, Parent = "Indirect Expenses" });
+        if (needsOtherCharges) package.Ledgers.Add(new LedgerMasterExport { Name = settings.OtherChargesLedgerName, Parent = "Indirect Incomes" });
         if (needsCash) package.Ledgers.Add(new LedgerMasterExport { Name = settings.CashLedgerName, Parent = "Cash-in-Hand" });
     }
 
@@ -351,6 +371,12 @@ public sealed class TallyExportService
     private static decimal RoundWhole(decimal value)
     {
         return Math.Round(value, 0, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal CalculateTaxableFromInclusive(decimal grossAmount, decimal gstRate)
+    {
+        if (gstRate <= 0m) return grossAmount;
+        return Round(grossAmount / (1m + (gstRate / 100m)));
     }
 
     private static bool IsInterstateSale(SalesExportRow row, TallyCompanySettings settings)

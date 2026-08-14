@@ -6,8 +6,11 @@ namespace RRE_To_Tally;
 
 public sealed class TallyDataRepository
 {
-    public const string SalesExportSql = @"
+    private const string SalesExportSqlTemplate = @"
 SELECT
+    @DivisionKey AS DivisionKey,
+    @DivisionName AS DivisionName,
+    @DivisionCompanyName AS DivisionCompanyName,
     S.sino,
     S.Salesid,
     S.Referenceid,
@@ -45,8 +48,8 @@ SELECT
     SD.Amount,
     SD.gst AS SalesDetailGST,
     CASE WHEN PM.id IS NULL THEN 1 ELSE 0 END AS MissingProductMaster
-FROM Sales S
-INNER JOIN SalesDetails SD
+FROM {0} S
+INNER JOIN {1} SD
     ON SD.Salesid = S.Salesid
 LEFT JOIN Customers C
     ON C.CustomerID = TRY_CONVERT(int, S.Customerid)
@@ -72,63 +75,92 @@ ORDER BY COALESCE(S.EnteredOn, S.Updatedon), S.Salesid, PM.ItemName;";
 
             List<SalesExportRow> rows = new List<SalesExportRow>();
             using (SqlConnection connection = new SqlConnection(setting.ConnectionString))
-            using (SqlCommand command = new SqlCommand(SalesExportSql, connection))
             {
-                command.CommandType = CommandType.Text;
-                command.Parameters.Add("@FromDate", SqlDbType.DateTime).Value = fromDate.Date;
-                command.Parameters.Add("@ToDate", SqlDbType.DateTime).Value = toDate.Date;
-                command.Parameters.Add("@BillNumber", SqlDbType.VarChar, 100).Value = (billNumber ?? "").Trim();
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+
+                foreach (SalesDivisionConfig division in SalesDivisionConfig.All)
                 {
-                    while (reader.Read())
+                    using (SqlCommand command = new SqlCommand(BuildSalesExportSql(division), connection))
                     {
-                        rows.Add(new SalesExportRow
+                        command.CommandType = CommandType.Text;
+                        command.Parameters.Add("@DivisionKey", SqlDbType.VarChar, 40).Value = division.Key;
+                        command.Parameters.Add("@DivisionName", SqlDbType.VarChar, 80).Value = division.DisplayName;
+                        command.Parameters.Add("@DivisionCompanyName", SqlDbType.VarChar, 120).Value = division.CompanyName;
+                        command.Parameters.Add("@FromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                        command.Parameters.Add("@ToDate", SqlDbType.DateTime).Value = toDate.Date;
+                        command.Parameters.Add("@BillNumber", SqlDbType.VarChar, 100).Value = (billNumber ?? "").Trim();
+
+                        using (SqlDataReader reader = command.ExecuteReader())
                         {
-                            Sino = GetInt(reader, "sino"),
-                            SalesId = GetString(reader, "Salesid"),
-                            ReferenceId = GetString(reader, "Referenceid"),
-                            TransactionDate = GetDate(reader, "TransactionDate"),
-                            CustomerId = GetString(reader, "Customerid"),
-                            CustomerName = GetString(reader, "CustomerName"),
-                            CustomerAddress1 = GetString(reader, "CustomerAddress1"),
-                            CustomerAddress2 = GetString(reader, "CustomerAddress2"),
-                            CustomerCity = GetString(reader, "CustomerCity"),
-                            CustomerState = GetString(reader, "CustomerState"),
-                            District = GetString(reader, "District"),
-                            Pincode = GetString(reader, "Pincode"),
-                            CustomerPhone = GetString(reader, "CustomerPhone"),
-                            Email = GetString(reader, "Email"),
-                            CustomerGSTIN = GetString(reader, "CustomerGSTIN"),
-                            PaymentMode = GetString(reader, "Paymentmode"),
-                            TotalAmount = GetString(reader, "TotalAmount"),
-                            LessAmount = GetString(reader, "LessAmount"),
-                            GrandTotal = GetString(reader, "GrandTotal"),
-                            OtherCharges = GetString(reader, "OtherCharges"),
-                            GstText = GetString(reader, "GstText"),
-                            ProductId = GetString(reader, "Productid"),
-                            ItemCode = GetString(reader, "ItemCode"),
-                            ProductName = GetString(reader, "ProductName"),
-                            Category = GetString(reader, "Category"),
-                            Brand = GetString(reader, "Brand"),
-                            Uom = GetString(reader, "UOM"),
-                            Hsn = GetString(reader, "HSN"),
-                            ProductGst = GetString(reader, "ProductGST"),
-                            Sgst = GetString(reader, "SGST"),
-                            Igst = GetString(reader, "IGST"),
-                            Tax = GetString(reader, "Tax"),
-                            Rate = GetString(reader, "Rate"),
-                            Quantity = GetString(reader, "Quantity"),
-                            Amount = GetString(reader, "Amount"),
-                            SalesDetailGst = GetDecimal(reader, "SalesDetailGST"),
-                            MissingProductMaster = GetInt(reader, "MissingProductMaster") == 1
-                        });
+                            while (reader.Read())
+                            {
+                                rows.Add(new SalesExportRow
+                                {
+                                    DivisionKey = GetString(reader, "DivisionKey"),
+                                    DivisionName = GetString(reader, "DivisionName"),
+                                    DivisionCompanyName = GetString(reader, "DivisionCompanyName"),
+                                    Sino = GetInt(reader, "sino"),
+                                    SalesId = GetString(reader, "Salesid"),
+                                    ReferenceId = GetString(reader, "Referenceid"),
+                                    TransactionDate = GetDate(reader, "TransactionDate"),
+                                    CustomerId = GetString(reader, "Customerid"),
+                                    CustomerName = GetString(reader, "CustomerName"),
+                                    CustomerAddress1 = GetString(reader, "CustomerAddress1"),
+                                    CustomerAddress2 = GetString(reader, "CustomerAddress2"),
+                                    CustomerCity = GetString(reader, "CustomerCity"),
+                                    CustomerState = GetString(reader, "CustomerState"),
+                                    District = GetString(reader, "District"),
+                                    Pincode = GetString(reader, "Pincode"),
+                                    CustomerPhone = GetString(reader, "CustomerPhone"),
+                                    Email = GetString(reader, "Email"),
+                                    CustomerGSTIN = GetString(reader, "CustomerGSTIN"),
+                                    PaymentMode = GetString(reader, "Paymentmode"),
+                                    TotalAmount = GetString(reader, "TotalAmount"),
+                                    LessAmount = GetString(reader, "LessAmount"),
+                                    GrandTotal = GetString(reader, "GrandTotal"),
+                                    OtherCharges = GetString(reader, "OtherCharges"),
+                                    GstText = GetString(reader, "GstText"),
+                                    ProductId = GetString(reader, "Productid"),
+                                    ItemCode = GetString(reader, "ItemCode"),
+                                    ProductName = GetString(reader, "ProductName"),
+                                    Category = GetString(reader, "Category"),
+                                    Brand = GetString(reader, "Brand"),
+                                    Uom = GetString(reader, "UOM"),
+                                    Hsn = GetString(reader, "HSN"),
+                                    ProductGst = GetString(reader, "ProductGST"),
+                                    Sgst = GetString(reader, "SGST"),
+                                    Igst = GetString(reader, "IGST"),
+                                    Tax = GetString(reader, "Tax"),
+                                    Rate = GetString(reader, "Rate"),
+                                    Quantity = GetString(reader, "Quantity"),
+                                    Amount = GetString(reader, "Amount"),
+                                    SalesDetailGst = GetDecimal(reader, "SalesDetailGST"),
+                                    MissingProductMaster = GetInt(reader, "MissingProductMaster") == 1
+                                });
+                            }
+                        }
                     }
                 }
             }
 
             return rows;
         });
+    }
+
+    private static string BuildSalesExportSql(SalesDivisionConfig division)
+    {
+        return string.Format(SalesExportSqlTemplate, QuoteName(division.HeaderTable), QuoteName(division.DetailTable));
+    }
+
+    private static string QuoteName(string tableName)
+    {
+        if (SalesDivisionConfig.All.All(d => !string.Equals(d.HeaderTable, tableName, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(d.DetailTable, tableName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Unsafe table name: " + tableName);
+        }
+
+        return "[" + tableName.Replace("]", "]]") + "]";
     }
 
     private static string GetString(SqlDataReader reader, string name)

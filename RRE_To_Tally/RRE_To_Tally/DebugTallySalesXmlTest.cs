@@ -44,7 +44,7 @@ internal static class DebugTallySalesXmlTest
                 IGSTLedgerName = "IGST",
                 RoundOffLedgerName = "Round Off",
                 CashLedgerName = "CASH",
-                SalesLedgerPrefix = "SALES"
+                SalesLedgerPrefix = "Sales"
             }
         };
 
@@ -74,7 +74,7 @@ internal static class DebugTallySalesXmlTest
             SGSTLedgerName = "SGST",
             IGSTLedgerName = "IGST",
             RoundOffLedgerName = "Round Off",
-            SalesLedgerPrefix = "SALES"
+            SalesLedgerPrefix = "Sales"
         };
         TallyExportPackage package = new TallyExportPackage();
         package.Units.Add(new UnitMasterExport { Name = "NOS" });
@@ -141,7 +141,7 @@ internal static class DebugTallySalesXmlTest
             GstRate = gstRate,
             CgstAmount = cgst,
             SgstAmount = sgst,
-            SalesLedgerName = TallyNameHelper.GetSalesLedgerName(gstRate, "SALES")
+            SalesLedgerName = TallyNameHelper.GetSalesLedgerName(gstRate, "Sales")
         };
     }
 }

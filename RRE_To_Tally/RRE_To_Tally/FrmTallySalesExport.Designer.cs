@@ -175,6 +175,7 @@ partial class FrmTallySalesExport
         dgvInvoices.TabIndex = 26;
         dgvInvoices.Columns.Add(MakeCheckColumn("Export", "Export", 55));
         dgvInvoices.Columns.Add(MakeTextColumn("Status", "Status", 80));
+        dgvInvoices.Columns.Add(MakeTextColumn("Division", "DivisionName", 90));
         dgvInvoices.Columns.Add(MakeTextColumn("Sales ID", "SalesId", 90));
         dgvInvoices.Columns.Add(MakeTextColumn("Date", "Date", 90, "d"));
         dgvInvoices.Columns.Add(MakeTextColumn("Customer", "CustomerLedgerName", 180));

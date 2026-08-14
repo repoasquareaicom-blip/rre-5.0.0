@@ -36,15 +36,10 @@ public sealed class TallyXmlWriter
     public void WriteSalesXml(string finalPath, IList<SalesExportInvoice> invoices, TallyExportOptions options)
     {
         TallyCompanySettings settings = options.CompanySettings ?? TallyCompanySettings.Load();
-        ReferenceTallySalesXmlWriter salesWriter = new ReferenceTallySalesXmlWriter();
+        TallySalesXmlGenerator salesWriter = new TallySalesXmlGenerator();
         WriteValidated(finalPath, delegate(XmlWriter writer)
         {
-            salesWriter.WriteEnvelopeStart(writer);
-            foreach (SalesExportInvoice invoice in invoices)
-            {
-                salesWriter.WriteVoucher(writer, invoice, settings, options);
-            }
-            salesWriter.WriteEnvelopeEnd(writer);
+            salesWriter.WriteSalesEnvelope(writer, invoices, settings, options);
         });
     }
 
@@ -81,6 +76,7 @@ public sealed class TallyXmlWriter
             if (parent == "SALES") AddGroup(groups, "SALES", "Sales Accounts");
             if (parent == "TAX AND DUTIES") AddGroup(groups, "TAX AND DUTIES", "Duties & Taxes");
             if (parent == "INDIRECT EXPENSES") AddGroup(groups, "INDIRECT EXPENSES", "Indirect Expenses");
+            if (parent == "INDIRECT INCOMES") AddGroup(groups, "INDIRECT INCOMES", "Indirect Incomes");
             if (parent == "CASH A/C") AddGroup(groups, "CASH A/C", "Cash-in-Hand");
         }
         if (package.Customers.Count > 0) AddGroup(groups, "SUNDRY DEBTORS", "Sundry Debtors");
@@ -317,6 +313,7 @@ public sealed class TallyXmlWriter
         if (string.Equals(ledger.Parent, "Sales Accounts", StringComparison.OrdinalIgnoreCase)) return "SALES";
         if (string.Equals(ledger.Parent, "Duties & Taxes", StringComparison.OrdinalIgnoreCase)) return "TAX AND DUTIES";
         if (string.Equals(ledger.Parent, "Indirect Expenses", StringComparison.OrdinalIgnoreCase)) return "INDIRECT EXPENSES";
+        if (string.Equals(ledger.Parent, "Indirect Incomes", StringComparison.OrdinalIgnoreCase)) return "INDIRECT INCOMES";
         if (string.Equals(ledger.Parent, "Cash-in-Hand", StringComparison.OrdinalIgnoreCase)) return "CASH A/C";
         return TallyNameHelper.CleanTallyName(ledger.Parent).ToUpperInvariant();
     }
