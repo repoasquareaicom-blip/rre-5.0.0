@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml;
 
 namespace RRE_To_Tally;
@@ -64,11 +65,17 @@ public sealed class TallySalesXmlGenerator
 
     private static void WriteVoucherHeader(XmlWriter writer, SalesExportInvoice invoice, string partyLedger, TallyCompanySettings settings)
     {
-        string date = invoice.Date.ToString("yyyyMMdd");
+        string date = GetExportVoucherDate(settings);
+        if (string.IsNullOrWhiteSpace(date))
+        {
+            throw new InvalidOperationException("Missing or invalid export voucher date for invoice " + invoice.SalesId + ".");
+        }
+
         string billPlace = FirstNonEmpty(invoice.CustomerCity, invoice.CustomerState, settings.CompanyState);
 
         writer.WriteElementString("DATE", date);
         writer.WriteElementString("VCHSTATUSDATE", date);
+        writer.WriteElementString("EFFECTIVEDATE", date);
         writer.WriteElementString("GSTREGISTRATIONTYPE", invoice.GstRegistrationType);
         writer.WriteElementString("VATDEALERTYPE", invoice.GstRegistrationType);
         writer.WriteElementString("STATENAME", invoice.CustomerState);
@@ -252,5 +259,21 @@ public sealed class TallySalesXmlGenerator
         }
 
         return invoice.CustomerLedgerName;
+    }
+
+    private static string GetExportVoucherDate(TallyCompanySettings settings)
+    {
+        string value = (settings.ExportVoucherDate ?? "").Trim();
+        if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
+        {
+            return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        }
+
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+        {
+            return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        }
+
+        return "";
     }
 }

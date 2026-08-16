@@ -1,8 +1,11 @@
+const salemBaseUrl =
+  import.meta.env.VITE_SALEM_API_URL?.trim() ||
+  'https://salem.rreconnect.in'
 export const branches = [
   {
     id: 'RR-SALEM',
     label: 'Salem',
-    baseUrl: 'https://salem.rreconnect.in',
+    baseUrl: salemBaseUrl,
     accent: '#b91c1c',
     accentSoft: '#fee2e2',
     accentBorder: '#fca5a5',

@@ -36,6 +36,12 @@ namespace Inventory
         private ToolStripMenuItem receiptNoteToolStripMenuItem;
         private ToolStripMenuItem receiptNoteApprovalToolStripMenuItem;
         private ToolStripMenuItem branchStockStatusToolStripMenuItem;
+        private ToolStripMenuItem productUpdatedToolStripMenuItem;
+        private Timer productUpdatedPollTimer;
+        private Timer productUpdatedBlinkTimer;
+        private bool productUpdatedPolling;
+        private bool productUpdatedBlinkOn;
+        private int productUpdatedPendingCount;
         private BranchStockWidget branchStockWidget;
         public FrmMain(string userid)
         {
@@ -47,6 +53,7 @@ namespace Inventory
             AddBranchStockStatusMenuItem();
             ApplyCloudEyeDelightMainTheme();
             ApplyMainOfficeProductRestrictions();
+            InitializeProductUpdatedIndicator();
             FixMdiClientArea();
             this.WindowState = FormWindowState.Maximized;
             Btndelete.Cursor = Cursors.Hand;
@@ -92,6 +99,125 @@ namespace Inventory
             branchStockStatusToolStripMenuItem.MouseLeave += new EventHandler(branchStockStatusToolStripMenuItem_MouseLeave);
 
             menuStrip1.Items.Add(branchStockStatusToolStripMenuItem);
+        }
+
+        private void InitializeProductUpdatedIndicator()
+        {
+            if (menuStrip1 == null)
+                return;
+
+            string branchCode = BranchAccess.CurrentBranchCode;
+            if (branchCode != BranchAccess.MainOfficeBranchCode && branchCode != "RR-NAMAKKAL" && branchCode != "RR-KOLATHUR")
+                return;
+
+            productUpdatedToolStripMenuItem = new ToolStripMenuItem();
+            productUpdatedToolStripMenuItem.Name = "productUpdatedToolStripMenuItem";
+            productUpdatedToolStripMenuItem.Text = "Product Updated";
+            productUpdatedToolStripMenuItem.ForeColor = Color.FromArgb(90, 90, 90);
+            productUpdatedToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            productUpdatedToolStripMenuItem.Click += new EventHandler(productUpdatedToolStripMenuItem_Click);
+            menuStrip1.Items.Add(productUpdatedToolStripMenuItem);
+
+            productUpdatedBlinkTimer = new Timer();
+            productUpdatedBlinkTimer.Interval = 900;
+            productUpdatedBlinkTimer.Tick += new EventHandler(productUpdatedBlinkTimer_Tick);
+
+            productUpdatedPollTimer = new Timer();
+            productUpdatedPollTimer.Interval = 60000;
+            productUpdatedPollTimer.Tick += new EventHandler(productUpdatedPollTimer_Tick);
+            productUpdatedPollTimer.Start();
+
+            BeginProductUpdatedPoll();
+        }
+
+        private void productUpdatedPollTimer_Tick(object sender, EventArgs e)
+        {
+            BeginProductUpdatedPoll();
+        }
+
+        private void BeginProductUpdatedPoll()
+        {
+            if (productUpdatedPolling || productUpdatedToolStripMenuItem == null)
+                return;
+
+            productUpdatedPolling = true;
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate
+            {
+                ProductUpdatedReadResult result = ProductUpdatedSyncClient.FetchPendingForCurrentBranch();
+                try
+                {
+                    BeginInvoke(new MethodInvoker(delegate
+                    {
+                        productUpdatedPolling = false;
+                        if (!result.Success)
+                        {
+                            productUpdatedPendingCount = 0;
+                            productUpdatedToolStripMenuItem.Text = "Product Updated";
+                            productUpdatedToolStripMenuItem.ForeColor = Color.LightGray;
+                            productUpdatedToolStripMenuItem.ToolTipText = "Salem product sync status unavailable.";
+                            if (productUpdatedBlinkTimer != null)
+                                productUpdatedBlinkTimer.Stop();
+                            return;
+                        }
+
+                        productUpdatedPendingCount = result.Items == null ? 0 : result.Items.Count;
+                        UpdateProductUpdatedIndicator();
+                    }));
+                }
+                catch
+                {
+                    productUpdatedPolling = false;
+                }
+            });
+        }
+
+        private void UpdateProductUpdatedIndicator()
+        {
+            if (productUpdatedToolStripMenuItem == null)
+                return;
+
+            if (productUpdatedPendingCount > 0)
+            {
+                productUpdatedToolStripMenuItem.Text = "Product Updated (" + productUpdatedPendingCount + ")";
+                productUpdatedToolStripMenuItem.ForeColor = Color.FromArgb(20, 150, 60);
+                productUpdatedToolStripMenuItem.BackColor = Color.FromArgb(220, 252, 231);
+                productUpdatedToolStripMenuItem.ToolTipText = productUpdatedPendingCount + " pending product update(s).";
+                if (productUpdatedBlinkTimer != null && !productUpdatedBlinkTimer.Enabled)
+                    productUpdatedBlinkTimer.Start();
+            }
+            else
+            {
+                productUpdatedToolStripMenuItem.Text = "Product Updated";
+                productUpdatedToolStripMenuItem.ForeColor = Color.FromArgb(90, 90, 90);
+                productUpdatedToolStripMenuItem.BackColor = Color.Transparent;
+                productUpdatedToolStripMenuItem.ToolTipText = "No pending product updates.";
+                if (productUpdatedBlinkTimer != null)
+                    productUpdatedBlinkTimer.Stop();
+            }
+        }
+
+        private void productUpdatedBlinkTimer_Tick(object sender, EventArgs e)
+        {
+            if (productUpdatedToolStripMenuItem == null || productUpdatedPendingCount <= 0)
+                return;
+
+            productUpdatedBlinkOn = !productUpdatedBlinkOn;
+            productUpdatedToolStripMenuItem.ForeColor = productUpdatedBlinkOn
+                ? Color.FromArgb(20, 180, 70)
+                : Color.FromArgb(10, 105, 45);
+            productUpdatedToolStripMenuItem.BackColor = productUpdatedBlinkOn
+                ? Color.FromArgb(187, 247, 208)
+                : Color.FromArgb(220, 252, 231);
+            productUpdatedToolStripMenuItem.Invalidate();
+        }
+
+        private void productUpdatedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ProductUpdatedForm form = new ProductUpdatedForm();
+            form.PendingChanged += delegate { BeginProductUpdatedPoll(); };
+            form.FormClosed += delegate { BeginProductUpdatedPoll(); };
+            form.MdiParent = this;
+            form.Show();
         }
 
         private void branchStockStatusToolStripMenuItem_Click(object sender, EventArgs e)
@@ -3876,6 +4002,20 @@ namespace Inventory
                     pressed = menuItem.Pressed || menuItem.DropDown.Visible;
                 }
 
+                if (isTopMenu && e.Item.Name == "productUpdatedToolStripMenuItem" && e.Item.BackColor != Color.Transparent)
+                {
+                    Rectangle fillRect = new Rectangle(rect.X + 1, rect.Y + 3, rect.Width - 2, rect.Height - 6);
+                    using (GraphicsPath path = GetRoundRect(fillRect, 8))
+                    using (SolidBrush brush = new SolidBrush(e.Item.BackColor))
+                    using (Pen pen = new Pen(Color.FromArgb(34, 197, 94)))
+                    {
+                        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                        e.Graphics.FillPath(brush, path);
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                    return;
+                }
+
                 if (selected || pressed)
                 {
                     Color startColor;
@@ -3941,7 +4081,9 @@ namespace Inventory
                 bool isTopMenu = e.Item.Owner is MenuStrip;
                 if (isTopMenu)
                 {
-                    e.TextColor = Color.White;
+                    e.TextColor = e.Item.Name == "productUpdatedToolStripMenuItem"
+                        ? e.Item.ForeColor
+                        : Color.White;
                 }
                 else if (e.Item.Selected)
                 {

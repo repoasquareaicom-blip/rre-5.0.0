@@ -207,6 +207,9 @@
     </Compile>
     <Compile Include="ProductCloudSyncClient.cs" />
     <Compile Include="ProductCloudSyncResult.cs" />
+    <Compile Include="ProductUpdatedSyncClient.cs" />
+    <Compile Include="ProductUpdatedSyncModels.cs" />
+    <Compile Include="LocalProductMasterAcceptAllUpsert.cs" />
     <Compile Include="ProductMasterCloudQueue.cs" />
     <Compile Include="AccountReceivableReport\AccountReceivableDS.cs">
       <DependentUpon>AccountReceivableDS.xsd</DependentUpon>
@@ -890,6 +893,9 @@
       <DependentUpon>PriceUpload.cs</DependentUpon>
     </Compile>
     <Compile Include="Tool\ProductSyncQueue.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tool\ProductUpdatedForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Tool\RackUpload.cs">

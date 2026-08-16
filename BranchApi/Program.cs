@@ -119,6 +119,8 @@ app.MapPost("/api/getdata", async (HttpRequest request, IConfiguration configura
 
     try
     {
+        await EnsureProductSyncReadProceduresAsync(connectionString, dataRequest.QueryText.Trim());
+
         List<Dictionary<string, object?>> rows = await ExecuteStoredProcedureAsync(
             connectionString,
             dataRequest.QueryText.Trim(),
@@ -251,7 +253,137 @@ app.MapPost("/api/productmaster/upsert", async (HttpRequest request, IConfigurat
     }
 });
 
+app.MapPost("/api/productmaster/queue/ack-synced", async (HttpRequest request, IConfiguration configuration) =>
+{
+    string branchCode = GetBranchCode(configuration);
+    string connectionString = GetDefaultConnectionString(configuration);
+
+    if (!ValidateConfiguredHeaderKey(request, configuration, "ApiKey", "X-Api-Key"))
+    {
+        return Results.Json(new GenericApiResponse(false, branchCode, "Unauthorized."), statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        return Results.Json(new ProductQueueAckResponse(false, branchCode, null, null, null, "Branch database connection is not configured."), statusCode: StatusCodes.Status500InternalServerError);
+    }
+
+    ProductQueueAckRequest? ackRequest;
+    try
+    {
+        ackRequest = await JsonSerializer.DeserializeAsync<ProductQueueAckRequest>(
+            request.Body,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+    catch
+    {
+        return Results.Json(new ProductQueueAckResponse(false, branchCode, null, null, null, "Invalid JSON payload."), statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    if (ackRequest == null || ackRequest.QueueId <= 0 || string.IsNullOrWhiteSpace(ackRequest.ProductId) || string.IsNullOrWhiteSpace(ackRequest.TargetBranchCode))
+    {
+        return Results.Json(new ProductQueueAckResponse(false, branchCode, ackRequest?.QueueId, ackRequest?.ProductId, ackRequest?.TargetBranchCode, "queueId, productId, and targetBranchCode are required."), statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    try
+    {
+        ProductQueueAckResult result = await AcknowledgeProductQueueSyncedAsync(
+            connectionString,
+            ackRequest.QueueId,
+            ackRequest.ProductId.Trim(),
+            ackRequest.TargetBranchCode.Trim());
+
+        if (!result.Success)
+        {
+            return Results.Json(new ProductQueueAckResponse(false, branchCode, ackRequest.QueueId, ackRequest.ProductId.Trim(), ackRequest.TargetBranchCode.Trim(), result.Message), statusCode: result.StatusCode);
+        }
+
+        return Results.Json(new ProductQueueAckResponse(true, branchCode, ackRequest.QueueId, ackRequest.ProductId.Trim(), ackRequest.TargetBranchCode.Trim(), result.Message));
+    }
+    catch (SqlException ex)
+    {
+        return Results.Json(new ProductQueueAckResponse(false, branchCode, ackRequest.QueueId, ackRequest.ProductId.Trim(), ackRequest.TargetBranchCode.Trim(), SanitizeErrorMessage(ex)), statusCode: StatusCodes.Status500InternalServerError);
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new ProductQueueAckResponse(false, branchCode, ackRequest.QueueId, ackRequest.ProductId.Trim(), ackRequest.TargetBranchCode.Trim(), SanitizeErrorMessage(ex)), statusCode: StatusCodes.Status500InternalServerError);
+    }
+});
+
 app.Run();
+
+static async Task EnsureProductSyncReadProceduresAsync(string connectionString, string procedureName)
+{
+    string normalized = procedureName.Trim();
+    if (!string.Equals(normalized, "dbo.sp_product_sync_pending_by_branch", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(normalized, "sp_product_sync_pending_by_branch", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(normalized, "dbo.sp_product_sync_full_product", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(normalized, "sp_product_sync_full_product", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    await using SqlConnection conn = new SqlConnection(connectionString);
+    await conn.OpenAsync();
+
+    await using (SqlCommand cmd = conn.CreateCommand())
+    {
+        cmd.CommandText = @"
+CREATE OR ALTER PROCEDURE dbo.sp_product_sync_pending_by_branch
+    @TargetBranchCode varchar(30)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @mrpExpression nvarchar(200) = CASE WHEN COL_LENGTH('dbo.ProductMaster', 'MRP') IS NULL THEN 'CAST(NULL AS decimal(18,2))' ELSE 'p.[MRP]' END;
+    DECLARE @gstExpression nvarchar(200) =
+        CASE
+            WHEN COL_LENGTH('dbo.ProductMaster', 'GST') IS NOT NULL THEN 'p.[GST]'
+            WHEN COL_LENGTH('dbo.ProductMaster', 'Tax') IS NOT NULL THEN 'p.[Tax]'
+            WHEN COL_LENGTH('dbo.ProductMaster', 'SGST') IS NOT NULL THEN 'p.[SGST]'
+            ELSE 'CAST(NULL AS varchar(50))'
+        END;
+
+    DECLARE @sql nvarchar(max) = N'
+SELECT q.QueueId,
+       q.ProductId,
+       COALESCE(NULLIF(CONVERT(varchar(255), p.DisplayName), ''''), CONVERT(varchar(255), p.ItemName), q.ItemName) AS DisplayName,
+       p.SalesPrice,
+       ' + @mrpExpression + N' AS MRP,
+       ' + @gstExpression + N' AS GST,
+       q.Status,
+       q.ChangeType,
+       q.AttemptCount,
+       q.LastError,
+       q.LastTriedOn,
+       q.TargetBranchCode
+FROM dbo.ProductMasterCloudQueue q
+INNER JOIN dbo.ProductMaster p ON CONVERT(varchar(50), p.id) = q.ProductId
+WHERE q.TargetBranchCode = @TargetBranchCode
+  AND q.Status IN (''Pending'', ''Failed'')
+ORDER BY q.ModifiedOn DESC, q.QueueId DESC';
+
+    EXEC sp_executesql @sql, N'@TargetBranchCode varchar(30)', @TargetBranchCode;
+END;";
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    await using (SqlCommand cmd = conn.CreateCommand())
+    {
+        cmd.CommandText = @"
+CREATE OR ALTER PROCEDURE dbo.sp_product_sync_full_product
+    @ProductId varchar(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM dbo.ProductMaster
+    WHERE CONVERT(varchar(50), id) = @ProductId;
+END;";
+        await cmd.ExecuteNonQueryAsync();
+    }
+}
 
 static async Task<List<Dictionary<string, object?>>> ExecuteStoredProcedureAsync(
     string connectionString,
@@ -325,6 +457,88 @@ static async Task<AvailableStockResponse?> GetAvailableStockAsync(
     }
 
     return null;
+}
+
+static async Task<ProductQueueAckResult> AcknowledgeProductQueueSyncedAsync(
+    string connectionString,
+    int queueId,
+    string productId,
+    string targetBranchCode)
+{
+    await using SqlConnection conn = new SqlConnection(connectionString);
+    await conn.OpenAsync();
+
+    await using SqlTransaction transaction = (SqlTransaction)await conn.BeginTransactionAsync();
+    try
+    {
+        await using (SqlCommand select = conn.CreateCommand())
+        {
+            select.Transaction = transaction;
+            select.CommandText = @"
+SELECT ProductId, TargetBranchCode, Status
+FROM dbo.ProductMasterCloudQueue WITH (UPDLOCK, HOLDLOCK)
+WHERE QueueId = @QueueId";
+            select.Parameters.Add("@QueueId", SqlDbType.Int).Value = queueId;
+
+            await using SqlDataReader reader = await select.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+            {
+                await transaction.RollbackAsync();
+                return new ProductQueueAckResult(false, StatusCodes.Status404NotFound, "QueueId was not found.");
+            }
+
+            string existingProductId = Convert.ToString(reader["ProductId"])?.Trim() ?? string.Empty;
+            string existingTargetBranchCode = Convert.ToString(reader["TargetBranchCode"])?.Trim() ?? string.Empty;
+            string existingStatus = Convert.ToString(reader["Status"])?.Trim() ?? string.Empty;
+
+            if (!string.Equals(existingProductId, productId, StringComparison.OrdinalIgnoreCase))
+            {
+                await transaction.RollbackAsync();
+                return new ProductQueueAckResult(false, StatusCodes.Status409Conflict, "ProductId does not match the queue row.");
+            }
+
+            if (!string.Equals(existingTargetBranchCode, targetBranchCode, StringComparison.Ordinal))
+            {
+                await transaction.RollbackAsync();
+                return new ProductQueueAckResult(false, StatusCodes.Status409Conflict, "TargetBranchCode does not match the queue row.");
+            }
+
+            if (string.Equals(existingStatus, "Synced", StringComparison.OrdinalIgnoreCase))
+            {
+                await transaction.CommitAsync();
+                return new ProductQueueAckResult(true, StatusCodes.Status200OK, "Queue row was already synced.");
+            }
+        }
+
+        await using (SqlCommand update = conn.CreateCommand())
+        {
+            update.Transaction = transaction;
+            update.CommandText = @"
+UPDATE dbo.ProductMasterCloudQueue
+SET Status = 'Synced',
+    SyncedOn = GETDATE(),
+    LastTriedOn = GETDATE(),
+    LastError = NULL
+WHERE QueueId = @QueueId";
+            update.Parameters.Add("@QueueId", SqlDbType.Int).Value = queueId;
+            await update.ExecuteNonQueryAsync();
+        }
+
+        await transaction.CommitAsync();
+        return new ProductQueueAckResult(true, StatusCodes.Status200OK, "Queue row marked as synced.");
+    }
+    catch
+    {
+        try
+        {
+            await transaction.RollbackAsync();
+        }
+        catch
+        {
+        }
+
+        throw;
+    }
 }
 
 static async Task<DeploymentExecutionResult> ExecuteDeploymentScriptAsync(
@@ -977,6 +1191,15 @@ sealed class ProductSyncRequest
     public List<Dictionary<string, object?>>? Records { get; set; }
 }
 
+sealed class ProductQueueAckRequest
+{
+    public int QueueId { get; set; }
+
+    public string? ProductId { get; set; }
+
+    public string? TargetBranchCode { get; set; }
+}
+
 sealed class ReportDataRequest
 {
     public string? QueryText { get; set; }
@@ -1009,6 +1232,10 @@ sealed class DeploymentConflictException : Exception
 }
 
 sealed record ProductUpsertResponse(bool Success, string BranchCode, object? ProductId, string Message);
+
+sealed record ProductQueueAckResponse(bool Success, string BranchCode, int? QueueId, string? ProductId, string? TargetBranchCode, string Message);
+
+sealed record ProductQueueAckResult(bool Success, int StatusCode, string Message);
 
 sealed record AvailableStockResponse(string BranchCode, string? ReturnCode, string? Message, int? ProductId, decimal? AvailableStock);
 

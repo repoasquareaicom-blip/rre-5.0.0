@@ -214,7 +214,7 @@ public sealed class TallyExportService
                 summary.InvoicesExported = selected.Count;
             }
 
-            WriteLogs(summary, package, selected);
+            WriteLogs(summary, package, selected, options.CompanySettings ?? TallyCompanySettings.Load());
             summary.CustomersExported = package.Customers.Count;
             summary.ProductsExported = package.Products.Count;
             summary.Warnings = package.Warnings.Count;
@@ -255,7 +255,7 @@ public sealed class TallyExportService
         foreach (SalesExportInvoice invoice in package.Invoices)
         {
             if (invoice.Items.Count == 0) continue;
-            if (options.IncludeCustomerMasters && customers.Add(invoice.CustomerLedgerName))
+            if (customers.Add(invoice.CustomerLedgerName))
             {
                 CustomerMasterExport customer = new CustomerMasterExport
                 {
@@ -280,12 +280,12 @@ public sealed class TallyExportService
             {
                 if (units.Add(item.Uom)) package.Units.Add(new UnitMasterExport { Name = item.Uom, DecimalPlaces = TallyNameHelper.GetUnitDecimalPlaces(item.Uom) });
                 if (groups.Add(item.StockGroupName)) package.StockGroups.Add(new StockGroupMasterExport { Name = item.StockGroupName });
-                if (options.IncludeProductMasters && products.Add(item.ProductTallyName))
+                if (products.Add(item.ProductTallyName))
                 {
                     package.Products.Add(new ProductMasterExport { Name = item.ProductTallyName, BaseUnit = item.Uom, StockGroupName = item.StockGroupName, Hsn = item.Hsn, GstRate = item.GstRate });
                 }
 
-                if (options.IncludeSalesLedgers && ledgers.Add(item.SalesLedgerName))
+                if (ledgers.Add(item.SalesLedgerName))
                 {
                     package.Ledgers.Add(new LedgerMasterExport { Name = item.SalesLedgerName, Parent = "Sales Accounts" });
                 }
@@ -296,12 +296,9 @@ public sealed class TallyExportService
             }
         }
 
-        if (options.IncludeGstLedgers)
-        {
-            if (needsCgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.CGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "Central Tax" });
-            if (needsSgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.SGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "State Tax" });
-            if (needsIgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.IGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "Integrated Tax" });
-        }
+        if (needsCgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.CGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "Central Tax" });
+        if (needsSgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.SGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "State Tax" });
+        if (needsIgst) package.Ledgers.Add(new LedgerMasterExport { Name = settings.IGSTLedgerName, Parent = "Duties & Taxes", TaxType = "GST", DutyHead = "Integrated Tax" });
         if (needsRoundOff) package.Ledgers.Add(new LedgerMasterExport { Name = settings.RoundOffLedgerName, Parent = "Indirect Expenses" });
         if (needsDiscount) package.Ledgers.Add(new LedgerMasterExport { Name = settings.DiscountLedgerName, Parent = "Indirect Expenses" });
         if (needsOtherCharges) package.Ledgers.Add(new LedgerMasterExport { Name = settings.OtherChargesLedgerName, Parent = "Indirect Incomes" });
@@ -334,7 +331,7 @@ public sealed class TallyExportService
         return Path.Combine(folder, timed);
     }
 
-    private static void WriteLogs(ExportSummary summary, TallyExportPackage package, List<SalesExportInvoice> selected)
+    private static void WriteLogs(ExportSummary summary, TallyExportPackage package, List<SalesExportInvoice> selected, TallyCompanySettings settings)
     {
         StringBuilder csv = new StringBuilder();
         csv.AppendLine("Type,Message");
@@ -347,9 +344,19 @@ public sealed class TallyExportService
         log.AppendLine("Generated: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
         log.AppendLine("Invoices selected: " + summary.InvoicesSelected);
         log.AppendLine("Invoices exported: " + selected.Count);
+        log.AppendLine("Sales XML voucher dates:");
+        foreach (SalesExportInvoice invoice in selected)
+        {
+            log.AppendLine("  " + invoice.DivisionName + " " + invoice.SalesId + " -> " + FormatVoucherDate(settings));
+        }
         log.AppendLine("Warnings: " + package.Warnings.Count);
         log.AppendLine("Errors: " + package.Errors.Count);
         File.WriteAllText(summary.LogPath, log.ToString(), Encoding.UTF8);
+    }
+
+    private static string FormatVoucherDate(TallyCompanySettings settings)
+    {
+        return settings.ExportVoucherDate;
     }
 
     private static void AddAddress(CustomerMasterExport customer, string text)

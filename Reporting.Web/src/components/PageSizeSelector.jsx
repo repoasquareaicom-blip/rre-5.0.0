@@ -1,6 +1,6 @@
-const pageSizes = [10, 25, 50, 100]
+const defaultPageSizes = [10, 25, 50, 100]
 
-function PageSizeSelector({ value, onChange }) {
+function PageSizeSelector({ value, onChange, pageSizes = defaultPageSizes }) {
   return (
     <div className="field-group size-field">
       <label htmlFor="page-size">Page Size</label>

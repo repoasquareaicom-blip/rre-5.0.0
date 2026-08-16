@@ -14,7 +14,7 @@ SELECT
     S.sino,
     S.Salesid,
     S.Referenceid,
-    COALESCE(S.EnteredOn, S.Updatedon) AS TransactionDate,
+    {2} AS TransactionDate,
     S.Customerid,
     COALESCE(NULLIF(C.Name, ''), NULLIF(S.customername, ''), 'CASH CUSTOMER') AS CustomerName,
     COALESCE(NULLIF(C.Address1, ''), NULLIF(S.Address1, '')) AS CustomerAddress1,
@@ -57,11 +57,11 @@ LEFT JOIN ProductMaster PM
     ON PM.id = TRY_CONVERT(int, SD.Productid)
 LEFT JOIN UOM U
     ON U.Uomid = TRY_CONVERT(int, PM.UOM)
-WHERE COALESCE(S.EnteredOn, S.Updatedon) >= @FromDate
-  AND COALESCE(S.EnteredOn, S.Updatedon) < DATEADD(DAY, 1, @ToDate)
+WHERE {2} >= @FromDate
+  AND {2} < DATEADD(DAY, 1, @ToDate)
   AND (@BillNumber = '' OR S.Salesid LIKE '%' + @BillNumber + '%')
   AND (PM.id IS NULL OR (ISNULL(PM.IsArchived, 0) = 0 AND ISNULL(PM.IsDeleted, 'No') NOT IN ('Yes', '1', 'True')))
-ORDER BY COALESCE(S.EnteredOn, S.Updatedon), S.Salesid, PM.ItemName;";
+ORDER BY {2}, S.Salesid, PM.ItemName;";
 
     public Task<List<SalesExportRow>> LoadSalesRowsAsync(DateTime fromDate, DateTime toDate, string billNumber)
     {
@@ -80,7 +80,7 @@ ORDER BY COALESCE(S.EnteredOn, S.Updatedon), S.Salesid, PM.ItemName;";
 
                 foreach (SalesDivisionConfig division in SalesDivisionConfig.All)
                 {
-                    using (SqlCommand command = new SqlCommand(BuildSalesExportSql(division), connection))
+                    using (SqlCommand command = new SqlCommand(BuildSalesExportSql(connection, division), connection))
                     {
                         command.CommandType = CommandType.Text;
                         command.Parameters.Add("@DivisionKey", SqlDbType.VarChar, 40).Value = division.Key;
@@ -147,9 +147,49 @@ ORDER BY COALESCE(S.EnteredOn, S.Updatedon), S.Salesid, PM.ItemName;";
         });
     }
 
-    private static string BuildSalesExportSql(SalesDivisionConfig division)
+    private static string BuildSalesExportSql(SqlConnection connection, SalesDivisionConfig division)
     {
-        return string.Format(SalesExportSqlTemplate, QuoteName(division.HeaderTable), QuoteName(division.DetailTable));
+        return string.Format(SalesExportSqlTemplate, QuoteName(division.HeaderTable), QuoteName(division.DetailTable), GetSalesDateExpression(connection, division.HeaderTable));
+    }
+
+    private static string GetSalesDateExpression(SqlConnection connection, string tableName)
+    {
+        List<string> dateColumns = new List<string>();
+        foreach (string column in new[] { "date", "Date", "BillDate", "SalesDate", "InvoiceDate", "TransactionDate", "EnteredOn", "Updatedon" })
+        {
+            if (ColumnExists(connection, tableName, column))
+            {
+                dateColumns.Add("S." + QuoteColumnName(column));
+            }
+        }
+
+        if (dateColumns.Count == 0)
+        {
+            throw new InvalidOperationException("No usable sales date column found in table " + tableName + ".");
+        }
+
+        return "COALESCE(" + string.Join(", ", dateColumns.ToArray()) + ")";
+    }
+
+    private static string QuoteColumnName(string columnName)
+    {
+        if (string.IsNullOrWhiteSpace(columnName) || columnName.Any(ch => !(char.IsLetterOrDigit(ch) || ch == '_')))
+        {
+            throw new InvalidOperationException("Unsafe column name: " + columnName);
+        }
+
+        return "[" + columnName.Replace("]", "]]") + "]";
+    }
+
+    private static bool ColumnExists(SqlConnection connection, string tableName, string columnName)
+    {
+        using (SqlCommand command = new SqlCommand("SELECT 1 FROM sys.columns c INNER JOIN sys.tables t ON t.object_id = c.object_id WHERE t.name = @TableName AND c.name = @ColumnName", connection))
+        {
+            command.Parameters.Add("@TableName", SqlDbType.NVarChar, 128).Value = tableName;
+            command.Parameters.Add("@ColumnName", SqlDbType.NVarChar, 128).Value = columnName;
+            object? result = command.ExecuteScalar();
+            return result != null && result != DBNull.Value;
+        }
     }
 
     private static string QuoteName(string tableName)

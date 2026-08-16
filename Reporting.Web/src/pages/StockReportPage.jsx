@@ -191,7 +191,7 @@ function StockReportPage({ selectedBranchId, onBranchChange }) {
   const reportTitle = isCompareMode ? 'Compare Stock in All Branches' : 'Stock Report'
   const loadingLabel = isCompareMode ? 'Preparing branch comparison' : `Loading ${selectedBranch.label} stock`
   return (
-    <section className="report-page" style={branchStyle}>
+    <section className="report-page stock-report-page" style={branchStyle}>
       <div className="report-sticky-zone">
         <div className="report-title-row">
           <div>
@@ -202,8 +202,7 @@ function StockReportPage({ selectedBranchId, onBranchChange }) {
             </div>
           </div>
           <div className="report-meta">
-            <span className="branch-badge">{isCompareMode ? 'All Branches' : selectedBranch.id}</span>
-            <span>As On: {getTodayLabel()}</span>
+            <span>{getTodayLabel()}</span>
           </div>
         </div>
 

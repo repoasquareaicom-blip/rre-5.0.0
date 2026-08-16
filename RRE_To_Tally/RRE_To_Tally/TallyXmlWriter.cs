@@ -1,5 +1,7 @@
 using System.Text;
+using System.Globalization;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace RRE_To_Tally;
 
@@ -16,21 +18,7 @@ public sealed class TallyXmlWriter
     public void WriteMastersXml(string finalPath, TallyExportPackage package, TallyExportOptions options)
     {
         TallyCompanySettings settings = options.CompanySettings ?? TallyCompanySettings.Load();
-        WriteValidated(finalPath, delegate(XmlWriter writer)
-        {
-            WriteMastersEnvelope(writer, delegate
-            {
-                foreach (AccountGroupDefinition group in GetRequiredAccountGroups(package, settings)) WriteAccountGroup(writer, group);
-                foreach (LedgerMasterExport ledger in package.Ledgers.Where(l => string.Equals(l.Parent, "Sales Accounts", StringComparison.OrdinalIgnoreCase))) WriteLedger(writer, ledger, settings);
-                foreach (LedgerMasterExport ledger in package.Ledgers.Where(l => string.Equals(l.Parent, "Duties & Taxes", StringComparison.OrdinalIgnoreCase))) WriteLedger(writer, ledger, settings);
-                foreach (LedgerMasterExport ledger in package.Ledgers.Where(l => string.Equals(l.Name, settings.RoundOffLedgerName, StringComparison.OrdinalIgnoreCase))) WriteLedger(writer, ledger, settings);
-                foreach (LedgerMasterExport ledger in package.Ledgers.Where(l => !string.Equals(l.Parent, "Sales Accounts", StringComparison.OrdinalIgnoreCase) && !string.Equals(l.Parent, "Duties & Taxes", StringComparison.OrdinalIgnoreCase) && !string.Equals(l.Name, settings.RoundOffLedgerName, StringComparison.OrdinalIgnoreCase))) WriteLedger(writer, ledger, settings);
-                if (options.IncludeCustomerMasters) foreach (CustomerMasterExport customer in package.Customers) WriteCustomerLedger(writer, customer, settings);
-                foreach (UnitMasterExport unit in package.Units) WriteUnit(writer, unit, settings);
-                foreach (StockGroupMasterExport group in package.StockGroups) WriteStockGroup(writer, group, settings);
-                if (options.IncludeProductMasters) foreach (ProductMasterExport product in package.Products) WriteStockItem(writer, product, settings);
-            });
-        });
+        new TallyMinimalMasterXmlWriter().WriteMastersXml(finalPath, package, settings);
     }
 
     public void WriteSalesXml(string finalPath, IList<SalesExportInvoice> invoices, TallyExportOptions options)
@@ -117,7 +105,7 @@ public sealed class TallyXmlWriter
         writer.WriteElementString("ISINVDETAILSENABLE", "No");
         WriteEmptyLists(writer, "SERVICETAXDETAILS.LIST", "VATDETAILS.LIST", "SALESTAXCESSDETAILS.LIST", "GSTDETAILS.LIST");
         WriteLanguageName(writer, group.Name);
-        WriteEmptyLists(writer, "XBRLDETAIL.LIST", "AUDITDETAILS.LIST", "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "TCSCATEGORYDETAILS.LIST", "TDSCATEGORYDETAILS.LIST", "GSTCLASSFNIGSTRATES.LIST", "EXTARIFFDUTYHEADDETAILS.LIST");
+        WriteEmptyLists(writer, "XBRLDETAIL.LIST", "AUDITDETAILS.LIST", "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "GSTCLASSFNIGSTRATES.LIST", "EXTARIFFDUTYHEADDETAILS.LIST");
         writer.WriteEndElement();
         writer.WriteEndElement();
     }
@@ -176,7 +164,7 @@ public sealed class TallyXmlWriter
         writer.WriteElementString("APPLICABLEFROM", settings.MasterApplicableFrom);
         writer.WriteEndElement();
         WriteLanguageName(writer, group.Name);
-        WriteEmptyLists(writer, "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "TCSCATEGORYDETAILS.LIST", "TDSCATEGORYDETAILS.LIST", "GSTCLASSFNIGSTRATES.LIST", "EXTARIFFDUTYHEADDETAILS.LIST", "TEMPGSTITEMSLABRATES.LIST");
+        WriteEmptyLists(writer, "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "GSTCLASSFNIGSTRATES.LIST", "EXTARIFFDUTYHEADDETAILS.LIST", "TEMPGSTITEMSLABRATES.LIST");
         writer.WriteEndElement();
         writer.WriteEndElement();
     }
@@ -211,18 +199,13 @@ public sealed class TallyXmlWriter
         writer.WriteAttributeString("RESERVEDNAME", "");
         WriteOldAudit(writer);
         writer.WriteElementString("PARENT", item.StockGroupName);
-        writer.WriteElementString("CATEGORY", "Not Applicable");
-        writer.WriteElementString("GSTAPPLICABLE", item.GstRate > 0m ? "Applicable" : "Not Applicable");
-        writer.WriteElementString("TAXCLASSIFICATIONNAME", "Not Applicable");
+        writer.WriteElementString("GSTAPPLICABLE", "Applicable");
         writer.WriteElementString("GSTTYPEOFSUPPLY", "Goods");
-        writer.WriteElementString("EXCISEAPPLICABILITY", "Not Applicable");
         writer.WriteElementString("SALESTAXCESSAPPLICABLE", "");
         writer.WriteElementString("VATAPPLICABLE", "Applicable");
         writer.WriteElementString("COSTINGMETHOD", "Avg. Cost");
         writer.WriteElementString("VALUATIONMETHOD", "Avg. Price");
         writer.WriteElementString("BASEUNITS", item.BaseUnit);
-        writer.WriteElementString("ADDITIONALUNITS", "Not Applicable");
-        writer.WriteElementString("EXCISEITEMCLASSIFICATION", "Not Applicable");
         writer.WriteElementString("VATBASEUNIT", item.BaseUnit);
         WriteStockItemFlags(writer);
         writer.WriteElementString("DENOMINATOR", "1");
@@ -237,7 +220,7 @@ public sealed class TallyXmlWriter
         WriteStockItemGstDetails(writer, item, settings);
         WriteStockItemHsnDetails(writer, item, settings);
         WriteLanguageName(writer, item.Name);
-        WriteEmptyLists(writer, "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "TCSCATEGORYDETAILS.LIST", "TDSCATEGORYDETAILS.LIST", "EXCLUDEDTAXATIONS.LIST", "OLDAUDITENTRIES.LIST", "ACCOUNTAUDITENTRIES.LIST", "AUDITENTRIES.LIST", "OLDMRPDETAILS.LIST", "VATCLASSIFICATIONDETAILS.LIST", "MRPDETAILS.LIST", "REPORTINGUOMDETAILS.LIST", "COMPONENTLIST.LIST", "ADDITIONALLEDGERS.LIST", "SALESLIST.LIST", "PURCHASELIST.LIST", "FULLPRICELIST.LIST");
+        WriteEmptyLists(writer, "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "EXCLUDEDTAXATIONS.LIST", "OLDAUDITENTRIES.LIST", "ACCOUNTAUDITENTRIES.LIST", "AUDITENTRIES.LIST", "OLDMRPDETAILS.LIST", "MRPDETAILS.LIST", "REPORTINGUOMDETAILS.LIST", "COMPONENTLIST.LIST", "ADDITIONALLEDGERS.LIST", "SALESLIST.LIST", "PURCHASELIST.LIST", "FULLPRICELIST.LIST");
         WriteStockItemBatchAllocation(writer, item, settings);
         WriteEmptyLists(writer, "TRADEREXCISEDUTIES.LIST", "STANDARDCOSTLIST.LIST", "STANDARDPRICELIST.LIST", "EXCISEITEMGODOWN.LIST", "MULTICOMPONENTLIST.LIST", "LBTDETAILS.LIST", "PRICELEVELLIST.LIST", "GSTCLASSFNIGSTRATES.LIST", "EXTARIFFDUTYHEADDETAILS.LIST", "TEMPGSTITEMSLABRATES.LIST");
         writer.WriteEndElement();
@@ -260,18 +243,9 @@ public sealed class TallyXmlWriter
         writer.WriteElementString("PRIORSTATENAME", "\"" + name + "\"");
         writer.WriteElementString("VATDEALERTYPE", gstRegistrationType);
         writer.WriteElementString("PARENT", parent);
-        writer.WriteElementString("TAXCLASSIFICATIONNAME", "Not Applicable");
         writer.WriteElementString("TAXTYPE", "Others");
         writer.WriteElementString("COUNTRYOFRESIDENCE", "India");
         writer.WriteElementString("OPENINGBALANCE", balance);
-        writer.WriteElementString("GSTTYPE", "Not Applicable");
-        writer.WriteElementString("APPROPRIATEFOR", "Not Applicable");
-        writer.WriteElementString("GSTNATUREOFSUPPLY", "Not Applicable");
-        writer.WriteElementString("SERVICECATEGORY", "Not Applicable");
-        writer.WriteElementString("EXCISELEDGERCLASSIFICATION", "Not Applicable");
-        writer.WriteElementString("EXCISEDUTYTYPE", "Not Applicable");
-        writer.WriteElementString("EXCISENATUREOFPURCHASE", "Not Applicable");
-        writer.WriteElementString("LEDGERFBTCATEGORY", "Not Applicable");
         WriteCustomerLedgerFlags(writer);
         writer.WriteElementString("SORTPOSITION", "1000");
         WriteEmptyLists(writer, "SERVICETAXDETAILS.LIST", "LBTREGNDETAILS.LIST", "VATDETAILS.LIST", "SALESTAXCESSDETAILS.LIST", "GSTDETAILS.LIST", "HSNDETAILS.LIST");
@@ -280,7 +254,7 @@ public sealed class TallyXmlWriter
         writer.WriteElementString("GSTREGISTRATIONTYPE", gstRegistrationType);
         writer.WriteElementString("PLACEOFSUPPLY", state);
         writer.WriteElementString("GSTIN", gstin);
-        WriteEmptyLists(writer, "XBRLDETAIL.LIST", "AUDITDETAILS.LIST", "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "TCSCATEGORYDETAILS.LIST", "TDSCATEGORYDETAILS.LIST", "SLABPERIOD.LIST", "GRATUITYPERIOD.LIST", "ADDITIONALCOMPUTATIONS.LIST", "EXCISEJURISDICTIONDETAILS.LIST", "EXCLUDEDTAXATIONS.LIST", "BANKALLOCATIONS.LIST", "PAYMENTDETAILS.LIST", "BANKEXPORTFORMATS.LIST", "BILLALLOCATIONS.LIST", "INTERESTCOLLECTION.LIST", "LEDGERCLOSINGVALUES.LIST", "LEDGERAUDITCLASS.LIST", "OLDAUDITENTRIES.LIST", "TDSEXEMPTIONRULES.LIST", "DEDUCTINSAMEVCHRULES.LIST", "LOWERDEDUCTION.LIST", "STXABATEMENTDETAILS.LIST", "LEDMULTIADDRESSLIST.LIST", "STXTAXDETAILS.LIST", "CHEQUERANGE.LIST", "DEFAULTVCHCHEQUEDETAILS.LIST", "ACCOUNTAUDITENTRIES.LIST", "AUDITENTRIES.LIST", "BRSIMPORTEDINFO.LIST", "AUTOBRSCONFIGS.LIST", "BANKURENTRIES.LIST", "DEFAULTCHEQUEDETAILS.LIST", "DEFAULTOPENINGCHEQUEDETAILS.LIST", "CANCELLEDPAYALLOCATIONS.LIST", "ECHEQUEPRINTLOCATION.LIST", "ECHEQUEPAYABLELOCATION.LIST", "EDDPRINTLOCATION.LIST", "EDDPAYABLELOCATION.LIST", "AVAILABLETRANSACTIONTYPES.LIST", "LEDPAYINSCONFIGS.LIST", "TYPECODEDETAILS.LIST", "FIELDVALIDATIONDETAILS.LIST", "INPUTCRALLOCS.LIST", "TCSMETHODOFCALCULATION.LIST");
+        WriteEmptyLists(writer, "XBRLDETAIL.LIST", "AUDITDETAILS.LIST", "SCHVIDETAILS.LIST", "EXCISETARIFFDETAILS.LIST", "SLABPERIOD.LIST", "GRATUITYPERIOD.LIST", "ADDITIONALCOMPUTATIONS.LIST", "EXCISEJURISDICTIONDETAILS.LIST", "EXCLUDEDTAXATIONS.LIST", "BANKALLOCATIONS.LIST", "PAYMENTDETAILS.LIST", "BANKEXPORTFORMATS.LIST", "BILLALLOCATIONS.LIST", "INTERESTCOLLECTION.LIST", "LEDGERCLOSINGVALUES.LIST", "LEDGERAUDITCLASS.LIST", "OLDAUDITENTRIES.LIST", "TDSEXEMPTIONRULES.LIST", "DEDUCTINSAMEVCHRULES.LIST", "LOWERDEDUCTION.LIST", "STXABATEMENTDETAILS.LIST", "LEDMULTIADDRESSLIST.LIST", "STXTAXDETAILS.LIST", "CHEQUERANGE.LIST", "DEFAULTVCHCHEQUEDETAILS.LIST", "ACCOUNTAUDITENTRIES.LIST", "AUDITENTRIES.LIST", "BRSIMPORTEDINFO.LIST", "AUTOBRSCONFIGS.LIST", "BANKURENTRIES.LIST", "DEFAULTCHEQUEDETAILS.LIST", "DEFAULTOPENINGCHEQUEDETAILS.LIST", "CANCELLEDPAYALLOCATIONS.LIST", "ECHEQUEPRINTLOCATION.LIST", "ECHEQUEPAYABLELOCATION.LIST", "EDDPRINTLOCATION.LIST", "EDDPAYABLELOCATION.LIST", "AVAILABLETRANSACTIONTYPES.LIST", "LEDPAYINSCONFIGS.LIST", "TYPECODEDETAILS.LIST", "FIELDVALIDATIONDETAILS.LIST", "INPUTCRALLOCS.LIST", "TCSMETHODOFCALCULATION.LIST");
         writer.WriteStartElement("LEDGSTREGDETAILS.LIST");
         writer.WriteElementString("APPLICABLEFROM", applicableFrom);
         writer.WriteElementString("GSTREGISTRATIONTYPE", gstRegistrationType);
@@ -335,8 +309,6 @@ public sealed class TallyXmlWriter
         WriteMasterItemRateDetail(writer, "CGST", item.GstRate / 2m, true);
         WriteMasterItemRateDetail(writer, "SGST/UTGST", item.GstRate / 2m, true);
         WriteMasterItemRateDetail(writer, "IGST", item.GstRate, true);
-        WriteMasterItemRateDetail(writer, "Cess", 0m, false);
-        WriteMasterItemRateDetail(writer, "State Cess", 0m, true);
         WriteEmptyList(writer, "GSTSLABRATES.LIST");
         writer.WriteEndElement();
         WriteEmptyList(writer, "TEMPGSTITEMSLABRATES.LIST");
@@ -358,8 +330,6 @@ public sealed class TallyXmlWriter
         WriteStockGroupRateDetail(writer, "CGST", true);
         WriteStockGroupRateDetail(writer, "SGST/UTGST", true);
         WriteStockGroupRateDetail(writer, "IGST", true);
-        WriteStockGroupRateDetail(writer, "Cess", false);
-        WriteStockGroupRateDetail(writer, "State Cess", true);
         WriteEmptyList(writer, "GSTSLABRATES.LIST");
         writer.WriteEndElement();
         WriteEmptyList(writer, "TEMPGSTITEMSLABRATES.LIST");
@@ -399,16 +369,8 @@ public sealed class TallyXmlWriter
     {
         writer.WriteStartElement("RATEDETAILS.LIST");
         writer.WriteElementString("GSTRATEDUTYHEAD", dutyHead);
-        if (dutyHead == "IGST" && basedOnValue)
-        {
-            writer.WriteElementString("GSTRATE", TallyNumericHelper.FormatGstRate(rate));
-            writer.WriteElementString("GSTRATEVALUATIONTYPE", "Based on Value");
-        }
-        else
-        {
-            writer.WriteElementString("GSTRATEVALUATIONTYPE", basedOnValue ? "Based on Value" : "Not Applicable");
-            if (basedOnValue) writer.WriteElementString("GSTRATE", TallyNumericHelper.FormatGstRate(rate));
-        }
+        writer.WriteElementString("GSTRATEVALUATIONTYPE", "Based on Value");
+        writer.WriteElementString("GSTRATE", TallyNumericHelper.FormatGstRate(rate));
         writer.WriteEndElement();
     }
 
@@ -561,6 +523,11 @@ public sealed class TallyXmlWriter
 
     private static void WriteValidated(string finalPath, Action<XmlWriter> write)
     {
+        WriteValidated(finalPath, write, null);
+    }
+
+    private static void WriteValidated(string finalPath, Action<XmlWriter> write, Action<string>? validate)
+    {
         string tempPath = finalPath + ".tmp";
         if (File.Exists(tempPath)) File.Delete(tempPath);
         using (XmlWriter writer = XmlWriter.Create(tempPath, Settings))
@@ -575,8 +542,81 @@ public sealed class TallyXmlWriter
             }
         }
 
+        validate?.Invoke(tempPath);
+
         if (File.Exists(finalPath)) throw new IOException("Export file already exists: " + finalPath);
         File.Move(tempPath, finalPath);
+    }
+
+    private static void ValidateMastersXml(string path)
+    {
+        string xml = File.ReadAllText(path);
+        int notApplicableCount = CountOccurrences(xml, ">Not Applicable<");
+        if (notApplicableCount != 0)
+        {
+            throw new InvalidOperationException("Masters XML validation failed: found " + notApplicableCount.ToString(CultureInfo.InvariantCulture) + " occurrence(s) of >Not Applicable<.");
+        }
+
+        string[] forbiddenReferenceTokens =
+        {
+            "<CATEGORY",
+            "</CATEGORY",
+            "STOCKCATEGORY",
+            "TAXCLASSIFICATION",
+            "TCSCATEGORYDETAILS",
+            "TDSCATEGORYDETAILS",
+            "VATCLASSIFICATIONDETAILS"
+        };
+        foreach (string token in forbiddenReferenceTokens)
+        {
+            int count = CountOccurrences(xml, token);
+            if (count != 0)
+            {
+                throw new InvalidOperationException("Masters XML validation failed: found " + count.ToString(CultureInfo.InvariantCulture) + " forbidden optional reference token(s): " + token + ".");
+            }
+        }
+
+        XDocument document = XDocument.Load(path);
+        foreach (XElement stockItem in document.Descendants("STOCKITEM"))
+        {
+            List<string> dutyHeads = stockItem.Descendants("RATEDETAILS.LIST")
+                .Select(e => ((string?)e.Element("GSTRATEDUTYHEAD") ?? "").Trim())
+                .Where(v => v.Length > 0)
+                .ToList();
+
+            string itemName = ((string?)stockItem.Attribute("NAME") ?? "").Trim();
+            if (dutyHeads.Any(v => string.Equals(v, "Cess", StringComparison.OrdinalIgnoreCase) || string.Equals(v, "State Cess", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("Masters XML validation failed: stock item '" + itemName + "' contains Cess or State Cess rate details with no configured cess rate.");
+            }
+
+            string[] expected = { "CGST", "SGST/UTGST", "IGST" };
+            foreach (string dutyHead in expected)
+            {
+                if (dutyHeads.Count(v => string.Equals(v, dutyHead, StringComparison.OrdinalIgnoreCase)) != 1)
+                {
+                    throw new InvalidOperationException("Masters XML validation failed: stock item '" + itemName + "' must contain exactly one " + dutyHead + " rate detail.");
+                }
+            }
+
+            if (dutyHeads.Count != expected.Length)
+            {
+                throw new InvalidOperationException("Masters XML validation failed: stock item '" + itemName + "' contains unexpected GST rate detail entries.");
+            }
+        }
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        int count = 0;
+        int index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+
+        return count;
     }
 }
 

@@ -3,10 +3,25 @@ import './App.css'
 import { isLoggedIn, logout } from './services/auth'
 import LoginPage from './pages/LoginPage'
 import StockReportPage from './pages/StockReportPage'
+import QuotationReportPage from './pages/QuotationReportPage'
+import EstimationReportPage from './pages/EstimationReportPage'
+import SalesReportPage from './pages/SalesReportPage'
+import ProductAnalysisReportPage from './pages/ProductAnalysisReportPage'
 import { defaultBranchId, getBranchById } from './config/branches'
+import ProductSyncStatus from './components/ProductSyncStatus'
 
-const REPORT_ROUTE = '/reports/stock'
+const STOCK_REPORT_ROUTE = '/reports/stock'
+const QUOTATION_REPORT_ROUTE = '/reports/quotation'
+const ESTIMATION_REPORT_ROUTE = '/reports/estimation'
+const SALES_REPORT_ROUTE = '/reports/sales'
+const PRODUCT_ANALYSIS_ROUTE = '/reports/product-analysis'
 const LOGIN_ROUTE = '/login'
+const transactionReportRoutes = new Set([
+  QUOTATION_REPORT_ROUTE,
+  ESTIMATION_REPORT_ROUTE,
+  SALES_REPORT_ROUTE,
+  PRODUCT_ANALYSIS_ROUTE,
+])
 
 function getCurrentPath() {
   return window.location.pathname || LOGIN_ROUTE
@@ -31,7 +46,7 @@ function App() {
 
   useEffect(() => {
     if (path === '/') {
-      navigateTo(authenticated ? REPORT_ROUTE : LOGIN_ROUTE)
+      navigateTo(authenticated ? STOCK_REPORT_ROUTE : LOGIN_ROUTE)
       return
     }
 
@@ -41,12 +56,12 @@ function App() {
     }
 
     if (authenticated && path === LOGIN_ROUTE) {
-      navigateTo(REPORT_ROUTE)
+      navigateTo(STOCK_REPORT_ROUTE)
     }
   }, [authenticated, path])
 
   const handleLogin = useCallback(() => {
-    navigateTo(REPORT_ROUTE)
+    navigateTo(STOCK_REPORT_ROUTE)
   }, [])
 
   const handleLogout = useCallback(() => {
@@ -55,7 +70,13 @@ function App() {
   }, [])
 
   const navItems = useMemo(
-    () => [{ label: 'Stock Report', path: REPORT_ROUTE, active: path === REPORT_ROUTE }],
+    () => [
+      { label: 'Stock Report', path: STOCK_REPORT_ROUTE, active: path === STOCK_REPORT_ROUTE },
+      { label: 'Quotation', path: QUOTATION_REPORT_ROUTE, active: path === QUOTATION_REPORT_ROUTE },
+      { label: 'Estimation', path: ESTIMATION_REPORT_ROUTE, active: path === ESTIMATION_REPORT_ROUTE },
+      { label: 'Sales', path: SALES_REPORT_ROUTE, active: path === SALES_REPORT_ROUTE },
+      { label: 'Product Analysis', path: PRODUCT_ANALYSIS_ROUTE, active: path === PRODUCT_ANALYSIS_ROUTE },
+    ],
     [path],
   )
 
@@ -65,7 +86,7 @@ function App() {
 
   return (
     <div
-      className="app-shell"
+      className={transactionReportRoutes.has(path) ? 'app-shell is-quotation-route' : 'app-shell'}
       style={{
         '--branch-accent': selectedBranch.accent,
         '--branch-accent-soft': selectedBranch.accentSoft,
@@ -92,14 +113,41 @@ function App() {
             </button>
           ))}
         </nav>
-        <button type="button" className="logout-button" onClick={handleLogout}>
-          Logout
-        </button>
+        <div className="header-actions">
+          <ProductSyncStatus />
+          <button type="button" className="logout-button" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
-        {path === REPORT_ROUTE && (
+        {path === STOCK_REPORT_ROUTE && (
           <StockReportPage
+            selectedBranchId={selectedBranchId}
+            onBranchChange={setSelectedBranchId}
+          />
+        )}
+        {path === QUOTATION_REPORT_ROUTE && (
+          <QuotationReportPage
+            selectedBranchId={selectedBranchId}
+            onBranchChange={setSelectedBranchId}
+          />
+        )}
+        {path === ESTIMATION_REPORT_ROUTE && (
+          <EstimationReportPage
+            selectedBranchId={selectedBranchId}
+            onBranchChange={setSelectedBranchId}
+          />
+        )}
+        {path === SALES_REPORT_ROUTE && (
+          <SalesReportPage
+            selectedBranchId={selectedBranchId}
+            onBranchChange={setSelectedBranchId}
+          />
+        )}
+        {path === PRODUCT_ANALYSIS_ROUTE && (
+          <ProductAnalysisReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />

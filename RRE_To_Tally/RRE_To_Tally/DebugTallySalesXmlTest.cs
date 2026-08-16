@@ -56,7 +56,8 @@ internal static class DebugTallySalesXmlTest
         bool hasCgstAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("LEDGERNAME") == "CGST" && (string?)e.Element("AMOUNT") == "415.00" && (string?)e.Element("VATEXPAMOUNT") == "415.00");
         bool hasSgstAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("LEDGERNAME") == "SGST" && (string?)e.Element("AMOUNT") == "415.00" && (string?)e.Element("VATEXPAMOUNT") == "415.00");
         bool hasPartyAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("ISPARTYLEDGER") == "Yes" && (string?)e.Element("AMOUNT") == "-6830.00");
-        if (cgstLedgerBlocks != 1 || sgstLedgerBlocks != 1 || !hasCgstAmount || !hasSgstAmount || !hasPartyAmount)
+        bool hasEffectiveDate = document.Descendants("VOUCHER").Any(e => (string?)e.Element("EFFECTIVEDATE") == "20260401");
+        if (cgstLedgerBlocks != 1 || sgstLedgerBlocks != 1 || !hasCgstAmount || !hasSgstAmount || !hasPartyAmount || !hasEffectiveDate)
         {
             throw new InvalidOperationException("Debug GST split XML validation failed.");
         }
@@ -111,13 +112,15 @@ internal static class DebugTallySalesXmlTest
         XDocument document = XDocument.Load(outputPath);
         XElement stockItem = document.Descendants("STOCKITEM").Single();
         XElement ledger = document.Descendants("LEDGER").Single(e => (string?)e.Attribute("NAME") == "THE FALOODA SHOP & TANDOORI TRIBES");
-        bool hasStockShape = (string?)stockItem.Attribute("RESERVEDNAME") == "" &&
-            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "CGST")?.Element("GSTRATE") == "2.5" &&
+        bool hasStockShape = (string?)stockItem.Attribute("ACTION") == "Create" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "Central Tax")?.Element("GSTRATE") == "2.5" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "State Tax")?.Element("GSTRATE") == "2.5" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "Integrated Tax")?.Element("GSTRATE") == "5" &&
             (string?)stockItem.Element("HSNDETAILS.LIST")?.Element("HSNCODE") == "04063000" &&
-            stockItem.Elements("BATCHALLOCATIONS.LIST").Any();
-        bool hasLedgerShape = (string?)ledger.Attribute("RESERVEDNAME") == "" &&
-            (string?)ledger.Element("LEDGSTREGDETAILS.LIST")?.Element("GSTIN") == "33ARWPA5570E1ZS" &&
-            ledger.Elements("LEDMAILINGDETAILS.LIST").Any();
+            stockItem.Elements("BATCHALLOCATIONS.LIST").Any() == false;
+        bool hasLedgerShape = (string?)ledger.Attribute("ACTION") == "Create" &&
+            (string?)ledger.Element("GSTIN") == "33ARWPA5570E1ZS" &&
+            (string?)ledger.Element("PARENT") == "Sundry Debtors";
         if (!hasStockShape || !hasLedgerShape)
         {
             throw new InvalidOperationException("Debug masters XML validation failed.");

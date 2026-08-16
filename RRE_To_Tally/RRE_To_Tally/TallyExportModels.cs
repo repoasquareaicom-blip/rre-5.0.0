@@ -90,6 +90,7 @@ public sealed class TallyCompanySettings
     public string CashLedgerName { get; set; } = "CASH";
     public string SalesLedgerPrefix { get; set; } = "Sales";
     public string MasterApplicableFrom { get; set; } = "20260401";
+    public string ExportVoucherDate { get; set; } = "20260401";
 
     public static TallyCompanySettings Load()
     {
@@ -116,6 +117,7 @@ public sealed class TallyCompanySettings
         settings.CashLedgerName = Read(app, "TallyCompany.CashLedgerName", settings.CashLedgerName);
         settings.SalesLedgerPrefix = Read(app, "TallyCompany.SalesLedgerPrefix", settings.SalesLedgerPrefix);
         settings.MasterApplicableFrom = Read(app, "TallyCompany.MasterApplicableFrom", settings.MasterApplicableFrom);
+        settings.ExportVoucherDate = Read(app, "TallyCompany.ExportVoucherDate", settings.ExportVoucherDate);
         return settings;
     }
 
