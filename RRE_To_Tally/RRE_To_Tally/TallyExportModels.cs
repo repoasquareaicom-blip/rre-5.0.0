@@ -43,6 +43,7 @@ public sealed class TallyExportOptions
     public CashSalesLedgerBehaviour CashSalesLedgerBehaviour { get; set; } = CashSalesLedgerBehaviour.UseCustomerLedger;
     public bool AggregateDuplicateProducts { get; set; }
     public TallyCompanySettings CompanySettings { get; set; } = TallyCompanySettings.Load();
+    public SalesDivisionConfig? SelectedDivision { get; set; }
 }
 
 public sealed class SalesDivisionConfig
@@ -56,14 +57,30 @@ public sealed class SalesDivisionConfig
 
     public static IReadOnlyList<SalesDivisionConfig> All { get; } = new List<SalesDivisionConfig>
     {
-        new SalesDivisionConfig { Key = "Electricals", DisplayName = "Electricals", CompanyName = "RRE Electricals", HeaderTable = "Sales", DetailTable = "SalesDetails", FilePrefix = "RRE_Electricals" },
-        new SalesDivisionConfig { Key = "Pipes", DisplayName = "Pipes", CompanyName = "RRE Pipes", HeaderTable = "SalesPipes", DetailTable = "SalesPipesDetails", FilePrefix = "RRE_Pipes" },
-        new SalesDivisionConfig { Key = "Traders", DisplayName = "Traders", CompanyName = "RRE Traders", HeaderTable = "SalesTraders", DetailTable = "SalesTradersDetails", FilePrefix = "RRE_Traders" }
+        new SalesDivisionConfig { Key = "Electricals", DisplayName = "Electricals", CompanyName = "R.R. ELECTRICAL AGENCIES", HeaderTable = "Sales", DetailTable = "SalesDetails", FilePrefix = "RRE_Electricals" },
+        new SalesDivisionConfig { Key = "Pipes", DisplayName = "Pipes", CompanyName = "R.R. PIPES", HeaderTable = "SalesPipes", DetailTable = "SalesPipesDetails", FilePrefix = "RRE_Pipes" },
+        new SalesDivisionConfig { Key = "Traders", DisplayName = "Traders", CompanyName = "RR TRADERS", HeaderTable = "SalesTraders", DetailTable = "SalesTradersDetails", FilePrefix = "RRE_Traders" }
     };
 
     public static SalesDivisionConfig Find(string key)
     {
         return All.FirstOrDefault(d => string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase)) ?? All[0];
+    }
+
+    public static SalesDivisionConfig? FindByCompanyName(string companyName)
+    {
+        string normalized = NormalizeCompanyName(companyName);
+        return All.FirstOrDefault(d => string.Equals(NormalizeCompanyName(d.CompanyName), normalized, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static string NormalizeCompanyName(string value)
+    {
+        return TallyNameHelper.CleanXmlText(value).Trim();
+    }
+
+    public override string ToString()
+    {
+        return CompanyName;
     }
 }
 
@@ -138,16 +155,26 @@ public sealed class SalesExportRow
     public string ReferenceId { get; set; } = "";
     public DateTime TransactionDate { get; set; }
     public string CustomerId { get; set; } = "";
-    public string CustomerName { get; set; } = "";
-    public string CustomerAddress1 { get; set; } = "";
-    public string CustomerAddress2 { get; set; } = "";
-    public string CustomerCity { get; set; } = "";
-    public string CustomerState { get; set; } = "";
-    public string District { get; set; } = "";
-    public string Pincode { get; set; } = "";
-    public string CustomerPhone { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string CustomerGSTIN { get; set; } = "";
+    public string MasterCustomerName { get; set; } = "";
+    public string MasterAddress1 { get; set; } = "";
+    public string MasterAddress2 { get; set; } = "";
+    public string MasterCity { get; set; } = "";
+    public string MasterDistrict { get; set; } = "";
+    public string MasterState { get; set; } = "";
+    public string MasterStateResolved { get; set; } = "";
+    public string MasterPincode { get; set; } = "";
+    public string MasterContactName { get; set; } = "";
+    public string MasterPhone { get; set; } = "";
+    public string MasterEmail { get; set; } = "";
+    public string MasterGSTIN { get; set; } = "";
+    public string SalesCustomerName { get; set; } = "";
+    public string SalesAddress1 { get; set; } = "";
+    public string SalesAddress2 { get; set; } = "";
+    public string SalesCity { get; set; } = "";
+    public string SalesState { get; set; } = "";
+    public string SalesStateResolved { get; set; } = "";
+    public string SalesMobile { get; set; } = "";
+    public string SalesGSTIN { get; set; } = "";
     public string PaymentMode { get; set; } = "";
     public string TotalAmount { get; set; } = "";
     public string LessAmount { get; set; } = "";
@@ -162,6 +189,7 @@ public sealed class SalesExportRow
     public string Uom { get; set; } = "";
     public string Hsn { get; set; } = "";
     public string ProductGst { get; set; } = "";
+    public string ProductVat { get; set; } = "";
     public string Sgst { get; set; } = "";
     public string Igst { get; set; } = "";
     public string Tax { get; set; } = "";
@@ -170,6 +198,27 @@ public sealed class SalesExportRow
     public string Amount { get; set; } = "";
     public decimal SalesDetailGst { get; set; }
     public bool MissingProductMaster { get; set; }
+}
+
+public sealed class ResolvedTallyCustomer
+{
+    public string CustomerId { get; set; } = "";
+    public string LedgerName { get; set; } = "";
+    public string Address1 { get; set; } = "";
+    public string Address2 { get; set; } = "";
+    public string City { get; set; } = "";
+    public string District { get; set; } = "";
+    public string State { get; set; } = "";
+    public string Pincode { get; set; } = "";
+    public string ContactName { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Gstin { get; set; } = "";
+    public string RegistrationType { get; set; } = "Unregistered/Consumer";
+    public string RawMasterGstin { get; set; } = "";
+    public string RawSalesGstin { get; set; } = "";
+    public string RawState { get; set; } = "";
+    public List<string> AddressLines { get; } = new List<string>();
 }
 
 public sealed class SalesExportInvoice : INotifyPropertyChanged
@@ -194,10 +243,17 @@ public sealed class SalesExportInvoice : INotifyPropertyChanged
     public string CustomerAddress1 { get; set; } = "";
     public string CustomerAddress2 { get; set; } = "";
     public string CustomerCity { get; set; } = "";
+    public string CustomerDistrict { get; set; } = "";
     public string CustomerState { get; set; } = "";
     public string Pincode { get; set; } = "";
     public string CustomerGSTIN { get; set; } = "";
     public string GstRegistrationType { get; set; } = "Unregistered/Consumer";
+    public string RawMasterGSTIN { get; set; } = "";
+    public string RawSalesGSTIN { get; set; } = "";
+    public string RawCustomerState { get; set; } = "";
+    public string CustomerContactName { get; set; } = "";
+    public string CustomerPhone { get; set; } = "";
+    public string CustomerEmail { get; set; } = "";
     public string PaymentMode { get; set; } = "";
     public bool IsInterstate { get; set; }
     public string SaleType { get { return IsInterstate ? "Interstate" : "Local"; } }
@@ -230,6 +286,7 @@ public sealed class SalesExportItem
     public string StockGroupName { get; set; } = "";
     public string Uom { get; set; } = "NOS";
     public string Hsn { get; set; } = "";
+    public string ProductVat { get; set; } = "";
     public decimal Rate { get; set; }
     public decimal Quantity { get; set; }
     public decimal TaxableAmount { get; set; }
@@ -244,10 +301,17 @@ public sealed class SalesExportItem
 public sealed class CustomerMasterExport
 {
     public string Name { get; set; } = "";
+    public string MailingName { get; set; } = "";
     public string State { get; set; } = "";
     public string Pincode { get; set; } = "";
     public string Gstin { get; set; } = "";
     public string GstRegistrationType { get; set; } = "";
+    public string CustomerId { get; set; } = "";
+    public string RawTin { get; set; } = "";
+    public string RawState { get; set; } = "";
+    public string ContactName { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public string Email { get; set; } = "";
     public List<string> AddressLines { get; } = new List<string>();
 }
 
@@ -257,6 +321,8 @@ public sealed class ProductMasterExport
     public string StockGroupName { get; set; } = "";
     public string BaseUnit { get; set; } = "NOS";
     public string Hsn { get; set; } = "";
+    public string ProductId { get; set; } = "";
+    public string ProductVat { get; set; } = "";
     public decimal GstRate { get; set; }
     public decimal OpeningBalance { get; set; }
 }

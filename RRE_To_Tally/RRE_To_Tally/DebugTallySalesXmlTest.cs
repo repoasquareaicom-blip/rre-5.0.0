@@ -109,18 +109,35 @@ internal static class DebugTallySalesXmlTest
 
         if (File.Exists(outputPath)) File.Delete(outputPath);
         new TallyXmlWriter().WriteMastersXml(outputPath, package, new TallyExportOptions { CompanySettings = settings });
-        XDocument document = XDocument.Load(outputPath);
+        string xml = File.ReadAllText(outputPath);
+        if (!xml.Contains("<STATENAME>&#4; Any</STATENAME>"))
+        {
+            throw new InvalidOperationException("Debug masters XML validation failed: missing Tally special Any state marker.");
+        }
+
+        XDocument document = XDocument.Parse(xml.Replace("&#4; Any", "Any"));
         XElement stockItem = document.Descendants("STOCKITEM").Single();
         XElement ledger = document.Descendants("LEDGER").Single(e => (string?)e.Attribute("NAME") == "THE FALOODA SHOP & TANDOORI TRIBES");
         bool hasStockShape = (string?)stockItem.Attribute("ACTION") == "Create" &&
-            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "Central Tax")?.Element("GSTRATE") == "2.5" &&
-            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "State Tax")?.Element("GSTRATE") == "2.5" &&
-            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "Integrated Tax")?.Element("GSTRATE") == "5" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("SRCOFGSTDETAILS") == "Specify Details Here" &&
+            stockItem.Element("GSTDETAILS.LIST")?.Element("CALCULATIONTYPE") == null &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("GSTINELIGIBLEITC") == "No" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("ISTAXONMRP") == "No" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Element("STATENAME") == "Any" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "CGST")?.Element("GSTRATE") == "2.5" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "SGST/UTGST")?.Element("GSTRATE") == "2.5" &&
+            (string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Elements("RATEDETAILS.LIST").FirstOrDefault(e => (string?)e.Element("GSTRATEDUTYHEAD") == "IGST")?.Element("GSTRATE") == "5" &&
+            stockItem.Descendants("GSTSLABRATES.LIST").Any() == false &&
+            stockItem.Descendants("TEMPGSTITEMSLABRATES.LIST").Any() == false &&
+            stockItem.Descendants("TEMPGSTDETAILSLABRATES.LIST").Any() == false &&
             (string?)stockItem.Element("HSNDETAILS.LIST")?.Element("HSNCODE") == "04063000" &&
             stockItem.Elements("BATCHALLOCATIONS.LIST").Any() == false;
         bool hasLedgerShape = (string?)ledger.Attribute("ACTION") == "Create" &&
             (string?)ledger.Element("GSTIN") == "33ARWPA5570E1ZS" &&
-            (string?)ledger.Element("PARENT") == "Sundry Debtors";
+            (string?)ledger.Element("PARENT") == "Sundry Debtors" &&
+            (string?)ledger.Element("MAILINGNAME") == "THE FALOODA SHOP & TANDOORI TRIBES" &&
+            ledger.Element("ADDRESS.LIST")?.Elements("ADDRESS").Count() == 4 &&
+            ledger.Element("LEDMAILINGDETAILS.LIST")?.Element("ADDRESS.LIST")?.Elements("ADDRESS").Count() == 4;
         if (!hasStockShape || !hasLedgerShape)
         {
             throw new InvalidOperationException("Debug masters XML validation failed.");

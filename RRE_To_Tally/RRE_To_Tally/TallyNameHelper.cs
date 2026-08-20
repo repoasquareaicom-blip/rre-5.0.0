@@ -50,7 +50,12 @@ public static class TallyNameHelper
 
     public static string GetTallyCustomerName(SalesExportRow row)
     {
-        string name = CleanTallyName(row.CustomerName);
+        string name = CleanTallyName(row.MasterCustomerName);
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = CleanTallyName(row.SalesCustomerName);
+        }
+
         if (string.IsNullOrWhiteSpace(name))
         {
             name = "CASH CUSTOMER";
@@ -72,14 +77,8 @@ public static class TallyNameHelper
 
     public static bool IsBasicValidGstin(string? value)
     {
-        string gstin = (value ?? "").Trim().ToUpperInvariant();
-        if (gstin.Length != 15) return false;
-        foreach (char ch in gstin)
-        {
-            if (!char.IsLetterOrDigit(ch)) return false;
-        }
-
-        return true;
+        string gstin = new string(((value ?? "").Trim()).Where(ch => !char.IsWhiteSpace(ch)).ToArray()).ToUpperInvariant();
+        return Regex.IsMatch(gstin, @"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$");
     }
 
     public static int GetUnitDecimalPlaces(string unit)

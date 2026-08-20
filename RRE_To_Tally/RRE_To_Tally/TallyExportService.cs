@@ -16,8 +16,14 @@ public sealed class TallyExportService
 
     public async Task<TallyExportPackage> LoadPackageAsync(DateTime fromDate, DateTime toDate, string billNumber, TallyExportOptions options)
     {
-        List<SalesExportRow> rows = await _repository.LoadSalesRowsAsync(fromDate, toDate, billNumber).ConfigureAwait(false);
+        SalesDivisionConfig division = options.SelectedDivision ?? throw new InvalidOperationException("Select a company before loading sales data.");
+        List<SalesExportRow> rows = await _repository.LoadSalesRowsAsync(fromDate, toDate, billNumber, division).ConfigureAwait(false);
         return BuildPackage(rows, options);
+    }
+
+    public Task<List<SalesDivisionConfig>> LoadCompanyConfigsAsync()
+    {
+        return _repository.LoadCompanyConfigsAsync();
     }
 
     public TallyExportPackage BuildPackage(IList<SalesExportRow> rows, TallyExportOptions options)
@@ -34,6 +40,7 @@ public sealed class TallyExportService
         {
             List<SalesExportRow> invoiceRows = group.ToList();
             SalesExportRow first = invoiceRows[0];
+            ResolvedTallyCustomer resolvedCustomer = ResolveCustomer(first, settings, package.Warnings);
             SalesExportInvoice invoice = new SalesExportInvoice
             {
                 DivisionKey = first.DivisionKey,
@@ -43,12 +50,21 @@ public sealed class TallyExportService
                 ReferenceId = first.ReferenceId,
                 Date = first.TransactionDate,
                 CustomerId = first.CustomerId,
-                CustomerName = TallyNameHelper.GetTallyCustomerName(first),
-                CustomerAddress1 = TallyNameHelper.CleanXmlText(first.CustomerAddress1),
-                CustomerAddress2 = TallyNameHelper.CleanXmlText(first.CustomerAddress2),
-                CustomerCity = TallyNameHelper.CleanXmlText(first.CustomerCity),
-                CustomerState = string.IsNullOrWhiteSpace(first.CustomerState) ? settings.CompanyState : TallyNameHelper.CleanTallyName(first.CustomerState),
-                Pincode = TallyNameHelper.CleanXmlText(first.Pincode),
+                CustomerName = resolvedCustomer.LedgerName,
+                CustomerAddress1 = resolvedCustomer.Address1,
+                CustomerAddress2 = resolvedCustomer.Address2,
+                CustomerCity = resolvedCustomer.City,
+                CustomerDistrict = resolvedCustomer.District,
+                CustomerState = resolvedCustomer.State,
+                Pincode = resolvedCustomer.Pincode,
+                CustomerGSTIN = resolvedCustomer.Gstin,
+                GstRegistrationType = resolvedCustomer.RegistrationType,
+                RawMasterGSTIN = resolvedCustomer.RawMasterGstin,
+                RawSalesGSTIN = resolvedCustomer.RawSalesGstin,
+                RawCustomerState = resolvedCustomer.RawState,
+                CustomerContactName = resolvedCustomer.ContactName,
+                CustomerPhone = resolvedCustomer.Phone,
+                CustomerEmail = resolvedCustomer.Email,
                 PaymentMode = TallyNameHelper.CleanXmlText(first.PaymentMode),
                 Discount = numeric.ParseDecimal(first.LessAmount),
                 OtherCharges = numeric.ParseDecimal(first.OtherCharges)
@@ -56,20 +72,10 @@ public sealed class TallyExportService
             decimal storedGrandTotal = numeric.ParseDecimal(first.GrandTotal);
             invoice.StoredGrandTotal = storedGrandTotal > 0m ? Round(storedGrandTotal) : 0m;
 
-            invoice.CustomerLedgerName = ResolveUniqueName(customerNameByIdentity, usedCustomerNames, first.DivisionKey + "|" + first.CustomerId, invoice.CustomerName, first.CustomerId, package.Warnings, "Duplicate normalized customer name");
-            string gstin = (first.CustomerGSTIN ?? "").Trim().ToUpperInvariant();
-            if (gstin.Length > 0 && TallyNameHelper.IsBasicValidGstin(gstin))
-            {
-                invoice.CustomerGSTIN = gstin;
-                invoice.GstRegistrationType = "Regular";
-            }
-            else
-            {
-                if (gstin.Length > 0) package.Warnings.Add("Invalid GSTIN for " + invoice.CustomerLedgerName + ": " + gstin);
-                invoice.GstRegistrationType = "Unregistered/Consumer";
-            }
+            invoice.CustomerLedgerName = ResolveUniqueName(customerNameByIdentity, usedCustomerNames, first.DivisionKey + "|" + first.CustomerId, resolvedCustomer.LedgerName, first.CustomerId, package.Warnings, "Duplicate normalized customer name");
+            invoice.CustomerName = invoice.CustomerLedgerName;
 
-            bool isInterstate = IsInterstateSale(first, settings);
+            bool isInterstate = IsInterstateSale(invoice.CustomerState, settings);
             invoice.IsInterstate = isInterstate;
             foreach (SalesExportRow row in invoiceRows)
             {
@@ -125,6 +131,7 @@ public sealed class TallyExportService
                     StockGroupName = string.IsNullOrWhiteSpace(row.Category) ? "RRE PRODUCTS" : TallyNameHelper.CleanTallyName(row.Category),
                     Uom = unit,
                     Hsn = TallyNameHelper.CleanTallyName(row.Hsn),
+                    ProductVat = Clean(row.ProductVat),
                     Rate = Round(rate),
                     Quantity = quantity,
                     TaxableAmount = taxable,
@@ -185,6 +192,8 @@ public sealed class TallyExportService
         List<SalesExportInvoice> selected = package.Invoices.Where(i => i.Export && i.IsValid).ToList();
         summary.InvoicesSelected = package.Invoices.Count(i => i.Export);
         summary.InvoicesSkipped = package.Invoices.Count - selected.Count;
+        TallyCompanySettings settings = options.CompanySettings ?? TallyCompanySettings.Load();
+        TallyExportPackage exportPackage = BuildSelectedPackage(package, selected, options, settings);
 
         string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
         summary.ErrorCsvPath = Path.Combine(exportFolder, "TallyExportErrors_" + stamp + ".csv");
@@ -196,7 +205,7 @@ public sealed class TallyExportService
             if (writeMasters)
             {
                 string mastersPath = GetExportPath(exportFolder, "RRE_Tally_Masters", fromDate, toDate);
-                writer.WriteMastersXml(mastersPath, package, options);
+                writer.WriteMastersXml(mastersPath, exportPackage, options);
                 summary.MastersXmlPath = mastersPath;
             }
 
@@ -214,9 +223,9 @@ public sealed class TallyExportService
                 summary.InvoicesExported = selected.Count;
             }
 
-            WriteLogs(summary, package, selected, options.CompanySettings ?? TallyCompanySettings.Load());
-            summary.CustomersExported = package.Customers.Count;
-            summary.ProductsExported = package.Products.Count;
+            WriteLogs(summary, exportPackage, selected, settings);
+            summary.CustomersExported = exportPackage.Customers.Count;
+            summary.ProductsExported = exportPackage.Products.Count;
             summary.Warnings = package.Warnings.Count;
             summary.Errors = package.Errors.Count;
         }).ConfigureAwait(false);
@@ -224,16 +233,28 @@ public sealed class TallyExportService
         return summary;
     }
 
+    private static TallyExportPackage BuildSelectedPackage(TallyExportPackage source, List<SalesExportInvoice> selected, TallyExportOptions options, TallyCompanySettings settings)
+    {
+        TallyExportPackage package = new TallyExportPackage();
+        foreach (SalesExportInvoice invoice in selected) package.Invoices.Add(invoice);
+        foreach (string warning in source.Warnings) package.Warnings.Add(warning);
+        foreach (string error in source.Errors) package.Errors.Add(error);
+        PrepareMasters(package, options, settings);
+        return package;
+    }
+
     // SalesDetails.Amount is GST-inclusive. Tally inventory allocation receives the extracted taxable value.
     public decimal ResolveGstRate(SalesExportRow row, TallyNumericHelper numeric)
     {
-        if (row.SalesDetailGst > 0m) return row.SalesDetailGst;
+        decimal productVat = numeric.ParseGstRate(row.ProductVat);
+        if (productVat > 0m) return productVat;
         decimal productGst = numeric.ParseGstRate(row.ProductGst);
         if (productGst > 0m) return productGst;
         decimal tax = numeric.ParseGstRate(row.Tax);
         if (tax > 0m) return tax;
         decimal igst = numeric.ParseGstRate(row.Igst);
         if (igst > 0m) return igst;
+        if (row.SalesDetailGst > 0m) return row.SalesDetailGst;
         return 0m;
     }
 
@@ -260,14 +281,22 @@ public sealed class TallyExportService
                 CustomerMasterExport customer = new CustomerMasterExport
                 {
                     Name = invoice.CustomerLedgerName,
+                    MailingName = invoice.CustomerLedgerName,
                     State = invoice.CustomerState,
                     Pincode = invoice.Pincode,
                     Gstin = invoice.CustomerGSTIN,
-                    GstRegistrationType = invoice.GstRegistrationType
+                    GstRegistrationType = invoice.GstRegistrationType,
+                    ContactName = invoice.CustomerContactName,
+                    Phone = invoice.CustomerPhone,
+                    Email = invoice.CustomerEmail,
+                    CustomerId = invoice.CustomerId,
+                    RawTin = FirstCleanText(invoice.RawMasterGSTIN, invoice.RawSalesGSTIN),
+                    RawState = invoice.RawCustomerState
                 };
-                AddAddress(customer, invoice.CustomerAddress1);
-                AddAddress(customer, invoice.CustomerAddress2);
-                AddAddress(customer, ((invoice.CustomerCity + " - " + invoice.Pincode).Trim(' ', '-')));
+                foreach (string addressLine in BuildCustomerAddressLines(invoice))
+                {
+                    AddAddress(customer, addressLine);
+                }
                 package.Customers.Add(customer);
             }
 
@@ -282,7 +311,7 @@ public sealed class TallyExportService
                 if (groups.Add(item.StockGroupName)) package.StockGroups.Add(new StockGroupMasterExport { Name = item.StockGroupName });
                 if (products.Add(item.ProductTallyName))
                 {
-                    package.Products.Add(new ProductMasterExport { Name = item.ProductTallyName, BaseUnit = item.Uom, StockGroupName = item.StockGroupName, Hsn = item.Hsn, GstRate = item.GstRate });
+                    package.Products.Add(new ProductMasterExport { Name = item.ProductTallyName, ProductId = item.ProductId, BaseUnit = item.Uom, StockGroupName = item.StockGroupName, Hsn = item.Hsn, ProductVat = item.ProductVat, GstRate = item.GstRate });
                 }
 
                 if (ledgers.Add(item.SalesLedgerName))
@@ -322,6 +351,140 @@ public sealed class TallyExportService
         return name;
     }
 
+    private static ResolvedTallyCustomer ResolveCustomer(SalesExportRow row, TallyCompanySettings settings, IList<string> warnings)
+    {
+        ResolvedTallyCustomer customer = new ResolvedTallyCustomer
+        {
+            CustomerId = Clean(row.CustomerId),
+            LedgerName = FirstCleanTallyName(row.MasterCustomerName, row.SalesCustomerName, "CASH CUSTOMER"),
+            Address1 = FirstCleanText(row.MasterAddress1, row.SalesAddress1),
+            Address2 = FirstCleanText(row.MasterAddress2, row.SalesAddress2),
+            City = FirstCleanText(row.MasterCity, row.SalesCity),
+            District = Clean(row.MasterDistrict),
+            State = FirstCleanTallyName(row.MasterStateResolved, row.SalesStateResolved, row.MasterState, row.SalesState, settings.CompanyState),
+            Pincode = Clean(row.MasterPincode),
+            ContactName = Clean(row.MasterContactName),
+            Phone = FirstCleanText(row.MasterPhone, row.SalesMobile),
+            Email = Clean(row.MasterEmail),
+            RawMasterGstin = row.MasterGSTIN ?? "",
+            RawSalesGstin = row.SalesGSTIN ?? "",
+            RawState = FirstCleanText(row.MasterState, row.SalesState)
+        };
+
+        string gstin = FirstValidGstin(warnings, customer.LedgerName, row.MasterGSTIN ?? "", row.SalesGSTIN ?? "");
+        if (gstin.Length > 0 && TallyNameHelper.IsBasicValidGstin(gstin))
+        {
+            customer.Gstin = gstin;
+            customer.RegistrationType = "Regular";
+        }
+        else
+        {
+            customer.RegistrationType = "Unregistered/Consumer";
+        }
+
+        foreach (string line in BuildAddressLines(customer.Address1, customer.Address2, customer.City, customer.District, customer.State, customer.Pincode))
+        {
+            customer.AddressLines.Add(line);
+        }
+
+        return customer;
+    }
+
+    private static List<string> BuildCustomerAddressLines(SalesExportInvoice invoice)
+    {
+        return BuildAddressLines(invoice.CustomerAddress1, invoice.CustomerAddress2, invoice.CustomerCity, invoice.CustomerDistrict, invoice.CustomerState, invoice.Pincode);
+    }
+
+    private static List<string> BuildAddressLines(string address1, string address2, string city, string district, string state, string pincode)
+    {
+        List<string> lines = new List<string>();
+        AddAddressLine(lines, address1, "");
+        AddAddressLine(lines, address2, "");
+        AddAddressLine(lines, city, address1 + " " + address2);
+        AddAddressLine(lines, district, address1 + " " + address2 + " " + city);
+
+        string stateLine = Clean(state);
+        string cleanPincode = Clean(pincode);
+        if (stateLine.Length > 0 && cleanPincode.Length > 0)
+        {
+            stateLine += " - " + cleanPincode;
+        }
+        else if (stateLine.Length == 0)
+        {
+            stateLine = cleanPincode;
+        }
+
+        AddAddressLine(lines, stateLine, string.Join(" ", lines.ToArray()));
+        return lines;
+    }
+
+    private static void AddAddressLine(List<string> lines, string value, string previousText)
+    {
+        string cleaned = Clean(value);
+        if (cleaned.Length == 0) return;
+        if (ContainsWholeText(previousText, cleaned)) return;
+        if (lines.Any(line => string.Equals(line, cleaned, StringComparison.OrdinalIgnoreCase))) return;
+        lines.Add(cleaned);
+    }
+
+    private static bool ContainsWholeText(string text, string value)
+    {
+        string cleanText = Clean(text);
+        string cleanValue = Clean(value);
+        return cleanText.Length > 0 &&
+            cleanValue.Length > 0 &&
+            cleanText.IndexOf(cleanValue, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static string FirstCleanText(params string[] values)
+    {
+        foreach (string value in values)
+        {
+            string cleaned = Clean(value);
+            if (cleaned.Length > 0) return cleaned;
+        }
+
+        return "";
+    }
+
+    private static string FirstCleanTallyName(params string[] values)
+    {
+        foreach (string value in values)
+        {
+            string cleaned = TallyNameHelper.CleanTallyName(value);
+            if (cleaned.Length > 0) return cleaned;
+        }
+
+        return "";
+    }
+
+    private static string FirstValidGstin(IList<string> warnings, string ledgerName, params string[] values)
+    {
+        string firstInvalid = "";
+        foreach (string value in values)
+        {
+            string gstin = NormalizeGstin(value);
+            if (gstin.Length == 0) continue;
+            if (TallyNameHelper.IsBasicValidGstin(gstin)) return gstin;
+            if (firstInvalid.Length == 0) firstInvalid = gstin;
+        }
+
+        if (firstInvalid.Length > 0) warnings.Add("Invalid GSTIN for " + ledgerName + ": " + firstInvalid);
+        return "";
+    }
+
+    private static string NormalizeGstin(string value)
+    {
+        string cleaned = TallyNameHelper.CleanXmlText(value).Trim();
+        if (cleaned.Length == 0) return "";
+        return new string(cleaned.Where(ch => !char.IsWhiteSpace(ch)).ToArray()).ToUpperInvariant();
+    }
+
+    private static string Clean(string value)
+    {
+        return TallyNameHelper.CleanXmlText(value).Trim();
+    }
+
     private static string GetExportPath(string folder, string prefix, DateTime fromDate, DateTime toDate)
     {
         string baseName = prefix + "_" + fromDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "_" + toDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".xml";
@@ -348,6 +511,34 @@ public sealed class TallyExportService
         foreach (SalesExportInvoice invoice in selected)
         {
             log.AppendLine("  " + invoice.DivisionName + " " + invoice.SalesId + " -> " + FormatVoucherDate(settings));
+        }
+        log.AppendLine("");
+        log.AppendLine("Resolved customers:");
+        foreach (CustomerMasterExport customer in package.Customers.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            log.AppendLine("  CustomerID = " + customer.CustomerId);
+            log.AppendLine("  Resolved Name = " + customer.Name);
+            log.AppendLine("  Customers.Tin raw value = " + customer.RawTin);
+            log.AppendLine("  Resolved GSTIN = " + customer.Gstin);
+            log.AppendLine("  GST Registration Type = " + customer.GstRegistrationType);
+            log.AppendLine("  Raw State = " + customer.RawState);
+            log.AppendLine("  Resolved State = " + customer.State);
+        }
+        log.AppendLine("");
+        log.AppendLine("Resolved products:");
+        foreach (ProductMasterExport product in package.Products.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            decimal cgst = Round(product.GstRate / 2m);
+            decimal sgst = Round(product.GstRate / 2m);
+            decimal igst = Round(product.GstRate);
+            log.AppendLine("  ProductId = " + product.ProductId);
+            log.AppendLine("  Product = " + product.Name);
+            log.AppendLine("  ProductMaster.vat = " + product.ProductVat);
+            log.AppendLine("  Resolved total GST = " + product.GstRate.ToString("0.##", CultureInfo.InvariantCulture));
+            log.AppendLine("  CGST = " + cgst.ToString("0.##", CultureInfo.InvariantCulture));
+            log.AppendLine("  SGST = " + sgst.ToString("0.##", CultureInfo.InvariantCulture));
+            log.AppendLine("  IGST = " + igst.ToString("0.##", CultureInfo.InvariantCulture));
+            log.AppendLine("  HSN = " + product.Hsn);
         }
         log.AppendLine("Warnings: " + package.Warnings.Count);
         log.AppendLine("Errors: " + package.Errors.Count);
@@ -386,9 +577,9 @@ public sealed class TallyExportService
         return Round(grossAmount / (1m + (gstRate / 100m)));
     }
 
-    private static bool IsInterstateSale(SalesExportRow row, TallyCompanySettings settings)
+    private static bool IsInterstateSale(string customerStateValue, TallyCompanySettings settings)
     {
-        string customerState = string.IsNullOrWhiteSpace(row.CustomerState) ? settings.CompanyState : row.CustomerState.Trim();
+        string customerState = string.IsNullOrWhiteSpace(customerStateValue) ? settings.CompanyState : customerStateValue.Trim();
         return !string.Equals(customerState, settings.CompanyState, StringComparison.OrdinalIgnoreCase);
     }
 

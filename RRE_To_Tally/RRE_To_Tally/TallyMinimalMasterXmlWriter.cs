@@ -7,6 +7,9 @@ namespace RRE_To_Tally;
 
 public sealed class TallyMinimalMasterXmlWriter
 {
+    private const string TallyAnyStatePlaceholder = "__RRE_TALLY_ANY_STATE__";
+    private const string TallyAnyStateReference = "&#4; Any";
+
     private static readonly XmlWriterSettings Settings = new XmlWriterSettings
     {
         Indent = true,
@@ -26,16 +29,24 @@ public sealed class TallyMinimalMasterXmlWriter
             {
                 foreach (UnitMasterExport unit in package.Units) WriteUnit(writer, unit);
                 foreach (StockGroupMasterExport group in package.StockGroups) WriteStockGroup(writer, group);
-                foreach (CustomerMasterExport customer in package.Customers) WriteCustomerLedger(writer, customer);
+                foreach (CustomerMasterExport customer in package.Customers) WriteCustomerLedger(writer, customer, settings);
                 foreach (LedgerMasterExport ledger in package.Ledgers) WriteLedger(writer, ledger);
                 foreach (ProductMasterExport product in package.Products) WriteStockItem(writer, product, settings);
             });
         }
 
         ValidateMastersXml(tempPath);
+        ReplaceTallySpecialValues(tempPath);
 
         if (File.Exists(finalPath)) throw new IOException("Export file already exists: " + finalPath);
         File.Move(tempPath, finalPath);
+    }
+
+    private static void ReplaceTallySpecialValues(string path)
+    {
+        string xml = File.ReadAllText(path, Encoding.UTF8);
+        xml = xml.Replace(TallyAnyStatePlaceholder, TallyAnyStateReference);
+        File.WriteAllText(path, xml, Settings.Encoding);
     }
 
     private static void WriteEnvelope(XmlWriter writer, Action writeData)
@@ -89,7 +100,7 @@ public sealed class TallyMinimalMasterXmlWriter
         writer.WriteEndElement();
     }
 
-    private static void WriteCustomerLedger(XmlWriter writer, CustomerMasterExport customer)
+    private static void WriteCustomerLedger(XmlWriter writer, CustomerMasterExport customer, TallyCompanySettings settings)
     {
         StartTallyMessage(writer);
         writer.WriteStartElement("LEDGER");
@@ -100,6 +111,7 @@ public sealed class TallyMinimalMasterXmlWriter
         writer.WriteElementString("COUNTRYOFRESIDENCE", "India");
         writer.WriteElementString("STATENAME", customer.State);
         writer.WriteElementString("PLACEOFSUPPLY", customer.State);
+        writer.WriteElementString("MAILINGNAME", GetMailingName(customer));
         writer.WriteElementString("GSTREGISTRATIONTYPE", customer.GstRegistrationType);
         if (!string.IsNullOrWhiteSpace(customer.Gstin))
         {
@@ -107,9 +119,29 @@ public sealed class TallyMinimalMasterXmlWriter
         }
 
         WriteAddressLines(writer, customer.AddressLines);
+        WriteLedgerGstRegistrationDetails(writer, customer, settings);
+        WriteMailingDetails(writer, customer, settings);
         writer.WriteElementString("ISBILLWISEON", "Yes");
         writer.WriteElementString("OPENINGBALANCE", "0");
         writer.WriteEndElement();
+        writer.WriteEndElement();
+    }
+
+    private static void WriteLedgerGstRegistrationDetails(XmlWriter writer, CustomerMasterExport customer, TallyCompanySettings settings)
+    {
+        writer.WriteStartElement("LEDGSTREGDETAILS.LIST");
+        writer.WriteElementString("APPLICABLEFROM", settings.MasterApplicableFrom);
+        writer.WriteElementString("GSTREGISTRATIONTYPE", customer.GstRegistrationType);
+        writer.WriteElementString("PLACEOFSUPPLY", customer.State);
+        if (!string.IsNullOrWhiteSpace(customer.Gstin))
+        {
+            writer.WriteElementString("GSTIN", customer.Gstin);
+        }
+
+        writer.WriteElementString("ISOTHTERRITORYASSESSEE", "No");
+        writer.WriteElementString("CONSIDERPURCHASEFOREXPORT", "No");
+        writer.WriteElementString("ISTRANSPORTER", "No");
+        writer.WriteElementString("ISCOMMONPARTY", "No");
         writer.WriteEndElement();
     }
 
@@ -126,6 +158,28 @@ public sealed class TallyMinimalMasterXmlWriter
         }
 
         writer.WriteEndElement();
+    }
+
+    private static void WriteMailingDetails(XmlWriter writer, CustomerMasterExport customer, TallyCompanySettings settings)
+    {
+        writer.WriteStartElement("LEDMAILINGDETAILS.LIST");
+        WriteAddressLines(writer, customer.AddressLines);
+        writer.WriteElementString("APPLICABLEFROM", settings.MasterApplicableFrom);
+        if (!string.IsNullOrWhiteSpace(customer.Pincode))
+        {
+            writer.WriteElementString("PINCODE", customer.Pincode);
+        }
+
+        writer.WriteElementString("MAILINGNAME", GetMailingName(customer));
+        writer.WriteElementString("STATE", customer.State);
+        writer.WriteElementString("COUNTRY", "India");
+        writer.WriteEndElement();
+    }
+
+    private static string GetMailingName(CustomerMasterExport customer)
+    {
+        string mailingName = TallyNameHelper.CleanTallyName(customer.MailingName);
+        return string.IsNullOrWhiteSpace(mailingName) ? customer.Name : mailingName;
     }
 
     private static void WriteLedger(XmlWriter writer, LedgerMasterExport ledger)
@@ -224,12 +278,18 @@ public sealed class TallyMinimalMasterXmlWriter
         writer.WriteStartElement("GSTDETAILS.LIST");
         writer.WriteElementString("APPLICABLEFROM", settings.MasterApplicableFrom);
         writer.WriteElementString("TAXABILITY", item.GstRate > 0m ? "Taxable" : "Exempt");
+        writer.WriteElementString("SRCOFGSTDETAILS", "Specify Details Here");
+        writer.WriteElementString("GSTCALCSLABONMRP", "No");
+        writer.WriteElementString("ISREVERSECHARGEAPPLICABLE", "No");
+        writer.WriteElementString("ISNONGSTGOODS", "No");
         writer.WriteElementString("GSTINELIGIBLEITC", "No");
+        writer.WriteElementString("INCLUDEEXPFORSLABCALC", "No");
+        writer.WriteElementString("ISTAXONMRP", "No");
         writer.WriteStartElement("STATEWISEDETAILS.LIST");
-        writer.WriteElementString("STATENAME", "Any");
-        WriteRateDetail(writer, "Central Tax", item.GstRate / 2m);
-        WriteRateDetail(writer, "State Tax", item.GstRate / 2m);
-        WriteRateDetail(writer, "Integrated Tax", item.GstRate);
+        writer.WriteElementString("STATENAME", TallyAnyStatePlaceholder);
+        WriteRateDetail(writer, "CGST", item.GstRate / 2m);
+        WriteRateDetail(writer, "SGST/UTGST", item.GstRate / 2m);
+        WriteRateDetail(writer, "IGST", item.GstRate);
         writer.WriteEndElement();
         writer.WriteEndElement();
     }
@@ -282,7 +342,10 @@ public sealed class TallyMinimalMasterXmlWriter
             "REPORTINGUOMDETAILS",
             "GSTCLASSFNIGSTRATES",
             "EXTARIFFDUTYHEADDETAILS",
-            "TEMPGSTITEMSLABRATES"
+            "CALCULATIONTYPE",
+            "GSTSLABRATES",
+            "TEMPGSTITEMSLABRATES",
+            "TEMPGSTDETAILSLABRATES"
         };
 
         foreach (string token in forbiddenTokens)
@@ -311,7 +374,22 @@ public sealed class TallyMinimalMasterXmlWriter
                 .Where(v => v.Length > 0)
                 .ToList();
 
-            string[] expected = { "Central Tax", "State Tax", "Integrated Tax" };
+            string sourceOfGstDetails = ((string?)stockItem.Element("GSTDETAILS.LIST")?.Element("SRCOFGSTDETAILS") ?? "").Trim();
+            if (!string.Equals(sourceOfGstDetails, "Specify Details Here", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: stock item '" + itemName + "' does not specify item-level GST details.");
+            }
+
+            string taxability = ((string?)stockItem.Element("GSTDETAILS.LIST")?.Element("TAXABILITY") ?? "").Trim();
+            string eligibleItc = ((string?)stockItem.Element("GSTDETAILS.LIST")?.Element("GSTINELIGIBLEITC") ?? "").Trim();
+            string taxOnMrp = ((string?)stockItem.Element("GSTDETAILS.LIST")?.Element("ISTAXONMRP") ?? "").Trim();
+            string stockState = ((string?)stockItem.Element("GSTDETAILS.LIST")?.Element("STATEWISEDETAILS.LIST")?.Element("STATENAME") ?? "").Trim();
+            if (taxability.Length == 0 || !string.Equals(eligibleItc, "No", StringComparison.OrdinalIgnoreCase) || !string.Equals(taxOnMrp, "No", StringComparison.OrdinalIgnoreCase) || !string.Equals(stockState, TallyAnyStatePlaceholder, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: stock item '" + itemName + "' does not match TallyPrime stock GST header details.");
+            }
+
+            string[] expected = { "CGST", "SGST/UTGST", "IGST" };
             foreach (string dutyHead in expected)
             {
                 if (dutyHeads.Count(v => string.Equals(v, dutyHead, StringComparison.OrdinalIgnoreCase)) != 1)
@@ -323,6 +401,44 @@ public sealed class TallyMinimalMasterXmlWriter
             if (dutyHeads.Count != expected.Length)
             {
                 throw new InvalidOperationException("Minimal Masters XML validation failed: stock item '" + itemName + "' contains unexpected GST rate detail entries.");
+            }
+        }
+
+        foreach (XElement ledger in document.Descendants("LEDGER")
+            .Where(e => string.Equals(((string?)e.Element("PARENT") ?? "").Trim(), "Sundry Debtors", StringComparison.OrdinalIgnoreCase)))
+        {
+            string ledgerName = ((string?)ledger.Element("NAME") ?? (string?)ledger.Attribute("NAME") ?? "").Trim();
+            if (ledgerName.Length == 0)
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: customer ledger name is blank.");
+            }
+
+            string state = ((string?)ledger.Element("STATENAME") ?? "").Trim();
+            string placeOfSupply = ((string?)ledger.Element("PLACEOFSUPPLY") ?? "").Trim();
+            if (state.Length == 0 || placeOfSupply.Length == 0)
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: customer ledger '" + ledgerName + "' is missing state or place of supply.");
+            }
+
+            List<string> addressLines = ledger.Element("ADDRESS.LIST")?.Elements("ADDRESS")
+                .Select(e => ((string?)e ?? "").Trim())
+                .ToList() ?? new List<string>();
+            if (addressLines.Any(v => v.Length == 0))
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: customer ledger '" + ledgerName + "' contains a blank address line.");
+            }
+
+            XElement? mailing = ledger.Element("LEDMAILINGDETAILS.LIST");
+            if (mailing == null || ((string?)mailing.Element("MAILINGNAME") ?? "").Trim().Length == 0)
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: customer ledger '" + ledgerName + "' is missing mailing details.");
+            }
+
+            string registrationType = ((string?)ledger.Element("GSTREGISTRATIONTYPE") ?? "").Trim();
+            string gstin = ((string?)ledger.Element("GSTIN") ?? "").Trim();
+            if (string.Equals(registrationType, "Regular", StringComparison.OrdinalIgnoreCase) && !TallyNameHelper.IsBasicValidGstin(gstin))
+            {
+                throw new InvalidOperationException("Minimal Masters XML validation failed: customer ledger '" + ledgerName + "' is Regular but GSTIN is missing or invalid.");
             }
         }
     }

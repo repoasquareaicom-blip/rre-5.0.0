@@ -5,37 +5,54 @@ namespace RRE_To_Tally;
 
 public partial class FrmTallySalesExport : Form
 {
-    private readonly TallyExportService _service = new TallyExportService(new TallyDataRepository());
+    private readonly TallyDataRepository _repository = new TallyDataRepository();
+    private readonly TallyExportService _service;
     private readonly UserSession _currentUser;
     private TallyExportPackage _package = new TallyExportPackage();
     private BindingList<SalesExportInvoice> _invoiceBinding = new BindingList<SalesExportInvoice>();
+    private bool _loadingCompanies;
 
     public FrmTallySalesExport(UserSession currentUser)
     {
+        _service = new TallyExportService(_repository);
         _currentUser = currentUser;
         InitializeComponent();
         dtpFrom.Value = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         dtpTo.Value = DateTime.Today;
         txtExportFolder.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RRE Tally Exports");
-        cboCashBehaviour.SelectedIndex = 0;
         lblLoggedIn.Text = "User: " + (_currentUser.UserFullName.Length > 0 ? _currentUser.UserFullName : _currentUser.UserName);
         btnUserAccess.Visible = _currentUser.IsAdmin;
+        dgvInvoices.CurrentCellDirtyStateChanged += dgvInvoices_CurrentCellDirtyStateChanged;
         BindGrid();
         SetStatus("Ready");
+        Load += FrmTallySalesExport_Load;
+    }
+
+    private async void FrmTallySalesExport_Load(object? sender, EventArgs e)
+    {
+        await LoadCompaniesAsync().ConfigureAwait(true);
     }
 
     private async void btnLoadData_Click(object sender, EventArgs e)
     {
         if (!ValidateDates()) return;
+        SalesDivisionConfig? selectedDivision = GetSelectedDivision();
+        if (selectedDivision == null)
+        {
+            MessageBox.Show(this, "Select a company before loading data.", "Tally Export", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
         await RunBusyAsync("Loading sales data...", async delegate
         {
             string billNumber = txtBillNumber.Text.Trim();
+            ClearGrid();
             _package = await _service.LoadPackageAsync(dtpFrom.Value.Date, dtpTo.Value.Date, billNumber, GetOptions()).ConfigureAwait(true);
             _invoiceBinding = new BindingList<SalesExportInvoice>(_package.Invoices);
             BindGrid();
             ApplyRowColours();
             UpdateSummary();
-            SetStatus("Loaded " + _package.Invoices.Count + " invoices" + (billNumber.Length > 0 ? " for bill search '" + billNumber + "'." : "."));
+            SetStatus("Loaded " + _package.Invoices.Count + " " + selectedDivision.CompanyName + " invoices" + (billNumber.Length > 0 ? " for bill search '" + billNumber + "'." : "."));
         }).ConfigureAwait(true);
     }
 
@@ -86,6 +103,12 @@ public partial class FrmTallySalesExport : Form
         if (_package.Invoices.Count == 0)
         {
             MessageBox.Show(this, "Load data before generating XML.", "Tally Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (!_package.Invoices.Any(i => i.Export && i.IsValid))
+        {
+            MessageBox.Show(this, "Select at least one valid invoice before generating XML.", "Tally Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
@@ -161,14 +184,112 @@ public partial class FrmTallySalesExport : Form
             IncludeSalesLedgers = chkSalesLedgers.Checked,
             IncludeGstLedgers = chkGstLedgers.Checked,
             OpenFolderAfterExport = chkOpenAfter.Checked,
-            CashSalesLedgerBehaviour = cboCashBehaviour.SelectedIndex == 1 ? CashSalesLedgerBehaviour.UseRreCashLedger : CashSalesLedgerBehaviour.UseCustomerLedger
+            CashSalesLedgerBehaviour = CashSalesLedgerBehaviour.UseCustomerLedger,
+            SelectedDivision = GetSelectedDivision()
         };
     }
 
     private void BindGrid()
     {
         dgvInvoices.AutoGenerateColumns = false;
+        dgvInvoices.AllowUserToAddRows = false;
+        dgvInvoices.AllowUserToDeleteRows = false;
+        dgvInvoices.ReadOnly = false;
+        foreach (DataGridViewColumn column in dgvInvoices.Columns)
+        {
+            column.ReadOnly = column.DataPropertyName != "Export";
+        }
+
         dgvInvoices.DataSource = _invoiceBinding;
+    }
+
+    private async Task LoadCompaniesAsync()
+    {
+        await RunBusyAsync("Loading companies...", async delegate
+        {
+            _loadingCompanies = true;
+            try
+            {
+                List<SalesDivisionConfig> companies = await _service.LoadCompanyConfigsAsync().ConfigureAwait(true);
+                cboCompany.DataSource = companies;
+                cboCompany.DisplayMember = "CompanyName";
+                cboCompany.ValueMember = "Key";
+                if (companies.Count > 0)
+                {
+                    cboCompany.SelectedIndex = GetDefaultCompanyIndex(companies);
+                    SetStatus("Ready. Company field loaded from ReportAddressDetails.CompanyName.");
+                }
+                else
+                {
+                    SetStatus("No mapped companies found in ReportAddressDetails.CompanyName.");
+                }
+            }
+            finally
+            {
+                _loadingCompanies = false;
+            }
+        }).ConfigureAwait(true);
+    }
+
+    private int GetDefaultCompanyIndex(List<SalesDivisionConfig> companies)
+    {
+        string configuredCompany = TallyCompanySettings.Load().CompanyName;
+        if (!string.IsNullOrWhiteSpace(configuredCompany))
+        {
+            int configuredIndex = companies.FindIndex(c => string.Equals(SalesDivisionConfig.NormalizeCompanyName(c.CompanyName), SalesDivisionConfig.NormalizeCompanyName(configuredCompany), StringComparison.OrdinalIgnoreCase));
+            if (configuredIndex >= 0) return configuredIndex;
+        }
+
+        return 0;
+    }
+
+    private SalesDivisionConfig? GetSelectedDivision()
+    {
+        return cboCompany.SelectedItem as SalesDivisionConfig;
+    }
+
+    private void cboCompany_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_loadingCompanies) return;
+        ClearGrid();
+        SalesDivisionConfig? selected = GetSelectedDivision();
+        SetStatus(selected == null ? "Select a company." : "Company changed to " + selected.CompanyName + ". Click Load Data.");
+    }
+
+    private void btnSelectAll_Click(object? sender, EventArgs e)
+    {
+        SetAllExports(true);
+    }
+
+    private void btnDeselectAll_Click(object? sender, EventArgs e)
+    {
+        SetAllExports(false);
+    }
+
+    private void SetAllExports(bool export)
+    {
+        foreach (SalesExportInvoice invoice in _invoiceBinding)
+        {
+            invoice.Export = export;
+        }
+
+        dgvInvoices.Refresh();
+    }
+
+    private void dgvInvoices_CurrentCellDirtyStateChanged(object? sender, EventArgs e)
+    {
+        if (dgvInvoices.IsCurrentCellDirty)
+        {
+            dgvInvoices.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+    }
+
+    private void ClearGrid()
+    {
+        _package = new TallyExportPackage();
+        _invoiceBinding = new BindingList<SalesExportInvoice>();
+        BindGrid();
+        UpdateSummary();
     }
 
     private void ApplyRowColours()
@@ -208,6 +329,9 @@ public partial class FrmTallySalesExport : Form
         btnGenerateBoth.Enabled = !busy;
         btnOpenFolder.Enabled = !busy;
         btnBrowse.Enabled = !busy;
+        btnSelectAll.Enabled = !busy;
+        btnDeselectAll.Enabled = !busy;
+        cboCompany.Enabled = !busy;
     }
 
     private void SetStatus(string message)
