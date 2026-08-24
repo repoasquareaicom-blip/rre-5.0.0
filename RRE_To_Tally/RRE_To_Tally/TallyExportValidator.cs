@@ -10,6 +10,11 @@ public sealed class TallyExportValidator
             result.Errors.Add("Missing sales id.");
         }
 
+        if (invoice.Date == DateTime.MinValue)
+        {
+            result.Errors.Add("Missing or invalid UpdatedOn date.");
+        }
+
         if (string.IsNullOrWhiteSpace(invoice.CustomerLedgerName))
         {
             result.Errors.Add("Missing customer name.");

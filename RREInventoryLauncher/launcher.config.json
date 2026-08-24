@@ -1,0 +1,8 @@
+{
+  "BranchCode": "RR-SALEM",
+  "ServerDeploymentPath": "C:\\RREDeploy\\Current",
+  "ServerVersionFile": "C:\\RREDeploy\\version.txt",
+  "LocalApplicationPath": "C:\\RRE\\Inventory",
+  "InventoryExe": "Inventory.exe",
+  "LogPath": "C:\\RRE\\Logs"
+}

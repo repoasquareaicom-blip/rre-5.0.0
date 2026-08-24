@@ -119,6 +119,7 @@
             this.productGSTReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hSNStockReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hSNSummaryReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.hSNCorrectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerWiseLedgerReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gSTNewReportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.servicesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1057,6 +1058,7 @@
             this.roseReportToolStripMenuItem,
             this.productGSTReportToolStripMenuItem,
             this.hSNSummaryReportToolStripMenuItem,
+            this.hSNCorrectionToolStripMenuItem,
             this.customerWiseLedgerReportToolStripMenuItem,
             this.gSTNewReportToolStripMenuItem});
             this.reportsToolStripMenuItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1198,6 +1200,14 @@
             this.hSNSummaryReportToolStripMenuItem.Size = new System.Drawing.Size(277, 22);
             this.hSNSummaryReportToolStripMenuItem.Text = "HSN Summary Report";
             this.hSNSummaryReportToolStripMenuItem.Click += new System.EventHandler(this.hSNSummaryReportToolStripMenuItem_Click);
+            // 
+            // hSNCorrectionToolStripMenuItem
+            // 
+            this.hSNCorrectionToolStripMenuItem.Image = global::Inventory.Properties.Resources.Hsn4;
+            this.hSNCorrectionToolStripMenuItem.Name = "hSNCorrectionToolStripMenuItem";
+            this.hSNCorrectionToolStripMenuItem.Size = new System.Drawing.Size(277, 22);
+            this.hSNCorrectionToolStripMenuItem.Text = "HSN Correction";
+            this.hSNCorrectionToolStripMenuItem.Click += new System.EventHandler(this.hSNCorrectionToolStripMenuItem_Click);
             // 
             // customerWiseLedgerReportToolStripMenuItem
             // 
@@ -1408,6 +1418,7 @@
         private System.Windows.Forms.ToolStripMenuItem productGSTReportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hSNStockReportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hSNSummaryReportToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem hSNCorrectionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerWiseLedgerReportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem rackUploadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem gSTNewReportToolStripMenuItem;

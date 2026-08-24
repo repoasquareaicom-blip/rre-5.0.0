@@ -683,6 +683,7 @@ namespace Inventory
             //btnSavePending.Enabled = true;
             //btnSave.Enabled = true;
             btnPrint.Enabled = true;
+            btnPrintWithTax.Enabled = true;
             cmbcustomername.Text = "--Select--";
             cmdcity.Text = string.Empty;
             cmbassistby.SelectedIndex = 0;
@@ -730,8 +731,31 @@ namespace Inventory
         private void btnPrint_Click(object sender, EventArgs e)
         {
             preview();
-
         }
+
+        private void btnPrintWithTax_Click(object sender, EventArgs e)
+        {
+            PrintWithTax();
+        }
+
+        private void PrintWithTax()
+        {
+            string quotationId = txtorder.Text.Trim();
+            if (string.IsNullOrEmpty(quotationId) && dgvSearch.CurrentRow != null)
+            {
+                quotationId = Convert.ToString(dgvSearch.CurrentRow.Cells[0].Value);
+            }
+
+            if (string.IsNullOrEmpty(quotationId))
+            {
+                MessageBox.Show("Please select a quotation before printing.", "Print With Tax", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            QuotationGSTReport report = new QuotationGSTReport(quotationId);
+            report.ShowDialog();
+        }
+
         public void GetReport(string QuotationId)
         {
             //try
@@ -1289,6 +1313,7 @@ namespace Inventory
                     // btnSavePending.Enabled = false;
                     // btnSave.Enabled = false;
                     btnPrint.Visible = true;
+                    btnPrintWithTax.Visible = true;
 
 
                 }
@@ -1603,6 +1628,7 @@ namespace Inventory
                             // btnSavePending.Enabled = false;
                             // btnSave.Enabled = false;
                             btnPrint.Visible = true;
+                            btnPrintWithTax.Visible = true;
 
 
                         }
@@ -1625,6 +1651,7 @@ namespace Inventory
                             // btnSavePending.Enabled = false;
                             // btnSave.Enabled = false;
                             btnPrint.Visible = true;
+                            btnPrintWithTax.Visible = true;
 
 
                         }

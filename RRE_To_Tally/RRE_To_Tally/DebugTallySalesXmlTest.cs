@@ -56,7 +56,7 @@ internal static class DebugTallySalesXmlTest
         bool hasCgstAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("LEDGERNAME") == "CGST" && (string?)e.Element("AMOUNT") == "415.00" && (string?)e.Element("VATEXPAMOUNT") == "415.00");
         bool hasSgstAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("LEDGERNAME") == "SGST" && (string?)e.Element("AMOUNT") == "415.00" && (string?)e.Element("VATEXPAMOUNT") == "415.00");
         bool hasPartyAmount = document.Descendants("LEDGERENTRIES.LIST").Any(e => (string?)e.Element("ISPARTYLEDGER") == "Yes" && (string?)e.Element("AMOUNT") == "-6830.00");
-        bool hasEffectiveDate = document.Descendants("VOUCHER").Any(e => (string?)e.Element("EFFECTIVEDATE") == "20260401");
+        bool hasEffectiveDate = document.Descendants("VOUCHER").Any(e => (string?)e.Element("EFFECTIVEDATE") == "20260501");
         if (cgstLedgerBlocks != 1 || sgstLedgerBlocks != 1 || !hasCgstAmount || !hasSgstAmount || !hasPartyAmount || !hasEffectiveDate)
         {
             throw new InvalidOperationException("Debug GST split XML validation failed.");

@@ -55,31 +55,33 @@ namespace Inventory.Sales
 
         private DataSet BuildReportDataSet()
         {
-            DataTable header = GetHeader();
-            if (header.Rows.Count == 0)
+            DataSet ds = new DataSet();
+            using (SqlConnection con = new SqlConnection(Conn))
+            using (SqlCommand cmd = new SqlCommand("Proc_QuotationInvoicePrint", con))
+            using (SqlDataAdapter ad = new SqlDataAdapter(cmd))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@id", quotationId);
+                cmd.Parameters.AddWithValue("@company", Program.Company);
+                ad.Fill(ds);
+            }
+
+            if (ds.Tables.Count < 2)
+            {
+                throw new ApplicationException("Quotation print did not return the required invoice tables. Please check the quotation number and company.");
+            }
+
+            ds.Tables[0].TableName = "BillHeader";
+            ds.Tables[1].TableName = "BillDetails";
+
+            if (ds.Tables["BillHeader"].Rows.Count == 0)
             {
                 throw new ApplicationException("Quotation not found: " + quotationId);
             }
 
-            DataTable customer = GetCustomer(GetValue(header.Rows[0], "Customerid"));
-            DataTable details = GetDetails();
-            if (details.Rows.Count == 0)
+            if (ds.Tables["BillDetails"].Rows.Count == 0)
             {
                 throw new ApplicationException("Quotation details not found: " + quotationId);
-            }
-
-            Inventory.Invoice ds = new Inventory.Invoice();
-            DataRow headerRow = ds.BillHeader.NewRow();
-            FillHeaderRow(headerRow, header.Rows[0], customer.Rows.Count > 0 ? customer.Rows[0] : null, details);
-            ds.BillHeader.Rows.Add(headerRow);
-
-            int sno = 1;
-            foreach (DataRow detail in details.Rows)
-            {
-                DataRow detailRow = ds.BillDetails.NewRow();
-                FillDetailRow(detailRow, detail, sno);
-                ds.BillDetails.Rows.Add(detailRow);
-                sno++;
             }
 
             return ds;
@@ -308,6 +310,10 @@ ORDER BY qd.sino";
 
             return new string[]
             {
+                Path.Combine(Application.StartupPath, "QuotationInvoice.rpt"),
+                Path.Combine(projectDirectory, "QuotationInvoice.rpt"),
+                Path.Combine(currentDirectory, "QuotationInvoice.rpt"),
+                Path.Combine(Path.Combine(currentDirectory, "Inventory"), "QuotationInvoice.rpt"),
                 Path.Combine(Application.StartupPath, "GSTInvoice.rpt"),
                 Path.Combine(projectDirectory, "GSTInvoice.rpt"),
                 Path.Combine(currentDirectory, "GSTInvoice.rpt"),

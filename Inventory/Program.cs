@@ -162,6 +162,7 @@ namespace Inventory
 
         public static HsnStockReport ObjHsnstockreport;
         public static HsnSummaryReport ObjHsnSummaryReport;
+        public static FrmHsnCorrection ObjHsnCorrection;
 
         public static UploadFile UploadFile;
 

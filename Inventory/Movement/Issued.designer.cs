@@ -46,6 +46,8 @@
             this.MainTabSalesBill = new System.Windows.Forms.TabControl();
             this.TabNew = new System.Windows.Forms.TabPage();
             this.panel9 = new System.Windows.Forms.Panel();
+            this.txtPreparedBy = new System.Windows.Forms.TextBox();
+            this.lblPreparedBy = new System.Windows.Forms.Label();
             this.txtreceiveno = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtissucustomer = new System.Windows.Forms.TextBox();
@@ -269,6 +271,8 @@
             // 
             // panel9
             // 
+            this.panel9.Controls.Add(this.txtPreparedBy);
+            this.panel9.Controls.Add(this.lblPreparedBy);
             this.panel9.Controls.Add(this.txtreceiveno);
             this.panel9.Controls.Add(this.label5);
             this.panel9.Controls.Add(this.txtissucustomer);
@@ -283,10 +287,28 @@
             this.panel9.Size = new System.Drawing.Size(684, 583);
             this.panel9.TabIndex = 8;
             // 
+            // txtPreparedBy
+            // 
+            this.txtPreparedBy.Enabled = false;
+            this.txtPreparedBy.Location = new System.Drawing.Point(101, 4);
+            this.txtPreparedBy.Name = "txtPreparedBy";
+            this.txtPreparedBy.ReadOnly = true;
+            this.txtPreparedBy.Size = new System.Drawing.Size(237, 23);
+            this.txtPreparedBy.TabIndex = 398;
+            // 
+            // lblPreparedBy
+            // 
+            this.lblPreparedBy.AutoSize = true;
+            this.lblPreparedBy.Location = new System.Drawing.Point(8, 5);
+            this.lblPreparedBy.Name = "lblPreparedBy";
+            this.lblPreparedBy.Size = new System.Drawing.Size(68, 15);
+            this.lblPreparedBy.TabIndex = 397;
+            this.lblPreparedBy.Text = "Prepared By";
+            // 
             // txtreceiveno
             // 
             this.txtreceiveno.Enabled = false;
-            this.txtreceiveno.Location = new System.Drawing.Point(101, 4);
+            this.txtreceiveno.Location = new System.Drawing.Point(101, 32);
             this.txtreceiveno.Name = "txtreceiveno";
             this.txtreceiveno.ReadOnly = true;
             this.txtreceiveno.Size = new System.Drawing.Size(237, 23);
@@ -295,7 +317,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(8, 5);
+            this.label5.Location = new System.Drawing.Point(8, 33);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(73, 15);
             this.label5.TabIndex = 395;
@@ -304,7 +326,7 @@
             // txtissucustomer
             // 
             this.txtissucustomer.Enabled = false;
-            this.txtissucustomer.Location = new System.Drawing.Point(101, 32);
+            this.txtissucustomer.Location = new System.Drawing.Point(101, 60);
             this.txtissucustomer.Name = "txtissucustomer";
             this.txtissucustomer.ReadOnly = true;
             this.txtissucustomer.Size = new System.Drawing.Size(237, 23);
@@ -313,7 +335,7 @@
             // label32
             // 
             this.label32.AutoSize = true;
-            this.label32.Location = new System.Drawing.Point(8, 33);
+            this.label32.Location = new System.Drawing.Point(8, 61);
             this.label32.Name = "label32";
             this.label32.Size = new System.Drawing.Size(93, 15);
             this.label32.TabIndex = 362;
@@ -322,7 +344,7 @@
             // txtOrderNo
             // 
             this.txtOrderNo.Enabled = false;
-            this.txtOrderNo.Location = new System.Drawing.Point(100, 59);
+            this.txtOrderNo.Location = new System.Drawing.Point(101, 87);
             this.txtOrderNo.Name = "txtOrderNo";
             this.txtOrderNo.ReadOnly = true;
             this.txtOrderNo.Size = new System.Drawing.Size(237, 23);
@@ -331,7 +353,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(8, 63);
+            this.label4.Location = new System.Drawing.Point(8, 91);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(82, 15);
             this.label4.TabIndex = 2;
@@ -348,10 +370,10 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvNew.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvNew.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvNew.Location = new System.Drawing.Point(12, 89);
+            this.dgvNew.Location = new System.Drawing.Point(12, 116);
             this.dgvNew.Name = "dgvNew";
             this.dgvNew.RowHeadersVisible = false;
-            this.dgvNew.Size = new System.Drawing.Size(660, 479);
+            this.dgvNew.Size = new System.Drawing.Size(660, 452);
             this.dgvNew.TabIndex = 5;
             this.dgvNew.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvNew_CellEndEdit);
             this.dgvNew.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvNew_CellLeave);
@@ -1384,6 +1406,8 @@
         private System.Windows.Forms.TextBox txtissucustomer;
         private System.Windows.Forms.TextBox txtreceiveno;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox txtPreparedBy;
+        private System.Windows.Forms.Label lblPreparedBy;
         private System.Windows.Forms.TabPage Tabcheckout;
         private System.Windows.Forms.TextBox Txtcheckrefno;
         private System.Windows.Forms.Label label6;

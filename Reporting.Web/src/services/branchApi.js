@@ -31,6 +31,19 @@ function createTimeoutSignal(signal, timeoutMs) {
   }
 }
 
+function maskSensitiveParameters(parameters) {
+  if (!parameters) {
+    return parameters
+  }
+
+  return Object.fromEntries(
+    Object.entries(parameters).map(([key, value]) => [
+      key,
+      /password|pwd|passcode/i.test(key) ? '[hidden]' : value,
+    ]),
+  )
+}
+
 export async function runBranchReport(branch, queryText, parameters, options = {}) {
   const timeout = createTimeoutSignal(options.signal, options.timeoutMs || REQUEST_TIMEOUT_MS)
   const requestUrl = `${branch.baseUrl}/api/getdata`
@@ -40,7 +53,7 @@ export async function runBranchReport(branch, queryText, parameters, options = {
       url: requestUrl,
       branchCode: branch.id,
       queryText,
-      parameters,
+      parameters: maskSensitiveParameters(parameters),
     })
 
     const response = await fetch(requestUrl, {

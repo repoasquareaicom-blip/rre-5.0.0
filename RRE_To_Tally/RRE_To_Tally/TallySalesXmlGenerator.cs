@@ -65,10 +65,10 @@ public sealed class TallySalesXmlGenerator
 
     private static void WriteVoucherHeader(XmlWriter writer, SalesExportInvoice invoice, string partyLedger, TallyCompanySettings settings)
     {
-        string date = GetExportVoucherDate(settings);
+        string date = invoice.Date == DateTime.MinValue ? "" : invoice.Date.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         if (string.IsNullOrWhiteSpace(date))
         {
-            throw new InvalidOperationException("Missing or invalid export voucher date for invoice " + invoice.SalesId + ".");
+            throw new InvalidOperationException("Missing or invalid UpdatedOn voucher date for invoice " + invoice.SalesId + ".");
         }
 
         string billPlace = FirstNonEmpty(invoice.CustomerCity, invoice.CustomerState, settings.CompanyState);
@@ -259,21 +259,5 @@ public sealed class TallySalesXmlGenerator
         }
 
         return invoice.CustomerLedgerName;
-    }
-
-    private static string GetExportVoucherDate(TallyCompanySettings settings)
-    {
-        string value = (settings.ExportVoucherDate ?? "").Trim();
-        if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsed))
-        {
-            return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        }
-
-        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
-        {
-            return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        }
-
-        return "";
     }
 }

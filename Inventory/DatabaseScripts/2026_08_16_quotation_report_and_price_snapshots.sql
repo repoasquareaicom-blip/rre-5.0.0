@@ -241,7 +241,7 @@ BEGIN
             pm.ItemName AS ProductName,
             pm.DisplayName,
             pm.UOM,
-            COALESCE(pm.HSN, pm.HSNCODE) AS HSN,
+            pm.HSN AS HSN,
             TRY_CONVERT(decimal(18, 2), NULLIF(qd.Rate, '')) AS QuotedRate,
             qd.MasterSalesPrice,
             TRY_CONVERT(decimal(18, 3), NULLIF(qd.Quantity, '')) AS Quantity,

@@ -1,20 +1,32 @@
 import { useState } from 'react'
-import { loginWithAccessCode } from '../services/auth'
+import { loginWithCredentials } from '../services/auth'
 
 function LoginPage({ onLogin }) {
-  const [accessCode, setAccessCode] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     setError('')
 
-    if (!loginWithAccessCode(accessCode)) {
-      setError('Invalid access code.')
+    if (!username.trim() || !password) {
+      setError('Invalid username or password.')
       return
     }
 
-    onLogin()
+    setLoading(true)
+    try {
+      const session = await loginWithCredentials(username, password)
+      setPassword('')
+      onLogin(session)
+    } catch (err) {
+      setPassword('')
+      setError(err instanceof Error ? err.message : 'Unable to login. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -25,18 +37,29 @@ function LoginPage({ onLogin }) {
         <h1 id="login-title">Reporting Login</h1>
         <form onSubmit={handleSubmit}>
           <div className="field-group">
-            <label htmlFor="access-code">Access Code</label>
+            <label htmlFor="username">Username</label>
             <input
-              id="access-code"
+              id="username"
+              type="text"
+              value={username}
+              autoComplete="username"
+              autoFocus
+              onChange={(event) => setUsername(event.target.value)}
+            />
+          </div>
+          <div className="field-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
               type="password"
-              value={accessCode}
+              value={password}
               autoComplete="current-password"
-              onChange={(event) => setAccessCode(event.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
             />
           </div>
           {error && <p className="form-error">{error}</p>}
-          <button type="submit" className="primary-button">
-            Login
+          <button type="submit" className="primary-button" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </section>

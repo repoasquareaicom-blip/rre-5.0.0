@@ -9,6 +9,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using System.Windows.Forms;
 
@@ -1021,11 +1022,48 @@ namespace Inventory.Masters
             //}
         }
 
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (char.IsDigit(e.KeyChar) || char.IsControl(e.KeyChar))
+            {
+                e.Handled = false;
+            }
+            else
+            {
+                e.Handled = true;
+            }
+        }
+
+        private bool ValidateHsn()
+        {
+            string hsn = textBox2.Text.Trim();
+
+            if (!Regex.IsMatch(hsn, @"^(?:\d{6}|\d{8})$"))
+            {
+                MessageBox.Show(
+                    "HSN Code must contain exactly 6 or 8 digits.",
+                    "Invalid HSN Code",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                textBox2.Focus();
+                return false;
+            }
+
+            textBox2.Text = hsn;
+            return true;
+        }
+
         public bool Validation()
         {
             bool status = true;
             string message = "";
             int i = 0;
+
+            if (!ValidateHsn())
+            {
+                return false;
+            }
 
 
             //if (string.IsNullOrEmpty(Convert.ToString(txtitemcodes.Text)))
@@ -2343,6 +2381,11 @@ namespace Inventory.Masters
             bool status = true;
             string message = "";
             int i = 0;
+
+            if (!ValidateHsn())
+            {
+                return false;
+            }
 
 
             //if (string.IsNullOrEmpty(Convert.ToString(txtitemcodes.Text)))

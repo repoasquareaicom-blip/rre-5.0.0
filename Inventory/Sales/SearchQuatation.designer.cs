@@ -61,6 +61,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.label17 = new System.Windows.Forms.Label();
             this.btnPrint = new System.Windows.Forms.Button();
+            this.btnPrintWithTax = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -446,6 +447,7 @@
             this.panel1.Controls.Add(this.button1);
             this.panel1.Controls.Add(this.label17);
             this.panel1.Controls.Add(this.btnPrint);
+            this.panel1.Controls.Add(this.btnPrintWithTax);
             this.panel1.Controls.Add(this.btnClear);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
@@ -478,14 +480,13 @@
             this.button1.FlatAppearance.BorderSize = 0;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button1.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.button1.Location = new System.Drawing.Point(430, 3);
+            this.button1.Location = new System.Drawing.Point(319, 3);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(116, 25);
+            this.button1.Size = new System.Drawing.Size(92, 25);
             this.button1.TabIndex = 363;
             this.button1.Text = "Print View";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // label17
             // 
             this.label17.AutoSize = true;
@@ -504,7 +505,7 @@
             this.btnPrint.FlatAppearance.BorderSize = 0;
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPrint.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnPrint.Location = new System.Drawing.Point(551, 3);
+            this.btnPrint.Location = new System.Drawing.Point(436, 3);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(75, 25);
             this.btnPrint.TabIndex = 4;
@@ -512,6 +513,22 @@
             this.btnPrint.UseVisualStyleBackColor = true;
             this.btnPrint.Visible = false;
             this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
+            // 
+            // btnPrintWithTax
+            // 
+            this.btnPrintWithTax.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnPrintWithTax.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnPrintWithTax.FlatAppearance.BorderSize = 0;
+            this.btnPrintWithTax.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnPrintWithTax.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.btnPrintWithTax.Location = new System.Drawing.Point(512, 3);
+            this.btnPrintWithTax.Name = "btnPrintWithTax";
+            this.btnPrintWithTax.Size = new System.Drawing.Size(98, 25);
+            this.btnPrintWithTax.TabIndex = 364;
+            this.btnPrintWithTax.Text = "Print With Tax";
+            this.btnPrintWithTax.UseVisualStyleBackColor = true;
+            this.btnPrintWithTax.Visible = false;
+            this.btnPrintWithTax.Click += new System.EventHandler(this.btnPrintWithTax_Click);
             // 
             // btnClear
             // 
@@ -1230,6 +1247,7 @@
         private System.Windows.Forms.Label lblTotal;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnPrint;
+        private System.Windows.Forms.Button btnPrintWithTax;
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label12;

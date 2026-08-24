@@ -1,7 +1,12 @@
-export const AUTH_STORAGE_KEY = 'rr.reporting.authenticated'
+export const AUTH_STORAGE_KEY = 'rr.reporting.auth.session'
 
-export const ACCESS_CODE = import.meta.env.VITE_REPORTING_ACCESS_CODE || 'rre'
+export const ACCESS_LEVELS = {
+  fullAccess: 'FULL_ACCESS',
+  productAnalysisOnly: 'PRODUCT_ANALYSIS_ONLY',
+  denied: 'DENIED',
+}
 
-export function isValidAccessCode(value) {
-  return value.trim() === ACCESS_CODE
+export const LOGIN_MESSAGES = {
+  invalid: 'Invalid username or password.',
+  unauthorized: 'You are not authorized to access Reporting.',
 }

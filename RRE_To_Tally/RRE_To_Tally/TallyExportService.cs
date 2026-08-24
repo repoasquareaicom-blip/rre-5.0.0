@@ -510,7 +510,12 @@ public sealed class TallyExportService
         log.AppendLine("Sales XML voucher dates:");
         foreach (SalesExportInvoice invoice in selected)
         {
-            log.AppendLine("  " + invoice.DivisionName + " " + invoice.SalesId + " -> " + FormatVoucherDate(settings));
+            string xmlDate = invoice.Date == DateTime.MinValue ? "" : invoice.Date.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            log.AppendLine("  Company: " + invoice.DivisionCompanyName);
+            log.AppendLine("  Salesid: " + invoice.SalesId);
+            log.AppendLine("  UpdatedOn: " + (invoice.Date == DateTime.MinValue ? "" : invoice.Date.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)));
+            log.AppendLine("  Generated VoucherNumber: " + invoice.SalesId);
+            log.AppendLine("  Generated XML Date: " + xmlDate);
         }
         log.AppendLine("");
         log.AppendLine("Resolved customers:");
@@ -543,11 +548,6 @@ public sealed class TallyExportService
         log.AppendLine("Warnings: " + package.Warnings.Count);
         log.AppendLine("Errors: " + package.Errors.Count);
         File.WriteAllText(summary.LogPath, log.ToString(), Encoding.UTF8);
-    }
-
-    private static string FormatVoucherDate(TallyCompanySettings settings)
-    {
-        return settings.ExportVoucherDate;
     }
 
     private static void AddAddress(CustomerMasterExport customer, string text)

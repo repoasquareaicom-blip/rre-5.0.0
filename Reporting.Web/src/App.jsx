@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { isLoggedIn, logout } from './services/auth'
+import {
+  canAccessRoute,
+  getAuthSession,
+  getLandingRoute,
+  hasFullAccess,
+  isLoggedIn,
+  logout,
+} from './services/auth'
 import LoginPage from './pages/LoginPage'
 import StockReportPage from './pages/StockReportPage'
 import QuotationReportPage from './pages/QuotationReportPage'
 import EstimationReportPage from './pages/EstimationReportPage'
 import SalesReportPage from './pages/SalesReportPage'
 import ProductAnalysisReportPage from './pages/ProductAnalysisReportPage'
+import LoginLogPage from './pages/LoginLogPage'
 import { defaultBranchId, getBranchById } from './config/branches'
 import ProductSyncStatus from './components/ProductSyncStatus'
 
@@ -15,6 +23,7 @@ const QUOTATION_REPORT_ROUTE = '/reports/quotation'
 const ESTIMATION_REPORT_ROUTE = '/reports/estimation'
 const SALES_REPORT_ROUTE = '/reports/sales'
 const PRODUCT_ANALYSIS_ROUTE = '/reports/product-analysis'
+const LOGIN_LOG_ROUTE = '/reports/login-log'
 const LOGIN_ROUTE = '/login'
 const transactionReportRoutes = new Set([
   QUOTATION_REPORT_ROUTE,
@@ -34,8 +43,9 @@ function navigateTo(path) {
 
 function App() {
   const [path, setPath] = useState(getCurrentPath)
+  const [authSession, setAuthSession] = useState(getAuthSession)
   const [selectedBranchId, setSelectedBranchId] = useState(defaultBranchId)
-  const authenticated = isLoggedIn()
+  const authenticated = isLoggedIn() && Boolean(authSession)
   const selectedBranch = getBranchById(selectedBranchId)
 
   useEffect(() => {
@@ -45,8 +55,10 @@ function App() {
   }, [])
 
   useEffect(() => {
+    const landingRoute = getLandingRoute(authSession?.accessLevel)
+
     if (path === '/') {
-      navigateTo(authenticated ? STOCK_REPORT_ROUTE : LOGIN_ROUTE)
+      navigateTo(authenticated ? landingRoute : LOGIN_ROUTE)
       return
     }
 
@@ -56,16 +68,23 @@ function App() {
     }
 
     if (authenticated && path === LOGIN_ROUTE) {
-      navigateTo(STOCK_REPORT_ROUTE)
+      navigateTo(landingRoute)
+      return
     }
-  }, [authenticated, path])
 
-  const handleLogin = useCallback(() => {
-    navigateTo(STOCK_REPORT_ROUTE)
+    if (authenticated && !canAccessRoute(authSession, path)) {
+      navigateTo(landingRoute)
+    }
+  }, [authSession, authenticated, path])
+
+  const handleLogin = useCallback((session) => {
+    setAuthSession(session)
+    navigateTo(getLandingRoute(session?.accessLevel))
   }, [])
 
   const handleLogout = useCallback(() => {
     logout()
+    setAuthSession(null)
     navigateTo(LOGIN_ROUTE)
   }, [])
 
@@ -76,8 +95,9 @@ function App() {
       { label: 'Estimation', path: ESTIMATION_REPORT_ROUTE, active: path === ESTIMATION_REPORT_ROUTE },
       { label: 'Sales', path: SALES_REPORT_ROUTE, active: path === SALES_REPORT_ROUTE },
       { label: 'Product Analysis', path: PRODUCT_ANALYSIS_ROUTE, active: path === PRODUCT_ANALYSIS_ROUTE },
-    ],
-    [path],
+      { label: 'Login Log', path: LOGIN_LOG_ROUTE, active: path === LOGIN_LOG_ROUTE },
+    ].filter((item) => canAccessRoute(authSession, item.path)),
+    [authSession, path],
   )
 
   if (!authenticated) {
@@ -114,7 +134,7 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
-          <ProductSyncStatus />
+          {hasFullAccess(authSession) && <ProductSyncStatus />}
           <button type="button" className="logout-button" onClick={handleLogout}>
             Logout
           </button>
@@ -122,36 +142,37 @@ function App() {
       </header>
 
       <main className="app-main">
-        {path === STOCK_REPORT_ROUTE && (
+        {canAccessRoute(authSession, STOCK_REPORT_ROUTE) && path === STOCK_REPORT_ROUTE && (
           <StockReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />
         )}
-        {path === QUOTATION_REPORT_ROUTE && (
+        {canAccessRoute(authSession, QUOTATION_REPORT_ROUTE) && path === QUOTATION_REPORT_ROUTE && (
           <QuotationReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />
         )}
-        {path === ESTIMATION_REPORT_ROUTE && (
+        {canAccessRoute(authSession, ESTIMATION_REPORT_ROUTE) && path === ESTIMATION_REPORT_ROUTE && (
           <EstimationReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />
         )}
-        {path === SALES_REPORT_ROUTE && (
+        {canAccessRoute(authSession, SALES_REPORT_ROUTE) && path === SALES_REPORT_ROUTE && (
           <SalesReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />
         )}
-        {path === PRODUCT_ANALYSIS_ROUTE && (
+        {canAccessRoute(authSession, PRODUCT_ANALYSIS_ROUTE) && path === PRODUCT_ANALYSIS_ROUTE && (
           <ProductAnalysisReportPage
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
           />
         )}
+        {canAccessRoute(authSession, LOGIN_LOG_ROUTE) && path === LOGIN_LOG_ROUTE && <LoginLogPage />}
       </main>
     </div>
   )

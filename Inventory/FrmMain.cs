@@ -3914,6 +3914,23 @@ namespace Inventory
             Program.ObjHsnSummaryReport.Show();
         }
 
+        private void hSNCorrectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.ObjHsnCorrection == null)
+            {
+                FrmHsnCorrection objHsnCorrection = new FrmHsnCorrection();
+                Program.ObjHsnCorrection = objHsnCorrection;
+            }
+            else
+            {
+                Program.ObjHsnCorrection.Dispose();
+                FrmHsnCorrection objHsnCorrection = new FrmHsnCorrection();
+                Program.ObjHsnCorrection = objHsnCorrection;
+            }
+            Program.ObjHsnCorrection.MdiParent = this;
+            Program.ObjHsnCorrection.Show();
+        }
+
         private void customerWiseLedgerReportToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Program.objCustomerledger == null)

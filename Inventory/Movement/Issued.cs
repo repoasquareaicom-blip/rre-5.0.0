@@ -1401,6 +1401,7 @@ namespace Inventory.Sales
                 txtOrderNo.Text = string.Empty;
                 txtissucustomer.Text = string.Empty;
                 txtreceiveno.Text = string.Empty;
+                txtPreparedBy.Text = string.Empty;
             }
 
             if (selectedtab == "Tabcheckout")
@@ -3041,6 +3042,7 @@ namespace Inventory.Sales
               txtissucustomer.Text = Convert.ToString(ds.Tables[0].Rows[0]["CustomerName"]);
                 txtreceiveno.Text = Convert.ToString(ds.Tables[0].Rows[0]["ReceivedID"]);
                 txtOrderNo.Text = Convert.ToString(ds.Tables[0].Rows[0]["RefNo"]);
+                txtPreparedBy.Text = ds.Tables[0].Columns.Contains("PreparedBy") ? Convert.ToString(ds.Tables[0].Rows[0]["PreparedBy"]) : string.Empty;
 
             }
             else
