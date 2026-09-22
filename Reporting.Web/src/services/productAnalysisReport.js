@@ -3,68 +3,64 @@ import { formatMoney, formatStock } from './stockReport'
 import { getValue, toNumber } from './reportUtils'
 
 export const PRODUCT_ANALYSIS_SORTS = {
-  TRANS_ID: 'TRANSID',
   PRODUCT_NAME: 'PRODUCTNAME',
   CUSTOMER_NAME: 'CUSTOMERNAME',
   CITY: 'CITY',
   BRAND: 'BRAND',
   CATEGORY: 'CATEGORY',
-  TRANS_DATE: 'TRANSDATE',
-  TRANS_QTY: 'TRANSQTY',
+  TOTAL_QTY: 'TOTALQTY',
   PRICE: 'PRICE',
-  TOTAL_PRICE: 'TOTALPRICE',
+  TOTAL_AMOUNT: 'TOTALAMOUNT',
 }
 
 const fieldNames = {
-  transId: ['TransId', 'TRANSID', 'transId'],
   productId: ['Productid', 'ProductId', 'productId'],
   productName: ['ProductName', 'productName'],
   customerName: ['CustomerName', 'customerName'],
   city: ['City', 'city'],
   brand: ['Brand', 'brand'],
   category: ['Category', 'category'],
-  transDate: ['TransDate', 'transDate'],
-  transQty: ['TransQty', 'transQty'],
+  totalQty: ['TotalQty', 'TOTALQTY', 'totalQty'],
   price: ['Price', 'price'],
-  totalPrice: ['TotalPrice', 'totalPrice'],
+  totalAmount: ['TotalAmount', 'TOTALAMOUNT', 'totalAmount'],
   totalRows: ['TotalRows', 'totalRows'],
   summaryProducts: ['SummaryProducts', 'summaryProducts'],
-  summaryTransactions: ['SummaryTransactions', 'summaryTransactions'],
+  summaryCustomers: ['SummaryCustomers', 'summaryCustomers'],
   summaryQuantity: ['SummaryQuantity', 'summaryQuantity'],
-  summaryTotalPrice: ['SummaryTotalPrice', 'summaryTotalPrice'],
+  summaryTotalAmount: ['SummaryTotalAmount', 'summaryTotalAmount'],
 }
 
 export const emptyProductAnalysisSummary = {
+  customers: 0,
   products: 0,
-  bills: 0,
   totalQuantity: 0,
-  totalSalesAmount: 0,
+  totalAmount: 0,
 }
 
 export function normalizeProductAnalysisRows(rows) {
   return rows.map((row, index) => {
     const productId = String(getValue(row, fieldNames.productId) || '-')
-    const transId = String(getValue(row, fieldNames.transId) || '-')
+    const customerName = getValue(row, fieldNames.customerName) || ''
+    const totalQty = toNumber(getValue(row, fieldNames.totalQty)) || 0
+    const totalAmount = toNumber(getValue(row, fieldNames.totalAmount)) || 0
 
     return {
-      id: `${transId}-${productId}-${index}`,
-      transId,
+      id: `${customerName || 'PRODUCT'}-${productId}-${index}`,
       productId,
       productName: getValue(row, fieldNames.productName) || '-',
-      customerName: getValue(row, fieldNames.customerName) || '',
+      customerName,
       city: getValue(row, fieldNames.city) || '',
       brand: getValue(row, fieldNames.brand) || '',
       category: getValue(row, fieldNames.category) || '',
-      transDate: getValue(row, fieldNames.transDate) || '',
-      transQty: toNumber(getValue(row, fieldNames.transQty)) || 0,
+      totalQty,
       price: toNumber(getValue(row, fieldNames.price)) || 0,
-      totalPrice: toNumber(getValue(row, fieldNames.totalPrice)) || 0,
+      totalAmount,
       totalRows: toNumber(getValue(row, fieldNames.totalRows)) || 0,
       summary: {
+        customers: toNumber(getValue(row, fieldNames.summaryCustomers)) || 0,
         products: toNumber(getValue(row, fieldNames.summaryProducts)) || 0,
-        bills: toNumber(getValue(row, fieldNames.summaryTransactions)) || 0,
         totalQuantity: toNumber(getValue(row, fieldNames.summaryQuantity)) || 0,
-        totalSalesAmount: toNumber(getValue(row, fieldNames.summaryTotalPrice)) || 0,
+        totalAmount: toNumber(getValue(row, fieldNames.summaryTotalAmount)) || 0,
       },
     }
   })
@@ -72,7 +68,7 @@ export function normalizeProductAnalysisRows(rows) {
 
 export async function fetchProductAnalysisReport(
   branch,
-  { fromDate, toDate, productSearch, pageNumber, pageSize, sortBy, sortDirection },
+  { fromDate, toDate, productSearch, customerSearch, analysisMode, pageNumber, pageSize, sortBy, sortDirection },
   signal,
 ) {
   const payload = await runBranchReport(
@@ -82,6 +78,8 @@ export async function fetchProductAnalysisReport(
       FromDate: fromDate,
       ToDate: toDate,
       ProductSearch: productSearch?.trim() || null,
+      CustomerSearch: customerSearch?.trim() || null,
+      ReportView: analysisMode === 'CUSTOMER' ? 'CUSTOMER' : 'PRODUCT',
       PageNumber: pageNumber,
       PageSize: pageSize,
       SortBy: normalizeSingleBranchSort(sortBy),
@@ -101,31 +99,27 @@ export async function fetchProductAnalysisReport(
 }
 
 export function normalizeSingleBranchSort(sortBy) {
-  const normalized = String(sortBy || PRODUCT_ANALYSIS_SORTS.TRANS_DATE).toUpperCase()
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TRANS_ID) return 'TRANSID'
+  const normalized = String(sortBy || PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT).toUpperCase()
   if (normalized === PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME) return 'PRODUCTNAME'
   if (normalized === PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME) return 'CUSTOMERNAME'
   if (normalized === PRODUCT_ANALYSIS_SORTS.CITY) return 'CITY'
   if (normalized === PRODUCT_ANALYSIS_SORTS.BRAND) return 'BRAND'
   if (normalized === PRODUCT_ANALYSIS_SORTS.CATEGORY) return 'CATEGORY'
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TRANS_QTY) return 'TRANSQTY'
+  if (normalized === PRODUCT_ANALYSIS_SORTS.TOTAL_QTY) return 'TOTALQTY'
   if (normalized === PRODUCT_ANALYSIS_SORTS.PRICE) return 'PRICE'
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TOTAL_PRICE) return 'TOTALPRICE'
-  return 'TRANSDATE'
+  return 'TOTALAMOUNT'
 }
 
 export function normalizeCompareSort(sortBy) {
-  const normalized = String(sortBy || PRODUCT_ANALYSIS_SORTS.TRANS_DATE).toUpperCase()
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TRANS_ID) return PRODUCT_ANALYSIS_SORTS.TRANS_ID
+  const normalized = String(sortBy || PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT).toUpperCase()
   if (normalized === PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME) return PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME
   if (normalized === PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME) return PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME
   if (normalized === PRODUCT_ANALYSIS_SORTS.CITY) return PRODUCT_ANALYSIS_SORTS.CITY
   if (normalized === PRODUCT_ANALYSIS_SORTS.BRAND) return PRODUCT_ANALYSIS_SORTS.BRAND
   if (normalized === PRODUCT_ANALYSIS_SORTS.CATEGORY) return PRODUCT_ANALYSIS_SORTS.CATEGORY
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TRANS_QTY) return PRODUCT_ANALYSIS_SORTS.TRANS_QTY
+  if (normalized === PRODUCT_ANALYSIS_SORTS.TOTAL_QTY) return PRODUCT_ANALYSIS_SORTS.TOTAL_QTY
   if (normalized === PRODUCT_ANALYSIS_SORTS.PRICE) return PRODUCT_ANALYSIS_SORTS.PRICE
-  if (normalized === PRODUCT_ANALYSIS_SORTS.TOTAL_PRICE) return PRODUCT_ANALYSIS_SORTS.TOTAL_PRICE
-  return PRODUCT_ANALYSIS_SORTS.TRANS_DATE
+  return PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT
 }
 
 export function normalizeSortDirection(sortDirection) {
@@ -136,12 +130,7 @@ export function sortProductAnalysisRows(rows, sortBy, sortDirection) {
   const normalizedSort = normalizeCompareSort(sortBy)
   const direction = normalizeSortDirection(sortDirection) === 'ASC' ? 1 : -1
 
-  return [...rows].sort((a, b) => {
-    if (normalizedSort === PRODUCT_ANALYSIS_SORTS.TRANS_ID) {
-      return direction * String(a.transId).localeCompare(String(b.transId))
-        || String(a.productName).localeCompare(String(b.productName))
-    }
-
+  return rows.slice().sort((a, b) => {
     if (normalizedSort === PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME) {
       return direction * String(a.productName).localeCompare(String(b.productName))
     }
@@ -167,8 +156,8 @@ export function sortProductAnalysisRows(rows, sortBy, sortDirection) {
         || String(a.productName).localeCompare(String(b.productName))
     }
 
-    if (normalizedSort === PRODUCT_ANALYSIS_SORTS.TRANS_QTY) {
-      return direction * ((a.transQty || 0) - (b.transQty || 0))
+    if (normalizedSort === PRODUCT_ANALYSIS_SORTS.TOTAL_QTY) {
+      return direction * ((a.totalQty || 0) - (b.totalQty || 0))
         || String(a.productName).localeCompare(String(b.productName))
     }
 
@@ -177,13 +166,12 @@ export function sortProductAnalysisRows(rows, sortBy, sortDirection) {
         || String(a.productName).localeCompare(String(b.productName))
     }
 
-    if (normalizedSort === PRODUCT_ANALYSIS_SORTS.TOTAL_PRICE) {
-      return direction * ((a.totalPrice || 0) - (b.totalPrice || 0))
+    if (normalizedSort === PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT) {
+      return direction * ((a.totalAmount || 0) - (b.totalAmount || 0))
         || String(a.productName).localeCompare(String(b.productName))
     }
 
-    return direction * (new Date(a.transDate || 0).getTime() - new Date(b.transDate || 0).getTime())
-      || String(a.productName).localeCompare(String(b.productName))
+    return String(a.productName).localeCompare(String(b.productName))
   })
 }
 

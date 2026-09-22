@@ -1412,7 +1412,7 @@ END", con))
             {
                 if (QuotationId.Rows.Count > 0)
                 {
-                    DialogResult result = MessageBox.Show("Do you Want Less Stock Details ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    DialogResult result = MessageBox.Show("Do you Want to print low stock product details?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (result == DialogResult.Yes)
                     {
@@ -1486,9 +1486,9 @@ END", con))
             {
                 if (!string.IsNullOrEmpty(QuotationId))
                 {
-                    DialogResult result = MessageBox.Show("Do you want to Print?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    DotMatrixPrintOption option = DotMatrixPrintOptionForm.Show("Do you want to Print " + QuotationId + "?");
 
-                    if (result == DialogResult.Yes)
+                    if (option != DotMatrixPrintOption.Cancel)
                     {
                         // Quotationreport rpt = new Quotationreport(txtorder.Text);
                         //rpt.ShowDialog();
@@ -1516,6 +1516,7 @@ END", con))
                                     objRREPrint.status = true;
                                     objRREPrint._strRefText = "Qtn:";
                                     objRREPrint._strRef = QuotationId;
+                                    objRREPrint.ShowPrintPreview = (option == DotMatrixPrintOption.Preview);
 
                                     objRREPrint.RREPrintQuotation();
                                 }
@@ -2943,6 +2944,7 @@ END", con))
                // {
                     string sa = Convert.ToString(DgvAutoRefNo.Rows[DgvAutoRefNo.CurrentCell.RowIndex].Cells[0].Value);
                     getitemdetails(sa);
+                    ShowRackStockAvailability();
                 //}
 
             }
@@ -3123,6 +3125,18 @@ END", con))
 
 
             }
+        }
+
+        private void ShowRackStockAvailability()
+        {
+            int productId;
+            if (!int.TryParse(lblproductid.Text, out productId) || productId <= 0)
+            {
+                return;
+            }
+
+            string productName = lblitem.Text;
+            RackStockAvailabilityForm.ShowForProduct(this, productId, productName);
         }
 
 

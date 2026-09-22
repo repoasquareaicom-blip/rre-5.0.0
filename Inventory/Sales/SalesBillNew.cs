@@ -38,6 +38,10 @@ namespace Inventory.Sales
         PurchaseReceiptBAL ObjPurchaseReceiptBAL = new PurchaseReceiptBAL();
 
         QuotationBal objQuotationbal = new QuotationBal();
+        private readonly PdiReverseRepository pdiReverseRepository = new PdiReverseRepository();
+        private TabPage TabReversePdi;
+        private DataGridView dgvReversePdi;
+        private const string ReversePdiActionColumnName = "ReversePdiAction";
         DataTable dtreceivedbalance, dtpaidbalance;
         ComboBox cmblocation;
         string cas = string.Empty;
@@ -570,6 +574,8 @@ namespace Inventory.Sales
 
 
 
+            InitializeReversePdiTab();
+            RefreshReversePdiCount();
         }
 
         public bool getreturns()
@@ -2147,9 +2153,275 @@ namespace Inventory.Sales
                 btnSavePending.Enabled = true;
                 btnClear.Enabled = true;
             }
+            else if (selectedtab == "TabReversePdi")
+            {
+                LoadReversePdiGrid();
+                btnPrint.Enabled = false;
+                btnNew.Enabled = false;
+                btnsave.Enabled = false;
+                btnSavePending.Enabled = false;
+                btnClear.Enabled = true;
+            }
 
         }
         #endregion
+
+        private void InitializeReversePdiTab()
+        {
+            if (TabReversePdi != null)
+            {
+                return;
+            }
+
+            TabReversePdi = new TabPage();
+            TabReversePdi.Name = "TabReversePdi";
+            TabReversePdi.Text = "Reverse PDI (0)";
+            TabReversePdi.BorderStyle = BorderStyle.FixedSingle;
+            TabReversePdi.UseVisualStyleBackColor = true;
+
+            dgvReversePdi = new DataGridView();
+            dgvReversePdi.AllowUserToAddRows = false;
+            dgvReversePdi.AllowUserToDeleteRows = false;
+            dgvReversePdi.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvReversePdi.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvReversePdi.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvReversePdi.DefaultCellStyle.BackColor = Color.Gainsboro;
+            dgvReversePdi.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
+            dgvReversePdi.Location = new Point(8, 8);
+            dgvReversePdi.MultiSelect = false;
+            dgvReversePdi.Name = "dgvReversePdi";
+            dgvReversePdi.ReadOnly = true;
+            dgvReversePdi.RowHeadersVisible = false;
+            dgvReversePdi.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvReversePdi.Size = new Size(TabReversePdi.Width - 16, TabReversePdi.Height - 16);
+            dgvReversePdi.TabIndex = 0;
+            dgvReversePdi.CellContentClick += new DataGridViewCellEventHandler(dgvReversePdi_CellContentClick);
+
+            TabReversePdi.Controls.Add(dgvReversePdi);
+            MainTabSalesBill.TabPages.Add(TabReversePdi);
+        }
+
+        private void RefreshReversePdiCount()
+        {
+            if (TabReversePdi == null)
+            {
+                return;
+            }
+
+            try
+            {
+                int count = pdiReverseRepository.GetReversiblePdiCount();
+                TabReversePdi.Text = "Reverse PDI (" + count.ToString() + ")";
+            }
+            catch
+            {
+                TabReversePdi.Text = "Reverse PDI";
+            }
+        }
+
+        private void LoadReversePdiGrid()
+        {
+            try
+            {
+                DataTable dt = pdiReverseRepository.GetReversiblePdis();
+                dgvReversePdi.Columns.Clear();
+                dgvReversePdi.DataSource = dt;
+
+                DataGridViewButtonColumn actionColumn = new DataGridViewButtonColumn();
+                actionColumn.Name = ReversePdiActionColumnName;
+                actionColumn.HeaderText = "Action";
+                actionColumn.Text = "Reverse PDI";
+                actionColumn.UseColumnTextForButtonValue = true;
+                actionColumn.Width = 110;
+                dgvReversePdi.Columns.Add(actionColumn);
+
+                dgvReversePdi.ColumnHeadersDefaultCellStyle.Font = new Font("Tahoma", 9.1F, FontStyle.Bold);
+                dgvReversePdi.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                lblItemCount.Text = Convert.ToString(dt.Rows.Count);
+                RefreshReversePdiCount();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void dgvReversePdi_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || dgvReversePdi.Columns[e.ColumnIndex].Name != ReversePdiActionColumnName)
+            {
+                return;
+            }
+
+            string quotationId = Convert.ToString(dgvReversePdi.Rows[e.RowIndex].Cells["Quotation No"].Value);
+            ReversePdiForQuotation(quotationId);
+        }
+
+        private void ReversePdiForQuotation(string quotationId)
+        {
+            if (string.IsNullOrEmpty(quotationId))
+            {
+                return;
+            }
+
+            DialogResult confirm = MessageBox.Show(
+                "Are you sure you want to reverse PDI for " + quotationId + "?\n\nThe PDI stock quantity will be returned to the racks.",
+                "Reverse PDI",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                DataTable originalPdiOut = pdiReverseRepository.GetOriginalPdiOut(quotationId);
+                if (originalPdiOut.Rows.Count == 0)
+                {
+                    MessageBox.Show("Original PDI stock transaction was not found.", "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    LoadReversePdiGrid();
+                    return;
+                }
+
+                DataTable rackDetails = BuildReversePdiRackDetails(originalPdiOut);
+                if (rackDetails == null)
+                {
+                    return;
+                }
+
+                PdiReverseRequest request = new PdiReverseRequest();
+                request.QuotationId = quotationId;
+                request.UpdatedBy = Program.userid;
+                request.RackDetails = rackDetails;
+
+                PdiReverseResult result = pdiReverseRepository.ReversePdi(request);
+                MessageBox.Show(result.Result.Length > 0 ? result.Result : "PDI reversed successfully.", "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadReversePdiGrid();
+                search("Quotationid", "", "Updatedon", "Today", "customername", "", role1, Program.userid);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                LoadReversePdiGrid();
+            }
+        }
+
+        private DataTable BuildReversePdiRackDetails(DataTable originalPdiOut)
+        {
+            DataTable rackDetails = pdiReverseRepository.CreateRackDetailsTable();
+            Dictionary<int, decimal> rackWiseProductTotals = new Dictionary<int, decimal>();
+            Dictionary<int, string> productNames = new Dictionary<int, string>();
+
+            foreach (DataRow row in originalPdiOut.Rows)
+            {
+                int productId = SafeIntValue(row["ProductId"]);
+                decimal quantity = SafeDecimalValue(row["Quantity"]);
+                bool rackWise = SafeBoolValue(row["RackWiseStockMovement"]);
+                string productName = Convert.ToString(row["ProductName"]);
+
+                if (productId <= 0 || quantity <= 0)
+                {
+                    continue;
+                }
+
+                if (!productNames.ContainsKey(productId))
+                {
+                    productNames.Add(productId, productName);
+                }
+
+                if (rackWise)
+                {
+                    if (!rackWiseProductTotals.ContainsKey(productId))
+                    {
+                        rackWiseProductTotals.Add(productId, 0);
+                    }
+                    rackWiseProductTotals[productId] += quantity;
+                }
+                else
+                {
+                    AddReverseRackDetail(rackDetails, productId, SafeIntValue(row["RackId"]), quantity);
+                }
+            }
+
+            foreach (KeyValuePair<int, decimal> productTotal in rackWiseProductTotals)
+            {
+                DataTable racks = pdiReverseRepository.GetReturnRacksForProduct(productTotal.Key);
+                string productName = productNames.ContainsKey(productTotal.Key) ? productNames[productTotal.Key] : Convert.ToString(productTotal.Key);
+                if (racks.Rows.Count == 0)
+                {
+                    MessageBox.Show("No active rack is assigned to " + productName + ". Please assign rack(s) in Product Master first.", "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return null;
+                }
+
+                using (PdiReverseRackAllocationDialog dialog = new PdiReverseRackAllocationDialog(productName, productTotal.Value, racks))
+                {
+                    if (dialog.ShowDialog(this) != DialogResult.OK)
+                    {
+                        return null;
+                    }
+
+                    foreach (KeyValuePair<int, decimal> allocation in dialog.Allocations)
+                    {
+                        if (allocation.Value > 0)
+                        {
+                            AddReverseRackDetail(rackDetails, productTotal.Key, allocation.Key, allocation.Value);
+                        }
+                    }
+                }
+            }
+
+            return rackDetails;
+        }
+
+        private void AddReverseRackDetail(DataTable rackDetails, int productId, int rackId, decimal quantity)
+        {
+            DataRow dr = rackDetails.NewRow();
+            dr["ProductId"] = productId;
+            dr["RackId"] = rackId;
+            dr["Quantity"] = quantity;
+            rackDetails.Rows.Add(dr);
+        }
+
+        private int SafeIntValue(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            int result;
+            return int.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private decimal SafeDecimalValue(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private bool SafeBoolValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return false;
+            }
+
+            bool boolResult;
+            if (bool.TryParse(Convert.ToString(value), out boolResult))
+            {
+                return boolResult;
+            }
+
+            int intResult;
+            return int.TryParse(Convert.ToString(value), out intResult) && intResult != 0;
+        }
 
 
 

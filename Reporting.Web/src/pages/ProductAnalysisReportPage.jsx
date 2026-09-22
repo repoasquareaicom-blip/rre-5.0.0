@@ -37,10 +37,18 @@ const emptyDashboardData = {
   branchSummaries: [],
 }
 
+const emptyMetricsData = {
+  rows: [],
+  summary: emptyProductAnalysisSummary,
+  dashboard: emptyDashboardData,
+  availabilityNotes: [],
+}
+
 function createDefaultFilters(branchId = defaultBranchId) {
   const today = getTodayInputValue()
   return {
     productSearch: '',
+    customerSearch: '',
     analysisMode: ANALYSIS_MODES.PRODUCT,
     fromDate: today,
     toDate: today,
@@ -53,12 +61,14 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
   const [appliedFilters, setAppliedFilters] = useState(() => createDefaultFilters(selectedBranchId || defaultBranchId))
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState(PRODUCT_ANALYSIS_PAGE_SIZE)
-  const [sortBy, setSortBy] = useState(PRODUCT_ANALYSIS_SORTS.TRANS_DATE)
+  const [sortBy, setSortBy] = useState(PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT)
   const [sortDirection, setSortDirection] = useState('DESC')
   const [rows, setRows] = useState([])
   const [totalRows, setTotalRows] = useState(0)
-  const [summary, setSummary] = useState(emptyProductAnalysisSummary)
-  const [dashboard, setDashboard] = useState(emptyDashboardData)
+  const [metricsData, setMetricsData] = useState(emptyMetricsData)
+  const [metricsStatus, setMetricsStatus] = useState('idle')
+  const [metricsError, setMetricsError] = useState('')
+  const [metricsCacheKey, setMetricsCacheKey] = useState('')
   const [showMetrics, setShowMetrics] = useState(false)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
@@ -72,11 +82,21 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
     [appliedFilters.branchId, isAllBranches],
   )
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize))
+  const appliedMetricsKey = useMemo(() => createMetricsCacheKey(appliedFilters), [appliedFilters])
+  const metricsSummary = useMemo(
+    () => createMetricsSummary(metricsData.rows, metricsData.summary, appliedFilters.analysisMode),
+    [appliedFilters.analysisMode, metricsData.rows, metricsData.summary],
+  )
+  const metricsCharts = useMemo(
+    () => createMetricsCharts(metricsData.rows, appliedFilters.analysisMode),
+    [appliedFilters.analysisMode, metricsData.rows],
+  )
 
   useEffect(() => {
     setPageNumber(1)
   }, [
     appliedFilters.productSearch,
+    appliedFilters.customerSearch,
     appliedFilters.analysisMode,
     appliedFilters.fromDate,
     appliedFilters.toDate,
@@ -97,8 +117,10 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
     if (validationError) {
       setRows([])
       setTotalRows(0)
-      setSummary(emptyProductAnalysisSummary)
-      setDashboard(emptyDashboardData)
+      setMetricsData(emptyMetricsData)
+      setMetricsStatus('idle')
+      setMetricsError('')
+      setMetricsCacheKey('')
       setStatus('error')
       setError(validationError)
       return () => controller.abort()
@@ -117,8 +139,6 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
 
         setRows(result.rows)
         setTotalRows(result.totalRows)
-        setSummary(result.summary)
-        setDashboard(result.dashboard || emptyDashboardData)
         setAvailabilityNotes(result.availabilityNotes || [])
         setStatus('ready')
       })
@@ -129,14 +149,66 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
 
         setRows([])
         setTotalRows(0)
-        setSummary(emptyProductAnalysisSummary)
-        setDashboard(emptyDashboardData)
         setStatus('error')
         setError(apiError.message || `${activeBranch.label} branch is currently offline or unavailable.`)
       })
 
     return () => controller.abort()
   }, [activeBranch, appliedFilters, isAllBranches, pageNumber, pageSize, sortBy, sortDirection])
+
+  useEffect(() => {
+    if (!showMetrics || metricsCacheKey === appliedMetricsKey) {
+      return undefined
+    }
+
+    const validationError = validateFilters(appliedFilters)
+    if (validationError) {
+      setMetricsData(emptyMetricsData)
+      setMetricsStatus('error')
+      setMetricsError(validationError)
+      setMetricsCacheKey(appliedMetricsKey)
+      return undefined
+    }
+
+    const controller = new AbortController()
+    setMetricsStatus('loading')
+    setMetricsError('')
+
+    const reportRequest = createReportRequest(
+      appliedFilters,
+      1,
+      EXPORT_FETCH_PAGE_SIZE,
+      PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT,
+      'DESC',
+    )
+
+    const request = isAllBranches
+      ? fetchAllBranchesResult(reportRequest, controller.signal, true)
+      : fetchAllRowsForSingleBranch(activeBranch, reportRequest, controller.signal)
+
+    request
+      .then((result) => {
+        setMetricsData({
+          rows: result.rows || [],
+          summary: result.summary || aggregateRows(result.rows || []),
+          dashboard: result.dashboard || createDashboard(result.rows || [], []),
+          availabilityNotes: result.availabilityNotes || [],
+        })
+        setMetricsCacheKey(appliedMetricsKey)
+        setMetricsStatus('ready')
+      })
+      .catch((apiError) => {
+        if (apiError.name === 'AbortError') {
+          return
+        }
+
+        setMetricsData(emptyMetricsData)
+        setMetricsStatus('error')
+        setMetricsError(apiError.message || 'Unable to load metrics dashboard.')
+      })
+
+    return () => controller.abort()
+  }, [activeBranch, appliedFilters, appliedMetricsKey, isAllBranches, metricsCacheKey, showMetrics])
 
   function updateDraftFilter(name, value) {
     setDraftFilters((current) => ({
@@ -149,16 +221,15 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
     const nextFilters = {
       ...draftFilters,
       productSearch: draftFilters.productSearch.trim(),
+      customerSearch: draftFilters.analysisMode === ANALYSIS_MODES.CUSTOMER ? draftFilters.customerSearch.trim() : '',
     }
 
     setAppliedFilters(nextFilters)
     setShowMetrics(false)
+    setMetricsCacheKey('')
     setPageNumber(1)
-    if (
-      nextFilters.analysisMode === ANALYSIS_MODES.PRODUCT &&
-      (sortBy === PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME || sortBy === PRODUCT_ANALYSIS_SORTS.CITY)
-    ) {
-      setSortBy(PRODUCT_ANALYSIS_SORTS.TRANS_DATE)
+    if (!isSortAllowedForMode(sortBy, nextFilters.analysisMode)) {
+      setSortBy(PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT)
       setSortDirection('DESC')
     }
     if (nextFilters.branchId !== ALL_BRANCHES_ID) {
@@ -171,9 +242,13 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
     setDraftFilters(defaults)
     setAppliedFilters(defaults)
     setPageSize(PRODUCT_ANALYSIS_PAGE_SIZE)
-    setSortBy(PRODUCT_ANALYSIS_SORTS.TRANS_DATE)
+    setSortBy(PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT)
     setSortDirection('DESC')
     setShowMetrics(false)
+    setMetricsData(emptyMetricsData)
+    setMetricsStatus('idle')
+    setMetricsError('')
+    setMetricsCacheKey('')
     setPageNumber(1)
     onBranchChange?.(defaults.branchId)
   }
@@ -181,8 +256,6 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
   function changeBranch(branchId) {
     setRows([])
     setTotalRows(0)
-    setSummary(emptyProductAnalysisSummary)
-    setDashboard(emptyDashboardData)
     setAvailabilityNotes([])
 
     const nextFilters = {
@@ -193,7 +266,11 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
     setDraftFilters(nextFilters)
     setAppliedFilters(nextFilters)
     setShowMetrics(false)
-    setSortBy(PRODUCT_ANALYSIS_SORTS.TRANS_DATE)
+    setMetricsData(emptyMetricsData)
+    setMetricsStatus('idle')
+    setMetricsError('')
+    setMetricsCacheKey('')
+    setSortBy(PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT)
     setSortDirection('DESC')
     setPageNumber(1)
 
@@ -208,7 +285,7 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
       setSortDirection((current) => (current === 'ASC' ? 'DESC' : 'ASC'))
     } else {
       setSortBy(normalizedSortBy)
-      setSortDirection(normalizedSortBy === PRODUCT_ANALYSIS_SORTS.TRANS_DATE ? 'DESC' : 'ASC')
+      setSortDirection(normalizedSortBy === PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT ? 'DESC' : 'ASC')
     }
     setPageNumber(1)
   }
@@ -238,9 +315,9 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
         : await fetchAllRowsForSingleBranch(activeBranch, request, controller.signal)
 
       downloadXlsx({
-        filename: `Product_Analysis_Detail_${getFileDateStamp()}.xlsx`,
+        filename: `Product_Analysis_${appliedFilters.analysisMode === ANALYSIS_MODES.CUSTOMER ? 'Customer_Wise' : 'Product_Wise'}_${getFileDateStamp()}.xlsx`,
         sheetName: 'Product Analysis',
-        columns: createExportColumns(isAllBranches, appliedFilters.analysisMode === ANALYSIS_MODES.CUSTOMER),
+        columns: createExportColumns(appliedFilters.analysisMode === ANALYSIS_MODES.CUSTOMER),
         rows: result.rows.map((row, index) => ({ ...row, serialNumber: index + 1 })),
       })
 
@@ -290,9 +367,35 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
             onChange={(value) => updateDraftFilter('productSearch', value)}
             onClear={() => updateDraftFilter('productSearch', '')}
           />
+          {draftFilters.analysisMode === ANALYSIS_MODES.CUSTOMER && (
+            <CustomerSearch
+              value={draftFilters.customerSearch}
+              onChange={(value) => updateDraftFilter('customerSearch', value)}
+              onClear={() => updateDraftFilter('customerSearch', '')}
+            />
+          )}
           <AnalysisModeSelector
             value={draftFilters.analysisMode}
-            onChange={(value) => updateDraftFilter('analysisMode', value)}
+            onChange={(value) => {
+              setDraftFilters((current) => ({
+                ...current,
+                analysisMode: value,
+                customerSearch: value === ANALYSIS_MODES.CUSTOMER ? current.customerSearch : '',
+              }))
+              setAppliedFilters((current) => ({
+                ...current,
+                analysisMode: value,
+                customerSearch: value === ANALYSIS_MODES.CUSTOMER ? current.customerSearch : '',
+              }))
+              setShowMetrics(false)
+              setMetricsData(emptyMetricsData)
+              setMetricsStatus('idle')
+              setMetricsError('')
+              setMetricsCacheKey('')
+              setSortBy(PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT)
+              setSortDirection('DESC')
+              setPageNumber(1)
+            }}
           />
           <div className="filter-actions">
             <button type="button" className="apply-button" onClick={applyFilters}>Apply</button>
@@ -313,21 +416,21 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
           <>
             <div className="dashboard-section-heading">
               <div>
-                <p className="section-kicker">Transaction Detail</p>
-                <h3>Completed Estimation Product Rows</h3>
+                <p className="section-kicker">{appliedFilters.analysisMode === ANALYSIS_MODES.CUSTOMER ? 'Customer Wise' : 'Product Wise'}</p>
+                <h3>Completed Estimation Summary</h3>
               </div>
             </div>
-            <ProductTransactionTable
+            <ProductSummaryTable
               rows={rows}
               pageNumber={pageNumber}
               pageSize={pageSize}
               sortBy={sortBy}
               sortDirection={sortDirection}
               onSort={changeSort}
-              showBranch={isAllBranches}
+              showBranch={false}
               showCustomer={appliedFilters.analysisMode === ANALYSIS_MODES.CUSTOMER}
             />
-            {rows.length === 0 && status !== 'error' && <div className="empty-state">No completed estimation product rows found for the selected criteria.</div>}
+            {rows.length === 0 && status !== 'error' && <div className="empty-state">No completed estimation summary rows found for the selected criteria.</div>}
             {status === 'loading' && <LoadingIndicator label="Refreshing product analysis" overlay />}
           </>
         )}
@@ -351,10 +454,17 @@ function ProductAnalysisReportPage({ selectedBranchId, onBranchChange }) {
       <div id="product-analysis-metrics" ref={metricsRef} className={showMetrics ? 'metrics-reveal is-open' : 'metrics-reveal'} aria-hidden={!showMetrics}>
         <div className="metrics-reveal-inner">
           <AnalysisContext filters={appliedFilters} isAllBranches={isAllBranches} activeBranch={activeBranch} />
-          <SummaryCards summary={summary} />
-          <DashboardGrid dashboard={dashboard} summary={summary} />
-          {isAllBranches && (
-            <BranchComparison summaries={dashboard.branchSummaries} />
+          {metricsStatus === 'loading' && <div className="dashboard-loading-state">Loading metrics...</div>}
+          {metricsStatus === 'error' && <div className="dashboard-error-state">{metricsError || 'Unable to load metrics dashboard.'}</div>}
+          {metricsStatus === 'ready' && (
+            <>
+              {metricsData.availabilityNotes.length > 0 && <div className="branch-status-message">{metricsData.availabilityNotes.join(' ')}</div>}
+              <SummaryCards summary={metricsSummary} mode={appliedFilters.analysisMode} />
+              <MetricsDashboard charts={metricsCharts} mode={appliedFilters.analysisMode} summary={metricsSummary} />
+            </>
+          )}
+          {isAllBranches && metricsStatus === 'ready' && (
+            <BranchComparison summaries={metricsData.dashboard.branchSummaries} />
           )}
         </div>
       </div>
@@ -385,11 +495,32 @@ function validateFilters(filters) {
   return ''
 }
 
+function isSortAllowedForMode(sortBy, analysisMode) {
+  const productSorts = new Set([
+    PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME,
+    PRODUCT_ANALYSIS_SORTS.BRAND,
+    PRODUCT_ANALYSIS_SORTS.CATEGORY,
+    PRODUCT_ANALYSIS_SORTS.TOTAL_QTY,
+    PRODUCT_ANALYSIS_SORTS.PRICE,
+    PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT,
+  ])
+
+  if (analysisMode !== ANALYSIS_MODES.CUSTOMER) {
+    return productSorts.has(sortBy)
+  }
+
+  return productSorts.has(sortBy)
+    || sortBy === PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME
+    || sortBy === PRODUCT_ANALYSIS_SORTS.CITY
+}
+
 function createReportRequest(filters, pageNumber, pageSize, sortBy, sortDirection) {
   return {
     pageNumber,
     pageSize,
     productSearch: filters.productSearch,
+    customerSearch: filters.analysisMode === ANALYSIS_MODES.CUSTOMER ? filters.customerSearch : '',
+    analysisMode: filters.analysisMode,
     fromDate: filters.fromDate,
     toDate: filters.toDate,
     sortBy,
@@ -397,25 +528,34 @@ function createReportRequest(filters, pageNumber, pageSize, sortBy, sortDirectio
   }
 }
 
+function createMetricsCacheKey(filters) {
+  return [
+    filters.branchId,
+    filters.fromDate,
+    filters.toDate,
+    filters.productSearch,
+    filters.customerSearch,
+    filters.analysisMode,
+  ].join('|')
+}
+
 async function fetchSingleBranchResult(activeBranch, reportRequest, signal) {
-  const [result, allRowsResult] = await Promise.all([
-    fetchProductAnalysisReport(activeBranch, reportRequest, signal),
-    fetchAllRowsForSingleBranch(activeBranch, reportRequest, signal),
-  ])
+  const result = await fetchProductAnalysisReport(activeBranch, reportRequest, signal)
 
   const rows = result.rows.map((row) => withBranch(row, activeBranch))
-  const dashboard = createDashboard(allRowsResult.rows, [
+  const summary = result.summary || emptyProductAnalysisSummary
+  const dashboard = createDashboard([], [
     {
       branch: activeBranch,
       status: 'online',
-      summary: allRowsResult.summary,
+      summary,
     },
   ])
 
   return {
     rows,
     totalRows: result.totalRows,
-    summary: allRowsResult.summary || result.summary || emptyProductAnalysisSummary,
+    summary,
     dashboard,
     availabilityNotes: [],
   }
@@ -433,7 +573,7 @@ async function fetchAllRowsForSingleBranch(activeBranch, reportRequest, signal) 
       { ...reportRequest, pageNumber: page, pageSize: EXPORT_FETCH_PAGE_SIZE },
       signal,
     )
-    rows = [...rows, ...result.rows.map((row) => withBranch(row, activeBranch))]
+    rows = rows.concat(result.rows.map((row) => withBranch(row, activeBranch)))
     totalRows = result.totalRows
     summary = result.summary
     page += 1
@@ -474,8 +614,13 @@ async function fetchAllBranchesResult(reportRequest, signal, exportAll = false) 
     throw new Error('All branches are currently unavailable.')
   }
 
+  let allRows = []
+  successful.forEach(({ result }) => {
+    allRows = allRows.concat(result.rows)
+  })
+
   const merged = sortProductAnalysisRows(
-    successful.flatMap(({ result }) => result.rows),
+    mergeBranchRows(allRows, reportRequest.analysisMode),
     reportRequest.sortBy,
     reportRequest.sortDirection,
   )
@@ -500,7 +645,7 @@ async function fetchAllBranchesResult(reportRequest, signal, exportAll = false) 
     rows: pageRows,
     totalRows: merged.length,
     summary,
-    dashboard: createDashboard(merged, [...branchSummaries, ...offlineSummaries]),
+    dashboard: createDashboard(merged, branchSummaries.concat(offlineSummaries)),
     availabilityNotes,
     branches,
   }
@@ -510,32 +655,59 @@ function createDashboard(rows, branchSummaries) {
   const productRows = aggregateProducts(rows)
 
   return {
-    topByAmount: [...productRows].sort((a, b) => b.salesAmount - a.salesAmount || a.productName.localeCompare(b.productName)).slice(0, 10),
-    topByQuantity: [...productRows].sort((a, b) => b.salesCount - a.salesCount || a.productName.localeCompare(b.productName)).slice(0, 10),
-    topByBillCount: [...productRows].sort((a, b) => b.billCount - a.billCount || a.productName.localeCompare(b.productName)).slice(0, 10),
+    topByAmount: productRows.slice().sort((a, b) => b.salesAmount - a.salesAmount || a.productName.localeCompare(b.productName)).slice(0, 10),
+    topByQuantity: productRows.slice().sort((a, b) => b.salesCount - a.salesCount || a.productName.localeCompare(b.productName)).slice(0, 10),
+    topByBillCount: productRows.slice().sort((a, b) => b.billCount - a.billCount || a.productName.localeCompare(b.productName)).slice(0, 10),
     branchSummaries,
   }
 }
 
 function aggregateRows(rows) {
   const productIds = new Set()
-  const transactionIds = new Set()
+  const customerNames = new Set()
   let totalQuantity = 0
-  let totalSalesAmount = 0
+  let totalAmount = 0
 
   rows.forEach((row) => {
     productIds.add(String(row.productId || row.productName || '-'))
-    transactionIds.add(`${row.branchCode || ''}-${row.transId || '-'}`)
-    totalQuantity += row.transQty || 0
-    totalSalesAmount += row.totalPrice || 0
+    if (row.customerName) {
+      customerNames.add(String(row.customerName).trim().toUpperCase())
+    }
+    totalQuantity += row.totalQty || 0
+    totalAmount += row.totalAmount || 0
   })
 
   return {
+    customers: customerNames.size,
     products: productIds.size,
-    bills: transactionIds.size,
     totalQuantity,
-    totalSalesAmount,
+    totalAmount,
   }
+}
+
+function mergeBranchRows(rows, analysisMode) {
+  const grouped = new Map()
+
+  rows.forEach((row) => {
+    const productKey = String(row.productId || row.productName || '-').trim().toUpperCase()
+    const customerKey = String(row.customerName || '').trim().toUpperCase()
+    const key = analysisMode === ANALYSIS_MODES.CUSTOMER ? `${customerKey}|${productKey}` : productKey
+    const current = grouped.get(key) || {
+      ...row,
+      totalQty: 0,
+      totalAmount: 0,
+    }
+
+    current.totalQty += row.totalQty || 0
+    current.totalAmount += row.totalAmount || 0
+    current.price = current.totalQty !== 0 ? current.totalAmount / current.totalQty : 0
+    grouped.set(key, current)
+  })
+
+  return Array.from(grouped.values()).map((row, index) => ({
+    ...row,
+    id: `${row.customerName || 'PRODUCT'}-${row.productId || row.productName}-${index}`,
+  }))
 }
 
 function aggregateProducts(rows) {
@@ -551,9 +723,9 @@ function aggregateProducts(rows) {
       transactionIds: new Set(),
     }
 
-    current.salesCount += row.transQty || 0
-    current.salesAmount += row.totalPrice || 0
-    current.transactionIds.add(`${row.branchCode || ''}-${row.transId || '-'}`)
+    current.salesCount += row.totalQty || 0
+    current.salesAmount += row.totalAmount || 0
+    current.transactionIds.add(`${row.branchCode || ''}-${row.customerName || ''}-${row.productId || row.productName || '-'}`)
     map.set(key, current)
   })
 
@@ -561,6 +733,175 @@ function aggregateProducts(rows) {
     ...row,
     billCount: row.transactionIds.size,
   }))
+}
+
+function createMetricsSummary(rows, fallbackSummary, analysisMode) {
+  const summary = aggregateRows(rows)
+  const baseSummary = rows.length > 0 ? summary : fallbackSummary
+  const productCount = baseSummary.products || 0
+
+  return {
+    ...baseSummary,
+    averageProductValue: productCount > 0 ? (baseSummary.totalAmount || 0) / productCount : 0,
+    mode: analysisMode,
+  }
+}
+
+function createMetricsCharts(rows, analysisMode) {
+  if (analysisMode === ANALYSIS_MODES.CUSTOMER) {
+    return createCustomerMetricsCharts(rows)
+  }
+
+  return createProductMetricsCharts(rows)
+}
+
+function createProductMetricsCharts(rows) {
+  const productRows = rows.map((row) => ({
+    id: row.productId || row.productName,
+    label: row.productName || '-',
+    productName: row.productName || '-',
+    totalQty: safeNumber(row.totalQty),
+    totalAmount: safeNumber(row.totalAmount),
+    price: safeNumber(row.price),
+  }))
+
+  return {
+    valueTitle: 'Top 10 Products by Sales Value',
+    quantityTitle: 'Top 10 Products by Quantity',
+    valueRows: topRows(productRows, (row) => row.totalAmount, 10),
+    quantityRows: topRows(productRows, (row) => row.totalQty, 10),
+    brandRows: topContributionRows(aggregateBy(rows, (row) => row.brand || 'Unassigned', (row) => row.totalAmount), 10),
+    categoryRows: topContributionRows(aggregateBy(rows, (row) => row.category || 'Unassigned', (row) => row.totalAmount), 10),
+    extraTitle: 'Top 10 Products by Average Price',
+    extraRows: topRows(productRows.filter((row) => row.price > 0), (row) => row.price, 10),
+    extraValueLabel: 'Price',
+  }
+}
+
+function createCustomerMetricsCharts(rows) {
+  const customerRows = aggregateCustomerRows(rows)
+  const productRows = aggregateProductSalesRows(rows)
+
+  return {
+    valueTitle: 'Top 10 Customers by Sales Value',
+    quantityTitle: 'Top 10 Customers by Quantity',
+    valueRows: topRows(customerRows, (row) => row.totalAmount, 10),
+    quantityRows: topRows(customerRows, (row) => row.totalQty, 10),
+    brandRows: topContributionRows(customerRows.map((row) => ({
+      id: row.id,
+      label: row.label,
+      value: row.totalAmount,
+      totalQty: row.totalQty,
+      totalAmount: row.totalAmount,
+    })), 10),
+    categoryRows: topContributionRows(aggregateBy(rows, (row) => row.category || 'Unassigned', (row) => row.totalAmount), 10),
+    extraTitle: 'Top 10 Products in Customer Sales',
+    extraRows: topRows(productRows, (row) => row.totalAmount, 10),
+    extraValueLabel: 'Total Amount',
+  }
+}
+
+function aggregateCustomerRows(rows) {
+  const map = new Map()
+
+  rows.forEach((row) => {
+    const label = String(row.customerName || 'Unassigned').trim() || 'Unassigned'
+    const key = label.toUpperCase()
+    const current = map.get(key) || {
+      id: key,
+      label,
+      productName: label,
+      customerName: label,
+      totalQty: 0,
+      totalAmount: 0,
+    }
+
+    current.totalQty += safeNumber(row.totalQty)
+    current.totalAmount += safeNumber(row.totalAmount)
+    map.set(key, current)
+  })
+
+  return Array.from(map.values())
+}
+
+function aggregateProductSalesRows(rows) {
+  const map = new Map()
+
+  rows.forEach((row) => {
+    const key = String(row.productId || row.productName || '-')
+    const current = map.get(key) || {
+      id: key,
+      productName: row.productName || '-',
+      label: row.productName || '-',
+      totalQty: 0,
+      totalAmount: 0,
+    }
+
+    current.totalQty += safeNumber(row.totalQty)
+    current.totalAmount += safeNumber(row.totalAmount)
+    map.set(key, current)
+  })
+
+  return Array.from(map.values())
+}
+
+function aggregateBy(rows, getLabel, getValue) {
+  const map = new Map()
+
+  rows.forEach((row) => {
+    const label = String(getLabel(row) || 'Unassigned').trim() || 'Unassigned'
+    const key = label.toUpperCase()
+    const current = map.get(key) || {
+      id: key,
+      label,
+      value: 0,
+      totalQty: 0,
+      totalAmount: 0,
+    }
+
+    const amount = safeNumber(getValue(row))
+    current.value += amount
+    current.totalAmount += amount
+    current.totalQty += safeNumber(row.totalQty)
+    map.set(key, current)
+  })
+
+  return Array.from(map.values())
+}
+
+function topRows(rows, getValue, count) {
+  return rows
+    .filter((row) => Number.isFinite(getValue(row)))
+    .slice()
+    .sort((a, b) => getValue(b) - getValue(a) || String(a.label || a.productName).localeCompare(String(b.label || b.productName)))
+    .slice(0, count)
+}
+
+function topContributionRows(rows, count) {
+  const positiveRows = rows
+    .filter((row) => safeNumber(row.value) > 0)
+    .slice()
+    .sort((a, b) => safeNumber(b.value) - safeNumber(a.value) || String(a.label).localeCompare(String(b.label)))
+
+  const top = positiveRows.slice(0, count)
+  const others = positiveRows.slice(count).reduce((sum, row) => sum + safeNumber(row.value), 0)
+
+  if (others > 0) {
+    return top.concat([{
+      id: 'OTHERS',
+      label: 'Others',
+      value: others,
+      totalAmount: others,
+      totalQty: 0,
+    }])
+  }
+
+  return top
+}
+
+function safeNumber(value) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : 0
 }
 
 function BranchDropdown({ value, availabilityNotes, onChange }) {
@@ -584,6 +925,18 @@ function ProductSearch({ value, onChange, onClear }) {
       <div className="product-search-box">
         <input id="product-analysis-product" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Product name" />
         {value && <button type="button" onClick={onClear} aria-label="Clear product search">x</button>}
+      </div>
+    </div>
+  )
+}
+
+function CustomerSearch({ value, onChange, onClear }) {
+  return (
+    <div className="field-group product-search-field customer-search-field">
+      <label htmlFor="product-analysis-customer">Customer Search</label>
+      <div className="product-search-box">
+        <input id="product-analysis-customer" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Customer name" />
+        {value && <button type="button" onClick={onClear} aria-label="Clear customer search">x</button>}
       </div>
     </div>
   )
@@ -619,12 +972,13 @@ function AnalysisModeSelector({ value, onChange }) {
   )
 }
 
-function SummaryCards({ summary }) {
+function SummaryCards({ summary, mode }) {
   const items = [
+    ...(mode === ANALYSIS_MODES.CUSTOMER ? [['Customers', formatStock(summary.customers)]] : []),
     ['Products', formatStock(summary.products)],
-    ['Transactions', formatStock(summary.bills)],
     ['Total Quantity', formatStock(summary.totalQuantity)],
-    ['Total Price', formatMoney(summary.totalSalesAmount)],
+    ['Total Amount', formatMoney(summary.totalAmount)],
+    ...(mode === ANALYSIS_MODES.PRODUCT ? [['Average Product Value', formatMoney(summary.averageProductValue)]] : []),
   ]
 
   return (
@@ -648,22 +1002,60 @@ function AnalysisContext({ filters, isAllBranches, activeBranch }) {
   )
 }
 
-function DashboardGrid({ dashboard, summary }) {
+function MetricsDashboard({ charts, mode }) {
+  const contributionTitle = mode === ANALYSIS_MODES.CUSTOMER ? 'Customer Sales Contribution' : 'Sales by Brand'
+
   return (
-    <div className="product-dashboard-grid">
-      <RankingCard title="Top Products by Total Price" rows={dashboard.topByAmount} valueLabel="Total Price" getValue={(row) => row.salesAmount || 0} renderValue={(value) => formatMoney(value)} showContribution total={summary.totalSalesAmount} className="dashboard-card-feature" />
-      <RankingCard title="Top Products by Quantity" rows={dashboard.topByQuantity} valueLabel="Trans Qty" getValue={(row) => row.salesCount || 0} renderValue={(value) => formatStock(value)} className="dashboard-card-feature" />
-      <RankingCard title="Top Products by Transactions" rows={dashboard.topByBillCount} valueLabel="Transactions" getValue={(row) => row.billCount || 0} renderValue={(value) => formatStock(value)} />
-      <ContributionCard rows={dashboard.topByAmount} total={summary.totalSalesAmount} />
+    <div className="metrics-dashboard-layout">
+      <div className="metrics-chart-row">
+        <BarChartCard
+          title={charts.valueTitle}
+          rows={charts.valueRows}
+          valueLabel="Total Amount"
+          getValue={(row) => row.totalAmount}
+          renderValue={formatMoney}
+          tooltipKind={mode === ANALYSIS_MODES.CUSTOMER ? 'customer' : 'product'}
+        />
+        <BarChartCard
+          title={charts.quantityTitle}
+          rows={charts.quantityRows}
+          valueLabel="Total Qty"
+          getValue={(row) => row.totalQty}
+          renderValue={formatStock}
+          tooltipKind={mode === ANALYSIS_MODES.CUSTOMER ? 'customer' : 'product'}
+        />
+      </div>
+      <div className="metrics-chart-row">
+        <DoughnutChartCard
+          title={contributionTitle}
+          rows={charts.brandRows}
+          note="Contribution chart shows positive sales values only."
+        />
+        <DoughnutChartCard
+          title="Sales by Category"
+          rows={charts.categoryRows}
+          note="Contribution chart shows positive sales values only."
+        />
+      </div>
+      <div className="metrics-chart-row metrics-chart-row-single">
+        <BarChartCard
+          title={charts.extraTitle}
+          rows={charts.extraRows}
+          valueLabel={charts.extraValueLabel}
+          getValue={(row) => charts.extraValueLabel === 'Price' ? row.price : row.totalAmount}
+          renderValue={formatMoney}
+          tooltipKind="product"
+        />
+      </div>
     </div>
   )
 }
 
-function RankingCard({ title, rows, valueLabel, getValue, renderValue, total = 0, showContribution = false, className = '' }) {
-  const maxValue = rows.reduce((max, row) => Math.max(max, getValue(row)), 0)
+function BarChartCard({ title, rows, valueLabel, getValue, renderValue, tooltipKind }) {
+  const maxValue = rows.reduce((max, row) => Math.max(max, Math.abs(safeNumber(getValue(row)))), 0)
 
   return (
-    <div className={`dashboard-card ${className}`}>
+    <div className="dashboard-card metric-chart-card">
       <div className="dashboard-card-title">
         <h3>{title}</h3>
         <span>{valueLabel}</span>
@@ -671,23 +1063,27 @@ function RankingCard({ title, rows, valueLabel, getValue, renderValue, total = 0
       {rows.length === 0 ? (
         <NoData />
       ) : (
-        <div className="dashboard-ranking-list">
-          {rows.slice(0, 10).map((row, index) => {
-            const value = getValue(row)
-            const percentOfMax = maxValue > 0 ? Math.max(3, (value / maxValue) * 100) : 0
-            const contribution = total > 0 ? (value / total) * 100 : 0
+        <div className="metric-bar-chart" role="list">
+          {rows.map((row, index) => {
+            const value = safeNumber(getValue(row))
+            const width = maxValue > 0 ? Math.max(4, (Math.abs(value) / maxValue) * 100) : 0
+            const label = row.label || row.productName || row.customerName || '-'
 
             return (
-              <div className="dashboard-ranking-row" key={`${row.productId}-${index}`}>
-                <span className="rank-number">{index + 1}</span>
-                <div className="rank-product">
-                  <div>
-                    <strong>{row.productName}</strong>
-                    {showContribution && <small>{formatPercent(contribution)} of total</small>}
-                  </div>
-                  <span className="rank-bar"><i style={{ width: `${percentOfMax}%` }} /></span>
+              <div
+                className={value < 0 ? 'metric-bar-row is-negative' : 'metric-bar-row'}
+                key={`${label}-${index}`}
+                role="listitem"
+                title={createChartTooltip(row, tooltipKind)}
+              >
+                <div className="metric-bar-label">
+                  <span>{index + 1}</span>
+                  <strong>{label}</strong>
                 </div>
-                <span className="rank-value">{renderValue(value)}</span>
+                <div className="metric-bar-track">
+                  <i style={{ width: `${width}%` }} />
+                </div>
+                <div className="metric-bar-value">{renderValue(value)}</div>
               </div>
             )
           })}
@@ -697,45 +1093,78 @@ function RankingCard({ title, rows, valueLabel, getValue, renderValue, total = 0
   )
 }
 
-function ContributionCard({ rows, total }) {
-  const topRows = rows.slice(0, 5)
-  const topTotal = topRows.reduce((sum, row) => sum + (row.salesAmount || 0), 0)
-  const items = topRows.map((row) => ({
-    id: row.productId,
-    label: row.productName,
-    value: row.salesAmount || 0,
-  }))
-  const others = Math.max(0, total - topTotal)
-  if (others > 0) {
-    items.push({ id: 'others', label: 'Others', value: others })
-  }
+function DoughnutChartCard({ title, rows, note }) {
+  const total = rows.reduce((sum, row) => sum + safeNumber(row.value), 0)
+  const segments = createDoughnutSegments(rows, total)
 
   return (
-    <div className="dashboard-card">
+    <div className="dashboard-card metric-chart-card">
       <div className="dashboard-card-title">
-        <h3>Total Price Contribution</h3>
+        <h3>{title}</h3>
         <span>Share</span>
       </div>
-      {items.length === 0 || total <= 0 ? (
+      {rows.length === 0 || total <= 0 ? (
         <NoData />
       ) : (
-        <div className="contribution-list">
-          {items.map((item) => {
-            const contribution = (item.value / total) * 100
-            return (
-              <div className="contribution-row" key={item.id}>
-                <div>
-                  <strong>{item.label}</strong>
-                  <span>{formatPercent(contribution)}</span>
-                </div>
-                <span className="rank-bar"><i style={{ width: `${Math.max(3, contribution)}%` }} /></span>
+        <div className="metric-doughnut-layout">
+          <div
+            className="metric-doughnut"
+            style={{ background: `conic-gradient(${segments.gradient})` }}
+            aria-label={title}
+          >
+            <span>{formatMoney(total)}</span>
+          </div>
+          <div className="metric-doughnut-legend">
+            {segments.items.map((item) => (
+              <div className="metric-legend-row" key={item.id} title={`${item.label}\nAmount: ${formatMoney(item.value)}\nShare: ${formatPercent(item.percent)}`}>
+                <i style={{ background: item.color }} />
+                <span>{item.label}</span>
+                <strong>{formatPercent(item.percent)}</strong>
               </div>
-            )
-          })}
+            ))}
+          </div>
         </div>
       )}
+      {note && rows.length > 0 && <p className="metric-chart-note">{note}</p>}
     </div>
   )
+}
+
+function createDoughnutSegments(rows, total) {
+  const colors = ['#b91c1c', '#0f766e', '#b45309', '#2563eb', '#7c3aed', '#be123c', '#15803d', '#ca8a04', '#0891b2', '#9333ea', '#6b7280']
+  let cursor = 0
+  const items = rows.map((row, index) => {
+    const value = safeNumber(row.value)
+    const percent = total > 0 ? (value / total) * 100 : 0
+    const start = cursor
+    cursor += percent
+    const color = colors[index % colors.length]
+
+    return {
+      id: row.id || row.label,
+      label: row.label || '-',
+      value,
+      percent,
+      color,
+      gradientPart: `${color} ${start}% ${cursor}%`,
+    }
+  })
+
+  return {
+    items,
+    gradient: items.map((item) => item.gradientPart).join(', '),
+  }
+}
+
+function createChartTooltip(row, kind) {
+  const nameLabel = kind === 'customer' ? 'Customer' : 'Product Name'
+  const nameValue = row.customerName || row.productName || row.label || '-'
+
+  return [
+    `${nameLabel}: ${nameValue}`,
+    `Total Qty: ${formatStock(row.totalQty)}`,
+    `Total Amount: ${formatMoney(row.totalAmount)}`,
+  ].join('\n')
 }
 
 function BranchComparison({ summaries }) {
@@ -755,14 +1184,14 @@ function BranchComparison({ summaries }) {
               <span>{status === 'offline' ? 'Offline' : 'Online'}</span>
             </div>
             <dl>
+              <dt>Customers</dt>
+              <dd>{formatStock(summary.customers)}</dd>
               <dt>Products</dt>
               <dd>{formatStock(summary.products)}</dd>
-              <dt>Transactions</dt>
-              <dd>{formatStock(summary.bills)}</dd>
               <dt>Qty</dt>
               <dd>{formatStock(summary.totalQuantity)}</dd>
               <dt>Total</dt>
-              <dd>{formatMoney(summary.totalSalesAmount)}</dd>
+              <dd>{formatMoney(summary.totalAmount)}</dd>
             </dl>
           </div>
         ))}
@@ -794,17 +1223,6 @@ function formatDisplayDate(value) {
   }).format(date)
 }
 
-function formatTransactionDate(value) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
 function SortHeader({ children, sortKey, sortBy, sortDirection, onSort, className = '' }) {
   const active = sortBy === sortKey || normalizeCompareSort(sortBy) === sortKey
 
@@ -818,7 +1236,7 @@ function SortHeader({ children, sortKey, sortBy, sortDirection, onSort, classNam
   )
 }
 
-function ProductTransactionTable({ rows, pageNumber, pageSize, sortBy, sortDirection, onSort, showBranch, showCustomer }) {
+function ProductSummaryTable({ rows, pageNumber, pageSize, sortBy, sortDirection, onSort, showBranch, showCustomer }) {
   if (rows.length === 0) return null
   const tableClassName = [
     'stock-table',
@@ -836,16 +1254,14 @@ function ProductTransactionTable({ rows, pageNumber, pageSize, sortBy, sortDirec
           <tr>
             <th className="numeric col-product-analysis-serial">S.No</th>
             {showBranch && <th className="col-product-analysis-branch">Branch</th>}
-            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TRANS_ID} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-trans">Trans ID</SortHeader>
-            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-name">Product Name</SortHeader>
             {showCustomer && <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.CUSTOMER_NAME} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-customer">Customer Name</SortHeader>}
             {showCustomer && <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.CITY} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-city">City</SortHeader>}
+            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.PRODUCT_NAME} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-name">Product Name</SortHeader>
             <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.BRAND} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-brand">Brand</SortHeader>
             <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.CATEGORY} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-category">Category</SortHeader>
-            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TRANS_DATE} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="col-product-analysis-date">Trans Date</SortHeader>
-            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TRANS_QTY} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="numeric metric-header">Trans Qty</SortHeader>
+            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TOTAL_QTY} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="numeric metric-header">Total Qty</SortHeader>
             <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.PRICE} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="numeric metric-header">Price</SortHeader>
-            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TOTAL_PRICE} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="numeric metric-header">Total Price</SortHeader>
+            <SortHeader sortKey={PRODUCT_ANALYSIS_SORTS.TOTAL_AMOUNT} sortBy={sortBy} sortDirection={sortDirection} onSort={onSort} className="numeric metric-header">Total Amount</SortHeader>
           </tr>
         </thead>
         <tbody>
@@ -853,16 +1269,14 @@ function ProductTransactionTable({ rows, pageNumber, pageSize, sortBy, sortDirec
             <tr key={row.id}>
               <td className="numeric">{((pageNumber - 1) * pageSize) + index + 1}</td>
               {showBranch && <td>{row.branchName}</td>}
-              <td className="product-analysis-trans-cell">{row.transId}</td>
-              <td>{row.productName}</td>
               {showCustomer && <td>{row.customerName}</td>}
               {showCustomer && <td>{row.city}</td>}
+              <td>{row.productName}</td>
               <td>{row.brand}</td>
               <td>{row.category}</td>
-              <td>{formatTransactionDate(row.transDate)}</td>
-              <td className="numeric">{formatStock(row.transQty)}</td>
+              <td className="numeric">{formatStock(row.totalQty)}</td>
               <td className="numeric">{formatMoney(row.price)}</td>
-              <td className="numeric">{formatMoney(row.totalPrice)}</td>
+              <td className="numeric">{formatMoney(row.totalAmount)}</td>
             </tr>
           ))}
         </tbody>
@@ -871,22 +1285,19 @@ function ProductTransactionTable({ rows, pageNumber, pageSize, sortBy, sortDirec
   )
 }
 
-function createExportColumns(includeBranch, includeCustomer) {
+function createExportColumns(includeCustomer) {
   return [
     { header: 'S.No', value: (row) => row.serialNumber },
-    ...(includeBranch ? [{ header: 'Branch', value: (row) => row.branchName }] : []),
-    { header: 'TRANS ID', value: (row) => row.transId },
-    { header: 'PRODUCT NAME', value: (row) => row.productName },
     ...(includeCustomer ? [
       { header: 'CUSTOMER NAME', value: (row) => row.customerName },
       { header: 'CITY', value: (row) => row.city },
     ] : []),
+    { header: 'PRODUCT NAME', value: (row) => row.productName },
     { header: 'BRAND', value: (row) => row.brand },
     { header: 'CATEGORY', value: (row) => row.category },
-    { header: 'TRANS DATE', value: (row) => formatTransactionDate(row.transDate) },
-    { header: 'TRANS QTY', value: (row) => row.transQty },
+    { header: 'TOTAL QTY', value: (row) => row.totalQty },
     { header: 'PRICE', value: (row) => row.price },
-    { header: 'TOTAL PRICE', value: (row) => row.totalPrice },
+    { header: 'TOTAL AMOUNT', value: (row) => row.totalAmount },
   ]
 }
 

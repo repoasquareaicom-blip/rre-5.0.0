@@ -422,7 +422,7 @@ async function fetchBranchPage(branch, reportRequest, signal) {
       signal,
     )
 
-    rows = [...rows, ...result.rows]
+    rows = rows.concat(result.rows)
     totalRows = result.totalRows
     summary = result.summary
 
@@ -472,9 +472,12 @@ async function fetchAllBranchQuotationReport(reportRequest, signal, exportAll = 
     throw new Error('All branches are currently unavailable.')
   }
 
-  const mergedRows = successful
-    .flatMap(({ branch, result }) => result.rows.map((row) => withBranch(row, branch)))
-    .sort((a, b) => {
+  let mergedRows = []
+  successful.forEach(({ branch, result }) => {
+    mergedRows = mergedRows.concat(result.rows.map((row) => withBranch(row, branch)))
+  })
+
+  mergedRows = mergedRows.sort((a, b) => {
       const bTime = new Date(b.updatedOn || 0).getTime()
       const aTime = new Date(a.updatedOn || 0).getTime()
       return bTime - aTime || String(b.quotationId).localeCompare(String(a.quotationId))
@@ -524,7 +527,7 @@ async function fetchAllRowsForBranch(branch, reportRequest, signal) {
       signal,
     )
 
-    rows = [...rows, ...result.rows]
+    rows = rows.concat(result.rows)
     summary = result.summary
     totalRows = result.totalRows
     pageNumber += 1

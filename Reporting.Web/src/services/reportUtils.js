@@ -111,7 +111,7 @@ export async function fetchBranchPage(fetchReport, branch, reportRequest, signal
       signal,
     )
 
-    rows = [...rows, ...result.rows]
+    rows = rows.concat(result.rows)
     totalRows = result.totalRows
     summary = result.summary
 
@@ -144,7 +144,7 @@ export async function fetchAllRowsForBranch(fetchReport, branch, reportRequest, 
       signal,
     )
 
-    rows = [...rows, ...result.rows]
+    rows = rows.concat(result.rows)
     summary = result.summary
     totalRows = result.totalRows
     pageNumber += 1

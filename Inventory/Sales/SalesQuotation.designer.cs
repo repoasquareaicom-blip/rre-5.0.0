@@ -169,8 +169,8 @@
             this.cmbassistby = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.pnlOrder = new System.Windows.Forms.Panel();
-            this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.pnlLabelSearch = new System.Windows.Forms.Panel();
+            this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -802,10 +802,11 @@
             this.Locationpanal.AutoScroll = true;
             this.Locationpanal.BackColor = System.Drawing.Color.Transparent;
             this.Locationpanal.BackgroundImage = global::Inventory.Properties.Resources.back;
-            this.Locationpanal.Location = new System.Drawing.Point(9, 352);
+            this.Locationpanal.Location = new System.Drawing.Point(6, 351);
             this.Locationpanal.Name = "Locationpanal";
             this.Locationpanal.Size = new System.Drawing.Size(451, 40);
             this.Locationpanal.TabIndex = 397;
+            this.Locationpanal.Visible = false;
             // 
             // panel9
             // 
@@ -916,6 +917,7 @@
             this.label10.TabIndex = 394;
             this.label10.Text = "Damage :";
             this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label10.Visible = false;
             // 
             // label8
             // 
@@ -929,6 +931,7 @@
             this.label8.TabIndex = 393;
             this.label8.Text = "Display :";
             this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label8.Visible = false;
             // 
             // DgvAutoRefNo
             // 
@@ -986,6 +989,7 @@
             this.Damage.TabIndex = 36;
             this.Damage.Text = "0";
             this.Damage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.Damage.Visible = false;
             // 
             // cmbloaction
             // 
@@ -1012,6 +1016,7 @@
             this.DefaultFloor.TabIndex = 25;
             this.DefaultFloor.Text = "0";
             this.DefaultFloor.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.DefaultFloor.Visible = false;
             // 
             // lblpageno
             // 
@@ -1048,6 +1053,7 @@
             this.Display.TabIndex = 34;
             this.Display.Text = "0";
             this.Display.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.Display.Visible = false;
             // 
             // lblrack
             // 
@@ -1085,6 +1091,7 @@
             this.labe.TabIndex = 21;
             this.labe.Text = "Rack :";
             this.labe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.labe.Visible = false;
             // 
             // lblitemcode
             // 
@@ -1983,6 +1990,20 @@
             this.pnlOrder.TabIndex = 113;
             this.pnlOrder.Visible = false;
             // 
+            // pnlLabelSearch
+            // 
+            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
+            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
+            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlLabelSearch.Controls.Add(this.vLabel1);
+            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
+            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
+            this.pnlLabelSearch.Name = "pnlLabelSearch";
+            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 811);
+            this.pnlLabelSearch.TabIndex = 112;
+            this.pnlLabelSearch.Visible = false;
+            // 
             // vLabel2
             // 
             this.vLabel2.BackColor = System.Drawing.Color.Transparent;
@@ -1998,20 +2019,6 @@
             this.vLabel2.Text = "View Sales Quotation";
             this.vLabel2.Visible = false;
             this.vLabel2.Click += new System.EventHandler(this.vLabel2_Click);
-            // 
-            // pnlLabelSearch
-            // 
-            this.pnlLabelSearch.BackColor = System.Drawing.Color.Transparent;
-            this.pnlLabelSearch.BackgroundImage = global::Inventory.Properties.Resources._5;
-            this.pnlLabelSearch.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.pnlLabelSearch.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnlLabelSearch.Controls.Add(this.vLabel1);
-            this.pnlLabelSearch.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlLabelSearch.Location = new System.Drawing.Point(0, 0);
-            this.pnlLabelSearch.Name = "pnlLabelSearch";
-            this.pnlLabelSearch.Size = new System.Drawing.Size(25, 811);
-            this.pnlLabelSearch.TabIndex = 112;
-            this.pnlLabelSearch.Visible = false;
             // 
             // vLabel1
             // 

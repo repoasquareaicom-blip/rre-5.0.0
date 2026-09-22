@@ -206,22 +206,6 @@ namespace RREInventoryLauncher.Forms
                 branchValue.Text =
                     config.BranchCode;
 
-                if (
-                    applicationLauncher
-                    .BringRunningInventoryToFront(
-                        config.InventoryExe))
-                {
-                    SetStatus(
-                        "Inventory is already running.");
-
-                    logService.Info(
-                        "Inventory already running");
-
-                    await CloseAfterDelayAsync();
-
-                    return;
-                }
-
                 await CheckVersionsAndLaunchAsync();
             }
             catch (Exception ex)
@@ -406,6 +390,23 @@ namespace RREInventoryLauncher.Forms
                     localVersion +
                     ", Available: " +
                     serverVersion);
+
+                if (
+                    applicationLauncher
+                    .IsInventoryRunning(
+                        config.InventoryExe))
+                {
+                    logService.Info(
+                        "Inventory update blocked because Inventory is currently running.");
+
+                    ShowFinalMessage(
+                        "A new version of Inventory is available.\r\n\r\n" +
+                        "Please close all Inventory windows and start the launcher again to complete the update.");
+
+                    await CloseAfterDelayAsync();
+
+                    return;
+                }
 
                 SetStatus(
                     "Updating Inventory to " +

@@ -41,9 +41,15 @@ namespace Inventory.Purchase
         string selectedtab = string.Empty;
         int InsDel = 1;
         string test;
+        private readonly PurchaseReceiptRepository purchaseReceiptRepository = new PurchaseReceiptRepository();
+        private readonly Dictionary<int, List<int>> allowedRackIdsByProduct = new Dictionary<int, List<int>>();
+        private readonly Dictionary<string, int> rackIdByColumnName = new Dictionary<string, int>();
+        private readonly Dictionary<int, Dictionary<int, decimal>> rackAllocationsByProduct = new Dictionary<int, Dictionary<int, decimal>>();
         public PurchaseReceipt()
         {
             InitializeComponent();
+            dgvOrder.CellClick += new DataGridViewCellEventHandler(dgvOrder_CellClick);
+            dgvOrder.CellDoubleClick += new DataGridViewCellEventHandler(dgvOrder_CellDoubleClick);
 
             this.WindowState = FormWindowState.Maximized;
             UserId = Convert.ToString(Program.userid);
@@ -440,6 +446,8 @@ namespace Inventory.Purchase
 
             this.dgvOrder.Columns[4].SortMode = DataGridViewColumnSortMode.NotSortable;
             this.dgvOrder.Columns[4].Width = 90;
+            this.dgvOrder.Columns[4].ReadOnly = true;
+            this.dgvOrder.Columns[4].DefaultCellStyle.BackColor = Color.FromArgb(221, 235, 247);
             //this.dgvOrder.Columns[3].DefaultCellStyle.BackColor = Color.Beige;
 
 
@@ -1469,53 +1477,16 @@ namespace Inventory.Purchase
 
             if (tabname == "TabNew")
             {
-                DataTable dt = DataGridView2DataTable(dgvOrder);
-                for (int i = 0; i < 3; i++)
+                string rackMessage = "";
+                if (Validation() && ValidateRackWiseReceipt(out rackMessage))
                 {
-                    dt.Columns.RemoveAt(0);
+                    SaveNew();
+                    GetsearchPurchasegoods();
                 }
-                dt.Columns.RemoveAt(3);
-                //dt.Columns.RemoveAt(0);
-                RemoveNullColumnFromDataTable(dt);
-
-                //foreach (DataRow row in dt.Rows)
-                //{
-                //    if (row["Quantity"].ToString() == "0")
-                //    {
-                //        //MessageBox.Show("Quanityy");
-
-                //        test = "1";
-                //    }
-                //    else
-                //    {
-                //        test = "0";
-                //    }
-                //}
-
-                //if (test == "1")
-                //{
-                //    MessageBox.Show("Quantity Should not be Zero");
-                //}
-                //else
-                //{
-                    bool dtval = RemoveDuplicateRows(dt, "ProductId");
-
-                    if (dtval)
-                    {
-                        if (Validation())
-                        {
-                            //if (getnewcheck())
-                            //{
-                            SaveNew();
-                            GetsearchPurchasegoods();
-                            //}
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Please Remove Duplication Product");
-                    }
-               //}
+                else if (!string.IsNullOrEmpty(rackMessage))
+                {
+                    MessageBox.Show(rackMessage);
+                }
             }
             else if (tabname == "TabReceipt")
             {
@@ -1599,7 +1570,6 @@ namespace Inventory.Purchase
 
         public void SaveNew()
         {
-            DataTable dt = new DataTable();
             if (string.IsNullOrEmpty(txtOrderNo.Text))
             {
                 ObjPurchaseReceiptBAL.isnew = 0;
@@ -1617,46 +1587,24 @@ namespace Inventory.Purchase
             ObjPurchaseReceiptBAL.Remarks = Convert.ToString(txtRemarks.Text);
             ObjPurchaseReceiptBAL.status = "Approve";
             ObjPurchaseReceiptBAL.Enteredby = Program.userid;
-            dt = DataGridView2DataTable(dgvOrder);
-            bool contains1 = dt.AsEnumerable()
-              .Any(row => "Partial" == row.Field<String>("Status"));
+            ObjPurchaseReceiptBAL.partial = GetRackWisePartialStatus();
 
-            if (contains1 == true)
-            {
-                ObjPurchaseReceiptBAL.partial = "Partial";
-            }
-            else
-            {
-                ObjPurchaseReceiptBAL.partial = "Full";
-            }
-            for (int i = 0; i < 3; i++)
-            {
-                dt.Columns.RemoveAt(0);
-            }
-            dt.Columns.RemoveAt(3);
-            RemoveNullColumnFromDataTable(dt);
-            dt.Columns["Ordered Qty"].ColumnName = "OrderQuantity";
-            dt.Columns["Received Qty"].ColumnName = "RecievedQuantity";
+            PurchaseReceiptSaveRequest request = new PurchaseReceiptSaveRequest();
+            request.IsNew = ObjPurchaseReceiptBAL.isnew;
+            request.OrderNumber = ObjPurchaseReceiptBAL.OrderNo;
+            request.OrderDate = ObjPurchaseReceiptBAL.OrderDate;
+            request.VendorId = Convert.ToInt32(cbVendor.SelectedValue);
+            request.Status = ObjPurchaseReceiptBAL.status;
+            request.EnteredBy = ObjPurchaseReceiptBAL.Enteredby;
+            request.Remarks = ObjPurchaseReceiptBAL.Remarks;
+            request.Partial = ObjPurchaseReceiptBAL.partial;
+            request.PurchaseDetails = BuildRackWisePurchaseDetails();
+            request.RackDetails = BuildRackWiseDetails();
 
-
-
-
-
-            string output = ObjPurchaseReceiptBAL.SavePurchaseReceipt(ObjPurchaseReceiptBAL, dt);
+            PurchaseReceiptSaveResult saveResult = purchaseReceiptRepository.SavePurchaseReceipt(request);
+            string output = saveResult.OutputMessage;
             if (!string.IsNullOrEmpty(output))
             {
-                DataTable dtval = ObjPurchaseReceiptBAL.getstatus(txtOrderNo.Text);
-                if (dtval.Rows.Count > 0)
-                {
-                    bool contains3 = dtval.AsEnumerable()
-                 .Any(row => "Partial" == row.Field<String>("Status"));
-
-                    if (contains3 == true)
-                    {
-                        int s = ObjPurchaseReceiptBAL.updatestatus(txtOrderNo.Text);
-                    }
-                }
-
                 clear();
                 search("OrderNumber", "", "OrderDate", "Today", "Name", "", role, UserId, "", "", "");
             }
@@ -2189,6 +2137,10 @@ namespace Inventory.Purchase
         private void clear()
         {
             //txtorder.Clear();
+            rackAllocationsByProduct.Clear();
+            allowedRackIdsByProduct.Clear();
+            rackIdByColumnName.Clear();
+            RemoveRackColumns();
             txtOrderNo.Clear();
             cbxStatus.SelectedIndex = 0;
             cbVendor.SelectedIndex = 0;
@@ -2813,6 +2765,8 @@ namespace Inventory.Purchase
 
         public void GetPurchaseOrderByOrderNo(string s, string s1)
         {
+            rackAllocationsByProduct.Clear();
+            allowedRackIdsByProduct.Clear();
             DataSet ds = OblPurchaseOrderBAL.GetPurchaseOrderByOrderNo(s, s1);
             if (ds.Tables[0].Rows.Count > 0)
             {
@@ -2858,6 +2812,7 @@ namespace Inventory.Purchase
                 pnsearch.Visible = false;
                 dgvOrder.Focus();
                 dgvOrder.CurrentCell = dgvOrder[4, 0];
+                BuildRackColumnsForLoadedPurchaseOrder();
                 //dgvOrder.BeginEdit(true);
             }
             else
@@ -3319,6 +3274,10 @@ namespace Inventory.Purchase
             try
             {
                 total();
+                if (e.RowIndex >= 0 && (e.ColumnIndex == 4 || IsRackQuantityColumn(e.ColumnIndex)))
+                {
+                    RecalculateRackBalance(dgvOrder.Rows[e.RowIndex]);
+                }
                 if (e.ColumnIndex == 4)
                 {
                     double OrderedQty;
@@ -3543,7 +3502,7 @@ namespace Inventory.Purchase
             int column = dgvOrder.CurrentCell.ColumnIndex;
             string headerText = dgvOrder.Columns[column].HeaderText;
 
-            if (headerText.Equals("Received Qty"))
+            if (headerText.Equals("Received Qty") || IsRackQuantityColumn(column))
             {
                 tb = e.Control as TextBox;
                 if (tb != null)
@@ -3627,6 +3586,13 @@ namespace Inventory.Purchase
         {
             if (e.KeyData == Keys.Enter)
             {
+                if (dgvOrder.CurrentCell != null && dgvOrder.CurrentCell.ColumnIndex == 4)
+                {
+                    e.SuppressKeyPress = true;
+                    e.Handled = true;
+                    OpenRackAllocationForCurrentRow();
+                    return;
+                }
                 //e.SuppressKeyPress = true;
                 //if (dgvOrder.CurrentCell.ColumnIndex == 3)
                 //{
@@ -3670,6 +3636,77 @@ namespace Inventory.Purchase
                 catch
                 {
 
+                }
+            }
+        }
+
+        private void dgvOrder_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex == 4)
+            {
+                OpenRackAllocation(e.RowIndex);
+            }
+        }
+
+        private void dgvOrder_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex == 4)
+            {
+                OpenRackAllocation(e.RowIndex);
+            }
+        }
+
+        private void OpenRackAllocationForCurrentRow()
+        {
+            if (dgvOrder.CurrentCell == null)
+            {
+                return;
+            }
+
+            OpenRackAllocation(dgvOrder.CurrentCell.RowIndex);
+        }
+
+        private void OpenRackAllocation(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+            {
+                return;
+            }
+
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            if (row.IsNewRow || IsBlankProductRow(row))
+            {
+                return;
+            }
+
+            int productId = SafeInt(row.Cells["ProductId"].Value);
+            string productName = Convert.ToString(row.Cells["Items"].Value);
+            decimal orderedQty = CellDecimal(row, "Ordered Qty");
+
+            DataTable racks = purchaseReceiptRepository.GetActiveRacksForProducts(new List<int>(new int[] { productId }));
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show("No racks are assigned to " + productName + ". Please assign rack(s) in Product Master first.");
+                return;
+            }
+
+            Dictionary<int, decimal> existingAllocation = new Dictionary<int, decimal>();
+            Dictionary<int, decimal> savedAllocation;
+            if (rackAllocationsByProduct.TryGetValue(productId, out savedAllocation))
+            {
+                foreach (KeyValuePair<int, decimal> item in savedAllocation)
+                {
+                    existingAllocation[item.Key] = item.Value;
+                }
+            }
+
+            using (PurchaseReceiptRackAllocation dialog = new PurchaseReceiptRackAllocation(productId, productName, orderedQty, racks, existingAllocation))
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    rackAllocationsByProduct[productId] = dialog.Allocations;
+                    row.Cells["Received Qty"].Value = dialog.TotalReceived.ToString("0.###");
+                    total();
                 }
             }
         }
@@ -4982,9 +5019,13 @@ namespace Inventory.Purchase
 
         private void dgvOrder_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex == 4)
+            if (e.ColumnIndex == 4 || IsRackQuantityColumn(e.ColumnIndex))
             {
                 total();
+                if (e.RowIndex >= 0)
+                {
+                    RecalculateRackBalance(dgvOrder.Rows[e.RowIndex]);
+                }
             }
         }
 
@@ -5105,6 +5146,338 @@ namespace Inventory.Purchase
 
             dgvSearch.Columns["OrderNumber"].HeaderText = "Order Number";
             dgvSearch.Columns["Partialval"].HeaderText = "Partial Val";
+        }
+
+        private void BuildRackColumnsForLoadedPurchaseOrder()
+        {
+            RemoveRackColumns();
+            allowedRackIdsByProduct.Clear();
+            rackIdByColumnName.Clear();
+
+            List<int> productIds = GetLoadedProductIds();
+            DataTable racks = purchaseReceiptRepository.GetActiveRacksForProducts(productIds);
+
+            foreach (DataRow row in racks.Rows)
+            {
+                int productId = SafeInt(row["ProductId"]);
+                int rackId = SafeInt(row["RackId"]);
+                if (productId <= 0 || rackId <= 0)
+                {
+                    continue;
+                }
+
+                if (!allowedRackIdsByProduct.ContainsKey(productId))
+                {
+                    allowedRackIdsByProduct.Add(productId, new List<int>());
+                }
+
+                if (!allowedRackIdsByProduct[productId].Contains(rackId))
+                {
+                    allowedRackIdsByProduct[productId].Add(rackId);
+                }
+            }
+        }
+
+        private void RemoveRackColumns()
+        {
+            for (int i = dgvOrder.Columns.Count - 1; i >= 0; i--)
+            {
+                if (dgvOrder.Columns[i].Name.StartsWith("Rack_") || dgvOrder.Columns[i].Name == "Balance")
+                {
+                    dgvOrder.Columns.RemoveAt(i);
+                }
+            }
+        }
+
+        private List<int> GetLoadedProductIds()
+        {
+            List<int> productIds = new List<int>();
+            if (!dgvOrder.Columns.Contains("ProductId"))
+            {
+                return productIds;
+            }
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["ProductId"].Value);
+                if (productId > 0 && !productIds.Contains(productId))
+                {
+                    productIds.Add(productId);
+                }
+            }
+
+            return productIds;
+        }
+
+        private void ApplyRackAccessToRows()
+        {
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow)
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["ProductId"].Value);
+                List<int> allowedRacks;
+                bool hasAllowedRacks = allowedRackIdsByProduct.TryGetValue(productId, out allowedRacks) && allowedRacks.Count > 0;
+
+                foreach (KeyValuePair<string, int> rackColumn in rackIdByColumnName)
+                {
+                    DataGridViewCell cell = row.Cells[rackColumn.Key];
+                    bool allowed = hasAllowedRacks && allowedRacks.Contains(rackColumn.Value);
+                    cell.ReadOnly = !allowed;
+                    cell.Style.BackColor = allowed ? Color.White : Color.Gainsboro;
+                    cell.Style.ForeColor = allowed ? Color.Black : Color.DarkGray;
+                    if (!allowed)
+                    {
+                        cell.Value = "";
+                    }
+                }
+
+                RecalculateRackBalance(row);
+            }
+        }
+
+        private bool ValidateRackWiseReceipt(out string message)
+        {
+            message = "";
+            bool hasReceived = false;
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankProductRow(row))
+                {
+                    continue;
+                }
+
+                string productName = Convert.ToString(row.Cells["Items"].Value);
+                int productId = SafeInt(row.Cells["ProductId"].Value);
+                decimal orderedQty = CellDecimal(row, "Ordered Qty");
+                decimal receivedQty = CellDecimal(row, "Received Qty");
+
+                if (receivedQty < 0)
+                {
+                    message = "Received Qty should not be negative for " + productName + ".";
+                    return false;
+                }
+
+                if (receivedQty > orderedQty)
+                {
+                    message = "Received Qty cannot be greater than remaining qty for " + productName + ".";
+                    return false;
+                }
+
+                if (receivedQty == 0)
+                {
+                    if (RackTotal(row) > 0)
+                    {
+                        message = "Rack quantity must be zero when Received Qty is zero for " + productName + ".";
+                        return false;
+                    }
+                    continue;
+                }
+
+                hasReceived = true;
+
+                List<int> allowedRacks;
+                if (productId <= 0 || !allowedRackIdsByProduct.TryGetValue(productId, out allowedRacks) || allowedRacks.Count == 0)
+                {
+                    message = "Rack is not assigned for " + productName + ". Please assign rack(s) in Product Master.";
+                    return false;
+                }
+
+                if (RackTotal(row) != receivedQty)
+                {
+                    message = "Rack total must match Received Qty for " + productName + ".";
+                    return false;
+                }
+            }
+
+            if (!hasReceived)
+            {
+                message = "Enter Received Qty for at least one product.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private DataTable BuildRackWisePurchaseDetails()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("OrderQuantity", typeof(decimal));
+            dt.Columns.Add("RecievedQuantity", typeof(decimal));
+            dt.Columns.Add("Productid", typeof(int));
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankProductRow(row))
+                {
+                    continue;
+                }
+
+                decimal receivedQty = CellDecimal(row, "Received Qty");
+                if (receivedQty > 0)
+                {
+                    DataRow dr = dt.NewRow();
+                    dr["OrderQuantity"] = CellDecimal(row, "Ordered Qty");
+                    dr["RecievedQuantity"] = receivedQty;
+                    dr["Productid"] = SafeInt(row.Cells["ProductId"].Value);
+                    dt.Rows.Add(dr);
+                }
+            }
+
+            return dt;
+        }
+
+        private DataTable BuildRackWiseDetails()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ProductId", typeof(int));
+            dt.Columns.Add("RackId", typeof(int));
+            dt.Columns.Add("Quantity", typeof(decimal));
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankProductRow(row))
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["ProductId"].Value);
+                Dictionary<int, decimal> allocations;
+                if (!rackAllocationsByProduct.TryGetValue(productId, out allocations))
+                {
+                    continue;
+                }
+
+                foreach (KeyValuePair<int, decimal> allocation in allocations)
+                {
+                    decimal quantity = allocation.Value;
+                    if (quantity > 0)
+                    {
+                        DataRow dr = dt.NewRow();
+                        dr["ProductId"] = productId;
+                        dr["RackId"] = allocation.Key;
+                        dr["Quantity"] = quantity;
+                        dt.Rows.Add(dr);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        private string GetRackWisePartialStatus()
+        {
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankProductRow(row))
+                {
+                    continue;
+                }
+
+                if (CellDecimal(row, "Received Qty") < CellDecimal(row, "Ordered Qty"))
+                {
+                    return "Partial";
+                }
+            }
+
+            return "Full";
+        }
+
+        private void RecalculateRackBalance(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow || !dgvOrder.Columns.Contains("Balance"))
+            {
+                return;
+            }
+
+            decimal balance = CellDecimal(row, "Received Qty") - RackTotal(row);
+            row.Cells["Balance"].Value = balance == 0 ? "0" : balance.ToString("0.###");
+            row.Cells["Balance"].Style.ForeColor = balance == 0 ? Color.DarkGreen : Color.Firebrick;
+        }
+
+        private decimal RackTotal(DataGridViewRow row)
+        {
+            decimal total = 0;
+            if (row == null || row.IsNewRow || !dgvOrder.Columns.Contains("ProductId"))
+            {
+                return total;
+            }
+
+            Dictionary<int, decimal> allocations;
+            if (!rackAllocationsByProduct.TryGetValue(SafeInt(row.Cells["ProductId"].Value), out allocations))
+            {
+                return total;
+            }
+
+            foreach (decimal quantity in allocations.Values)
+            {
+                total += quantity;
+            }
+            return total;
+        }
+
+        private int GetProductIdColumnIndex()
+        {
+            if (dgvOrder.Columns.Contains("ProductId"))
+            {
+                return dgvOrder.Columns["ProductId"].Index;
+            }
+            return dgvOrder.Columns.Count;
+        }
+
+        private bool IsRackQuantityColumn(int columnIndex)
+        {
+            if (columnIndex < 0 || columnIndex >= dgvOrder.Columns.Count)
+            {
+                return false;
+            }
+            return rackIdByColumnName.ContainsKey(dgvOrder.Columns[columnIndex].Name);
+        }
+
+        private bool IsBlankProductRow(DataGridViewRow row)
+        {
+            return string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value))
+                && SafeInt(row.Cells["ProductId"].Value) == 0;
+        }
+
+        private decimal CellDecimal(DataGridViewRow row, string columnName)
+        {
+            if (!dgvOrder.Columns.Contains(columnName))
+            {
+                return 0;
+            }
+            return SafeDecimal(row.Cells[columnName].Value);
+        }
+
+        private int SafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            int result;
+            return int.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private decimal SafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : 0;
         }
     }
 }

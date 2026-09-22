@@ -1,4 +1,4 @@
-﻿using InvBal;
+using InvBal;
 using Inventory.Accounts;
 using Inventory.Adjustment;
 using Inventory.Commission;
@@ -62,6 +62,7 @@ namespace Inventory
         public static Suppliers objSuppliers;
         public static UOM objUOM;
         public static Brand objBrand;
+        public static LocationRackMaster objLocationRackMaster;
 
         public static CustomerAccount CustAccount;
 

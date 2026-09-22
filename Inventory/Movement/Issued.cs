@@ -32,6 +32,8 @@ namespace Inventory.Sales
         PurchaseReceiptBAL ObjPurchaseReceiptBAL = new PurchaseReceiptBAL();
         DataGridViewComboBoxColumn name = new DataGridViewComboBoxColumn();
         QuotationBal objQuotationbal = new QuotationBal();
+        PendingIssuedRackRepository pendingIssuedRackRepository = new PendingIssuedRackRepository();
+        private readonly Dictionary<DataGridViewRow, Dictionary<int, decimal>> pendingIssuedManualRackAllocations = new Dictionary<DataGridViewRow, Dictionary<int, decimal>>();
         DataTable dtreceivedbalance, dtpaidbalance;
         ComboBox cmblocation;
         string cas = string.Empty;
@@ -66,6 +68,9 @@ namespace Inventory.Sales
             LoadPortsChecking();
             LoadPortsDelivery();
             LoadPortsFloorCheckOut();
+            HideNewExeUnusedTabs();
+            dgvNew.CellClick += new DataGridViewCellEventHandler(dgvNew_CellClick);
+            dgvNew.CellFormatting += new DataGridViewCellFormattingEventHandler(dgvNew_CellFormatting);
            
             ddlpaymenttype.SelectedIndex = 0;
 
@@ -285,6 +290,8 @@ namespace Inventory.Sales
             this.dgvNew.Columns[1].ReadOnly = true;
             this.dgvNew.Columns[2].ReadOnly = true;
             this.dgvNew.Columns[3].ReadOnly = true;
+            this.dgvNew.Columns[4].ReadOnly = true;
+            this.dgvNew.Columns[5].ReadOnly = true;
             this.dgvNew.Columns[6].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             this.dgvNew.Columns[4].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             this.dgvNew.Columns[5].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -310,6 +317,8 @@ namespace Inventory.Sales
            
 
             this.dgvNew.Columns[7].ReadOnly = true;
+            dgvNew.Columns["Quantity"].ReadOnly = true;
+            dgvNew.Columns["Quantity"].Visible = false;
             dgvNew.Columns[6].Visible = false;
             dgvNew.Columns[7].Visible = false;
 
@@ -345,12 +354,29 @@ namespace Inventory.Sales
             dgvNew.Columns.Insert(5, name);
             dgvNew.Columns["Location"].Width = 53;
             dgvNew.Columns["Location"].ReadOnly = true;
+            dgvNew.Columns["Location"].Visible = false;
             dt = objQuotationbal.GetFloor();
             if (dt.Rows.Count > 0)
             {
                 name.DataSource = dt;
             }
 
+        }
+
+        private void HideNewExeUnusedTabs()
+        {
+            if (MainTabSalesBill.TabPages.Contains(Tabcheckout))
+            {
+                MainTabSalesBill.TabPages.Remove(Tabcheckout);
+            }
+            if (MainTabSalesBill.TabPages.Contains(TabChecking))
+            {
+                MainTabSalesBill.TabPages.Remove(TabChecking);
+            }
+            if (MainTabSalesBill.TabPages.Contains(TabDelivery))
+            {
+                MainTabSalesBill.TabPages.Remove(TabDelivery);
+            }
         }
 
 
@@ -1086,8 +1112,6 @@ namespace Inventory.Sales
                 if (vali)
                 {
                  save();
-                 clear();
-                 GetSearchissue();
                 }
             }
             
@@ -1503,7 +1527,7 @@ namespace Inventory.Sales
         {
             try
             {
-                if (e.ColumnIndex == 5)
+                if (e.ColumnIndex >= 0 && dgvNew.Columns[e.ColumnIndex].Name == "Quantity")
                 {
                     dgvNew.Focus();
                     //edit = true;
@@ -1518,27 +1542,38 @@ namespace Inventory.Sales
 
         private void dgvNew_CellLeave(object sender, DataGridViewCellEventArgs e)
         {
-
-            if (Convert.ToString(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Quantity"].Value) != ".")
+            if (e.RowIndex < 0)
             {
-                double qty = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Quantity"].Value);
-                double orgqty = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Pending Qty"].Value);
-                double rec = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Issued"].Value);
-                double balance = orgqty - rec;
-
-                if (balance < qty)
-                {
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.ForeColor = Color.White;
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.BackColor = Color.Red;
-                }
-                else
-                {
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.ForeColor = Color.Black;
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.BackColor = Color.White;
-                }
+                return;
             }
-           
-         
+
+            ValidatePendingIssueRow(dgvNew.Rows[e.RowIndex]);
+        }
+
+        private void dgvNew_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || dgvNew.Columns[e.ColumnIndex].Name != "Issued")
+            {
+                return;
+            }
+
+            OpenPendingIssuedQuantitySelector(dgvNew.Rows[e.RowIndex]);
+        }
+
+        private void dgvNew_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || dgvNew.Columns[e.ColumnIndex].Name != "Issued")
+            {
+                return;
+            }
+
+            decimal alreadyIssued = SafeDecimal(dgvNew.Rows[e.RowIndex].Cells["Issued"].Value);
+            decimal issueNow = SafeDecimal(dgvNew.Rows[e.RowIndex].Cells["Quantity"].Value);
+            if (issueNow > 0)
+            {
+                e.Value = alreadyIssued.ToString("0.000") + " [+" + issueNow.ToString("0.000") + "]";
+                e.FormattingApplied = true;
+            }
         }
 
         private void dgvNew_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
@@ -1627,6 +1662,133 @@ namespace Inventory.Sales
             }
         }
 
+        private void OpenPendingIssuedQuantitySelector(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow)
+            {
+                return;
+            }
+
+            int productId = SafeInt(row.Cells["Productid"].Value);
+            string productName = Convert.ToString(row.Cells["Items"].Value);
+            decimal pendingQty = SafeDecimal(row.Cells["Pending Qty"].Value);
+            decimal alreadyIssued = SafeDecimal(row.Cells["Issued"].Value);
+            decimal remainingPending = pendingQty - alreadyIssued;
+
+            if (productId <= 0)
+            {
+                MessageBox.Show("Invalid product selected.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (remainingPending <= 0)
+            {
+                MessageBox.Show("No pending quantity is available for " + productName + ".", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            bool isManualRackWise = pendingIssuedRackRepository.GetRackWiseStockMovement(productId);
+            DataTable racks = pendingIssuedRackRepository.GetEligibleRackAvailability(productId);
+            if (isManualRackWise)
+            {
+                OpenPendingIssuedRackDialog(row, productId, productName, remainingPending, racks);
+            }
+            else
+            {
+                OpenPendingIssuedSimpleQuantityDialog(row, productId, productName, remainingPending, racks);
+            }
+        }
+
+        private void OpenPendingIssuedRackDialog(DataGridViewRow row, int productId, string productName, decimal remainingPending, DataTable racks)
+        {
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show("Available stock for " + productName + " is only 0.000." + Environment.NewLine + "Quantity cannot be greater than available stock.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Dictionary<int, decimal> previousAllocations;
+            if (!pendingIssuedManualRackAllocations.TryGetValue(row, out previousAllocations))
+            {
+                previousAllocations = new Dictionary<int, decimal>();
+            }
+
+            using (PendingIssuedRackAllocationDialog dialog = new PendingIssuedRackAllocationDialog(productName, remainingPending, racks, previousAllocations))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return;
+                }
+
+                pendingIssuedManualRackAllocations[row] = new Dictionary<int, decimal>(dialog.Allocations);
+                row.Cells["Quantity"].Value = dialog.TotalAllocated.ToString("0.###");
+                row.Cells["Issued"].ToolTipText = "Issue Now: " + dialog.TotalAllocated.ToString("0.000");
+                ValidatePendingIssueRow(row);
+                dgvNew.InvalidateRow(row.Index);
+            }
+        }
+
+        private void OpenPendingIssuedSimpleQuantityDialog(DataGridViewRow row, int productId, string productName, decimal remainingPending, DataTable racks)
+        {
+            decimal totalAvailable = GetTotalAvailable(racks);
+            decimal previousQuantity = SafeDecimal(row.Cells["Quantity"].Value);
+
+            using (PendingIssuedQuantityDialog dialog = new PendingIssuedQuantityDialog(productName, remainingPending, previousQuantity))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return;
+                }
+
+                if (dialog.IssueQuantity > totalAvailable)
+                {
+                    MessageBox.Show("Available stock for " + productName + " is only " + totalAvailable.ToString("0.000") + "." + Environment.NewLine + "Quantity cannot be greater than available stock.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                pendingIssuedManualRackAllocations.Remove(row);
+                row.Cells["Quantity"].Value = dialog.IssueQuantity.ToString("0.###");
+                row.Cells["Issued"].ToolTipText = "Issue Now: " + dialog.IssueQuantity.ToString("0.000");
+                ValidatePendingIssueRow(row);
+                dgvNew.InvalidateRow(row.Index);
+            }
+        }
+
+        private decimal GetTotalAvailable(DataTable racks)
+        {
+            decimal totalAvailable = 0;
+            foreach (DataRow rackRow in racks.Rows)
+            {
+                totalAvailable += SafeDecimal(rackRow["AvailableQty"]);
+            }
+
+            return totalAvailable;
+        }
+
+        private bool ValidatePendingIssueRow(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow)
+            {
+                return true;
+            }
+
+            decimal issueNow = SafeDecimal(row.Cells["Quantity"].Value);
+            decimal pendingQty = SafeDecimal(row.Cells["Pending Qty"].Value);
+            decimal alreadyIssued = SafeDecimal(row.Cells["Issued"].Value);
+            decimal balance = pendingQty - alreadyIssued;
+
+            if (balance < issueNow)
+            {
+                row.DefaultCellStyle.ForeColor = Color.White;
+                row.DefaultCellStyle.BackColor = Color.Red;
+                return false;
+            }
+
+            row.DefaultCellStyle.ForeColor = Color.Black;
+            row.DefaultCellStyle.BackColor = Color.White;
+            return true;
+        }
+
         public DataTable DataGridView2DataTable(DataGridView dgv, int minRow = 0)
         {
 
@@ -1680,26 +1842,38 @@ namespace Inventory.Sales
 
         public void save()
         {
-          
-            DataTable dt = new DataTable();
-            dt = DataGridView2DataTable(dgvNew);
-
-            for (int i = 0; i < 3; i++)
+            try
             {
-                dt.Columns.RemoveAt(0);
+                DataTable issueDetails;
+                DataTable rackDetails;
+                if (!BuildPendingIssuedRackWiseSaveTables(out issueDetails, out rackDetails))
+                {
+                    return;
+                }
+
+                string receiveId = txtreceiveno.Text;
+                string s = pendingIssuedRackRepository.SaveIssuedRackWise(receiveId, Program.userid, issueDetails, rackDetails);
+
+                if (!string.IsNullOrEmpty(s))
+                {
+                    pendingIssuedManualRackAllocations.Clear();
+                    GetReport(s);
+                    GetSearchissue();
+                    getEstimation(receiveId);
+                    if (dgvNew.Rows.Count == 0)
+                    {
+                        clear();
+                    }
+                }
             }
-
-            dt.Columns.RemoveAt(0);
-            dt.Columns.RemoveAt(1);
-            dt.Columns.RemoveAt(0);
-
-            string s = objQuotationbal.SaveIssued(txtreceiveno.Text,Program.userid,dt);
-            
-             if(!string.IsNullOrEmpty(s))
-             {
-                 GetReport(s);
-                 clear();
-             }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(ex.Message, "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
 
             //for (int i = 0; i < dgvNew.Rows.Count; i++)
             //{
@@ -1714,6 +1888,335 @@ namespace Inventory.Sales
         
           
 
+        }
+
+        private bool BuildPendingIssuedRackWiseSaveTables(out DataTable issueDetails, out DataTable rackDetails)
+        {
+            issueDetails = CreateIssuedDetailsTable();
+            rackDetails = pendingIssuedRackRepository.CreateRackDetailsTable();
+
+            foreach (DataGridViewRow gridRow in dgvNew.Rows)
+            {
+                if (gridRow.IsNewRow)
+                {
+                    continue;
+                }
+
+                decimal issueQuantity = SafeDecimal(gridRow.Cells["Quantity"].Value);
+                if (issueQuantity <= 0)
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(gridRow.Cells["Productid"].Value);
+                if (productId <= 0)
+                {
+                    MessageBox.Show("Invalid product selected.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                string productName = Convert.ToString(gridRow.Cells["Items"].Value);
+                AddIssueDetailRow(issueDetails, issueQuantity, productId, Convert.ToString(gridRow.Cells["Locationid"].Value));
+
+                DataTable racks = pendingIssuedRackRepository.GetEligibleRackAvailability(productId);
+                bool isManualRackWise = pendingIssuedRackRepository.GetRackWiseStockMovement(productId);
+                if (isManualRackWise)
+                {
+                    if (!AddStoredManualRackAllocation(gridRow, productName, issueQuantity, rackDetails, productId))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!CollectAutomaticRackAllocation(productName, issueQuantity, racks, rackDetails, productId))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (issueDetails.Rows.Count == 0)
+            {
+                MessageBox.Show("Please enter an issue quantity greater than zero.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool AddStoredManualRackAllocation(DataGridViewRow gridRow, string productName, decimal issueQuantity, DataTable rackDetails, int productId)
+        {
+            Dictionary<int, decimal> allocations;
+            if (!pendingIssuedManualRackAllocations.TryGetValue(gridRow, out allocations) || allocations.Count == 0)
+            {
+                MessageBox.Show("Click the Issued cell and select rack allocation for " + productName + ".", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            decimal totalAllocated = 0;
+            foreach (KeyValuePair<int, decimal> allocation in allocations)
+            {
+                totalAllocated += allocation.Value;
+            }
+
+            if (totalAllocated != issueQuantity)
+            {
+                MessageBox.Show("Rack allocation total for " + productName + " does not match Issue Now quantity.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            foreach (KeyValuePair<int, decimal> allocation in allocations)
+            {
+                if (allocation.Value > 0)
+                {
+                    AddRackDetailRow(rackDetails, productId, allocation.Key, allocation.Value);
+                }
+            }
+
+            return true;
+        }
+
+        private DataTable CreateIssuedDetailsTable()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Quantity", typeof(string));
+            dt.Columns.Add("Productid", typeof(string));
+            dt.Columns.Add("Location", typeof(string));
+            return dt;
+        }
+
+        private void AddIssueDetailRow(DataTable issueDetails, decimal quantity, int productId, string locationId)
+        {
+            DataRow row = issueDetails.NewRow();
+            row["Quantity"] = quantity.ToString("0.###");
+            row["Productid"] = productId.ToString();
+            row["Location"] = locationId;
+            issueDetails.Rows.Add(row);
+        }
+
+        private bool CollectManualRackAllocation(string productName, decimal issueQuantity, DataTable racks, DataTable rackDetails, int productId)
+        {
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show("Available stock for " + productName + " is only 0.000." + Environment.NewLine + "Quantity cannot be greater than available stock.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            using (PendingIssuedRackAllocationDialog dialog = new PendingIssuedRackAllocationDialog(productName, issueQuantity, racks))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return false;
+                }
+
+                foreach (KeyValuePair<int, decimal> allocation in dialog.Allocations)
+                {
+                    if (allocation.Value > 0)
+                    {
+                        AddRackDetailRow(rackDetails, productId, allocation.Key, allocation.Value);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private bool CollectAutomaticRackAllocation(string productName, decimal issueQuantity, DataTable racks, DataTable rackDetails, int productId)
+        {
+            decimal totalAvailable = 0;
+            foreach (DataRow rackRow in racks.Rows)
+            {
+                totalAvailable += SafeDecimal(rackRow["AvailableQty"]);
+            }
+
+            if (totalAvailable < issueQuantity)
+            {
+                MessageBox.Show("Available stock for " + productName + " is only " + totalAvailable.ToString("0.000") + "." + Environment.NewLine + "Quantity cannot be greater than available stock.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            decimal balance = issueQuantity;
+            foreach (DataRow rackRow in racks.Rows)
+            {
+                if (balance <= 0)
+                {
+                    break;
+                }
+
+                decimal available = SafeDecimal(rackRow["AvailableQty"]);
+                if (available <= 0)
+                {
+                    continue;
+                }
+
+                decimal picked = available > balance ? balance : available;
+                AddRackDetailRow(rackDetails, productId, SafeInt(rackRow["RackId"]), picked);
+                balance -= picked;
+            }
+
+            return balance == 0;
+        }
+
+        private void AddRackDetailRow(DataTable rackDetails, int productId, int rackId, decimal quantity)
+        {
+            DataRow row = rackDetails.NewRow();
+            row["ProductId"] = productId;
+            row["RackId"] = rackId;
+            row["Quantity"] = quantity;
+            rackDetails.Rows.Add(row);
+        }
+
+        private int SafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            int result;
+            return int.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private decimal SafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private class PendingIssuedQuantityDialog : Form
+        {
+            private readonly string productName;
+            private readonly decimal remainingPending;
+            private readonly decimal previousQuantity;
+            private TextBox txtQuantity;
+
+            public decimal IssueQuantity;
+
+            public PendingIssuedQuantityDialog(string productName, decimal remainingPending, decimal previousQuantity)
+            {
+                this.productName = productName;
+                this.remainingPending = remainingPending;
+                this.previousQuantity = previousQuantity;
+                InitializeComponent();
+            }
+
+            private void InitializeComponent()
+            {
+                Label lblProduct = new Label();
+                Label lblRemaining = new Label();
+                Label lblIssueQuantity = new Label();
+                Button btnOK = new Button();
+                Button btnCancel = new Button();
+
+                SuspendLayout();
+
+                lblProduct.AutoEllipsis = true;
+                lblProduct.Font = new Font("Tahoma", 9F, FontStyle.Bold);
+                lblProduct.Location = new Point(12, 12);
+                lblProduct.Size = new Size(390, 20);
+                lblProduct.Text = "Product: " + productName;
+
+                lblRemaining.AutoSize = true;
+                lblRemaining.Location = new Point(12, 42);
+                lblRemaining.Text = "Remaining Pending: " + remainingPending.ToString("0.000");
+
+                lblIssueQuantity.AutoSize = true;
+                lblIssueQuantity.Location = new Point(12, 78);
+                lblIssueQuantity.Text = "Issue Quantity:";
+
+                txtQuantity = new TextBox();
+                txtQuantity.Location = new Point(120, 75);
+                txtQuantity.Size = new Size(120, 22);
+                txtQuantity.TextAlign = HorizontalAlignment.Right;
+                txtQuantity.Text = previousQuantity > 0 ? previousQuantity.ToString("0.###") : "";
+                txtQuantity.KeyPress += txtQuantity_KeyPress;
+
+                btnOK.Location = new Point(246, 116);
+                btnOK.Size = new Size(75, 28);
+                btnOK.Text = "OK";
+                btnOK.Click += btnOK_Click;
+
+                btnCancel.Location = new Point(327, 116);
+                btnCancel.Size = new Size(75, 28);
+                btnCancel.Text = "Cancel";
+                btnCancel.Click += btnCancel_Click;
+
+                AcceptButton = btnOK;
+                CancelButton = btnCancel;
+                AutoScaleDimensions = new SizeF(7F, 14F);
+                AutoScaleMode = AutoScaleMode.Font;
+                ClientSize = new Size(414, 156);
+                Controls.Add(lblProduct);
+                Controls.Add(lblRemaining);
+                Controls.Add(lblIssueQuantity);
+                Controls.Add(txtQuantity);
+                Controls.Add(btnOK);
+                Controls.Add(btnCancel);
+                Font = new Font("Tahoma", 9F);
+                FormBorderStyle = FormBorderStyle.FixedDialog;
+                MaximizeBox = false;
+                MinimizeBox = false;
+                StartPosition = FormStartPosition.CenterParent;
+                Text = "Issue Quantity";
+                Shown += PendingIssuedQuantityDialog_Shown;
+
+                ResumeLayout(false);
+                PerformLayout();
+            }
+
+            private void PendingIssuedQuantityDialog_Shown(object sender, EventArgs e)
+            {
+                txtQuantity.Focus();
+                txtQuantity.SelectAll();
+            }
+
+            private void txtQuantity_KeyPress(object sender, KeyPressEventArgs e)
+            {
+                if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar) || e.KeyChar == '.')
+                {
+                    if (e.KeyChar == '.' && txtQuantity.Text.IndexOf('.') >= 0)
+                    {
+                        e.Handled = true;
+                    }
+                    return;
+                }
+
+                e.Handled = true;
+            }
+
+            private void btnOK_Click(object sender, EventArgs e)
+            {
+                decimal quantity;
+                if (!decimal.TryParse(txtQuantity.Text.Trim(), out quantity) || quantity <= 0)
+                {
+                    MessageBox.Show("Issue Quantity must be greater than zero.", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtQuantity.Focus();
+                    return;
+                }
+
+                if (quantity > remainingPending)
+                {
+                    MessageBox.Show("Issue Quantity cannot be greater than remaining pending quantity of " + remainingPending.ToString("0.000") + ".", "Pending Issued", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtQuantity.Focus();
+                    return;
+                }
+
+                IssueQuantity = quantity;
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+
+            private void btnCancel_Click(object sender, EventArgs e)
+            {
+                DialogResult = DialogResult.Cancel;
+                Close();
+            }
         }
 
         public void savecheckout()
@@ -2674,26 +3177,12 @@ namespace Inventory.Sales
 
         private void dgvNew_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (Convert.ToString(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Quantity"].Value) != ".")
+            if (e.RowIndex < 0)
             {
-                double qty = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Quantity"].Value);
-                //double totalqty = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Total Quantity"].Value);
-                double orgqty = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Pending Qty"].Value);
-                double rec = Convert.ToDouble(dgvNew.Rows[dgvNew.CurrentCell.RowIndex].Cells["Issued"].Value);
-                double balance = orgqty - rec;
-
-                if (balance < qty)
-                {
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.ForeColor = Color.White;
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.BackColor = Color.Red;
-                }
-                else
-                {
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.ForeColor = Color.Black;
-                    dgvNew.Rows[dgvNew.CurrentCell.RowIndex].DefaultCellStyle.BackColor = Color.White;
-                }
+                return;
             }
-           
+
+            ValidatePendingIssueRow(dgvNew.Rows[e.RowIndex]);
         }
 
         public void getsino()
@@ -3035,6 +3524,7 @@ namespace Inventory.Sales
 
         public void getEstimation(string s)
         {
+            pendingIssuedManualRackAllocations.Clear();
             DataSet ds = objQuotationbal.GetIssued(s, Program.Floor, Program.Userrole);
             if (ds.Tables[0].Rows.Count > 0)
             {
@@ -3070,6 +3560,7 @@ namespace Inventory.Sales
                     //dgvNew.Rows[i].Cells[4].Value = sval1;
 
                     dgvNew.Rows[i].Cells["Issued"].Value = Convert.ToString(ds.Tables[1].Rows[i]["IssueQty"]);
+                    dgvNew.Rows[i].Cells["Quantity"].Value = "0";
 
                     dgvNew.Rows[i].Cells["Location"].Value = Convert.ToString(ds.Tables[1].Rows[i]["LocationName"]);
                     dgvNew.Rows[i].Cells["Locationid"].Value = Convert.ToString(ds.Tables[1].Rows[i]["Location"]);

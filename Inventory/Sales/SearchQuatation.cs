@@ -730,7 +730,13 @@ namespace Inventory
 
         private void btnPrint_Click(object sender, EventArgs e)
         {
-            preview();
+            string output = BuildQuotationPrintOutput(txtorder.Text);
+            if (output == null)
+            {
+                return;
+            }
+
+            DotMatrixPrinter.Print(output);
         }
 
         private void btnPrintWithTax_Click(object sender, EventArgs e)
@@ -1609,7 +1615,67 @@ namespace Inventory
 
         private void button1_Click(object sender, EventArgs e)
         {
-            GetReport(txtorder.Text);
+            string output = BuildQuotationPrintOutput(txtorder.Text);
+            if (output == null)
+            {
+                return;
+            }
+
+            DotMatrixPrintPreviewForm.ShowPreview(output);
+        }
+
+        private string BuildQuotationPrintOutput(string quotationId)
+        {
+            quotationId = quotationId == null ? "" : quotationId.Trim();
+            if (quotationId.Length == 0)
+            {
+                MessageBox.Show("Please select a quotation before printing.", "Quotation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return null;
+            }
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(Program.connection))
+                {
+                    DataSet ds = new DataSet();
+                    using (SqlCommand cmd = new SqlCommand("GetQuotationreport_Print_RackOrder", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@id", quotationId);
+                        cmd.Parameters.AddWithValue("@companyname", Program.Company);
+                        using (SqlDataAdapter ad = new SqlDataAdapter(cmd))
+                        {
+                            ad.Fill(ds);
+                        }
+                    }
+
+                    if (ds.Tables.Count == 0 || ds.Tables[0].Rows.Count == 0)
+                    {
+                        MessageBox.Show("The quotation could not be loaded for printing.", "Quotation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return null;
+                    }
+
+                    RREPrint quotationPrint = new RREPrint();
+                    quotationPrint.dsMain = ds;
+                    quotationPrint.pagenumber = 1;
+                    quotationPrint.status = true;
+                    quotationPrint._strRefText = "Qtn:";
+                    quotationPrint._strRef = quotationId;
+                    string output = quotationPrint.GenerateQuotationPrintOutput();
+                    if (string.IsNullOrEmpty(output))
+                    {
+                        MessageBox.Show("The quotation could not be loaded for printing.", "Quotation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return null;
+                    }
+
+                    return output;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("The quotation could not be loaded for printing." + Environment.NewLine + Environment.NewLine + ex.Message, "Quotation", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
         }
 
         private void dgvSearch_KeyDown(object sender, KeyEventArgs e)

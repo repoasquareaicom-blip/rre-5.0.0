@@ -448,7 +448,7 @@ async function fetchCompareStockReport(reportRequest, signal, onProgress) {
 
   return {
     rows: mergeCompareRows(branchResults),
-    totalRows: Math.max(...branchResults.map(({ result }) => result?.totalRows || 0), 0),
+    totalRows: branchResults.reduce((maxRows, { result }) => Math.max(maxRows, result?.totalRows || 0), 0),
   }
 }
 

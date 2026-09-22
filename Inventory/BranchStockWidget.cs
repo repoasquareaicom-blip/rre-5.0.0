@@ -186,7 +186,7 @@ namespace Inventory
             try
             {
                 using (SqlConnection con = new SqlConnection(Program.connection))
-                using (SqlCommand cmd = new SqlCommand("GetAvailableStockByProductId", con))
+                using (SqlCommand cmd = new SqlCommand("GetAvailableStockByProductId_BranchAPI", con))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.Add("@ProductId", SqlDbType.Int).Value = productId;

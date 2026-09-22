@@ -68,6 +68,8 @@
             this.Stock = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Items = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SNo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.FromRack = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.ToRack = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.pnsearch = new System.Windows.Forms.Panel();
             this.Txtitem = new System.Windows.Forms.TextBox();
             this.panel5 = new System.Windows.Forms.Panel();
@@ -506,6 +508,7 @@
             this.label7.Size = new System.Drawing.Size(84, 15);
             this.label7.TabIndex = 396;
             this.label7.Text = "From Location";
+            this.label7.Visible = false;
             // 
             // ddlLocation
             // 
@@ -523,6 +526,7 @@
             this.ddlLocation.Name = "ddlLocation";
             this.ddlLocation.Size = new System.Drawing.Size(209, 23);
             this.ddlLocation.TabIndex = 3;
+            this.ddlLocation.Visible = false;
             // 
             // dgvOrder
             // 
@@ -542,11 +546,13 @@
             this.Quantitytomove,
             this.cmblocation,
             this.ProductId,
-            this.TransId});
-            this.dgvOrder.Location = new System.Drawing.Point(6, 35);
+            this.TransId,
+            this.FromRack,
+            this.ToRack});
+            this.dgvOrder.Location = new System.Drawing.Point(6, 6);
             this.dgvOrder.Name = "dgvOrder";
             this.dgvOrder.RowHeadersVisible = false;
-            this.dgvOrder.Size = new System.Drawing.Size(659, 502);
+            this.dgvOrder.Size = new System.Drawing.Size(659, 531);
             this.dgvOrder.TabIndex = 1;
             this.dgvOrder.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrder_CellEndEdit);
             this.dgvOrder.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvOrder_CellEnter);
@@ -573,6 +579,21 @@
             this.cmblocation.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cmblocation.HeaderText = "Location";
             this.cmblocation.Name = "cmblocation";
+            this.cmblocation.Visible = false;
+            // 
+            // FromRack
+            // 
+            this.FromRack.DisplayStyle = System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox;
+            this.FromRack.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.FromRack.HeaderText = "From Rack";
+            this.FromRack.Name = "FromRack";
+            // 
+            // ToRack
+            // 
+            this.ToRack.DisplayStyle = System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox;
+            this.ToRack.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.ToRack.HeaderText = "To Rack";
+            this.ToRack.Name = "ToRack";
             // 
             // Quantitytomove
             // 
@@ -1022,6 +1043,8 @@
         private System.Windows.Forms.DataGridViewComboBoxColumn cmblocation;
         private System.Windows.Forms.DataGridViewTextBoxColumn ProductId;
         private System.Windows.Forms.DataGridViewTextBoxColumn TransId;
+        private System.Windows.Forms.DataGridViewComboBoxColumn FromRack;
+        private System.Windows.Forms.DataGridViewComboBoxColumn ToRack;
         private System.Windows.Forms.ComboBox ddlLocation;
         private System.Windows.Forms.Label label7;
     }

@@ -437,7 +437,7 @@ static async Task<AvailableStockResponse?> GetAvailableStockAsync(
     string itemName)
 {
     await using SqlConnection connection = new SqlConnection(connectionString);
-    await using SqlCommand command = new SqlCommand("GetAvailableStockByProductId", connection);
+    await using SqlCommand command = new SqlCommand("GetAvailableStockByProductId_BranchAPI", connection);
 
     command.CommandType = CommandType.StoredProcedure;
     command.Parameters.AddWithValue("@ProductId", productId);

@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -24,7 +25,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -418,6 +418,39 @@
     <Compile Include="Masters\FrmUser.Designer.cs">
       <DependentUpon>FrmUser.cs</DependentUpon>
     </Compile>
+    <Compile Include="Masters\LocationRackMaster.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Masters\LocationRackMaster.Designer.cs">
+      <DependentUpon>LocationRackMaster.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\LocationRackRepository.cs" />
+    <Compile Include="Masters\RackChangeDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Masters\RackChangeDialog.Designer.cs">
+      <DependentUpon>RackChangeDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\RackProductList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Masters\RackProductList.Designer.cs">
+      <DependentUpon>RackProductList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\ProductRackMappingRepository.cs" />
+    <Compile Include="Masters\ProductRackWiseStockMovementRepository.cs" />
+    <Compile Include="Masters\ProductLocationRackAssignmentControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Masters\ProductLocationRackAssignmentControl.Designer.cs">
+      <DependentUpon>ProductLocationRackAssignmentControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Masters\LocationRackSectionControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Masters\LocationRackSectionControl.Designer.cs">
+      <DependentUpon>LocationRackSectionControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Masters\Location.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -478,6 +511,15 @@
     <Compile Include="Movement\Issued.designer.cs">
       <DependentUpon>Issued.cs</DependentUpon>
     </Compile>
+    <Compile Include="Movement\PendingIssuedRackAllocationDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Movement\PendingIssuedRackRepository.cs" />
+    <Compile Include="Movement\WarrantyRackRepository.cs" />
+    <Compile Include="Movement\MaterialMovementRackAllocationDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Movement\MaterialMovementRackRepository.cs" />
     <Compile Include="Movement\issuedreceived11.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -551,6 +593,27 @@
     </Compile>
     <Compile Include="Purchase\PurchaseReceipt.designer.cs">
       <DependentUpon>PurchaseReceipt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Purchase\PurchaseReceiptRepository.cs" />
+    <Compile Include="Purchase\PurchaseReceiptRackAllocation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Purchase\PurchaseReceiptRackAllocation.Designer.cs">
+      <DependentUpon>PurchaseReceiptRackAllocation.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sales\PdiRackRepository.cs" />
+    <Compile Include="Sales\PdiReverseRepository.cs" />
+    <Compile Include="Sales\PdiRackAllocationDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sales\PdiRackAllocationDialog.Designer.cs">
+      <DependentUpon>PdiRackAllocationDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sales\PdiReverseRackAllocationDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sales\PdiReverseRackAllocationDialog.Designer.cs">
+      <DependentUpon>PdiReverseRackAllocationDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Purchase\ReceiptOfGoodsReport.cs">
       <SubType>Form</SubType>
@@ -731,6 +794,16 @@
       <DependentUpon>Userestimation.cs</DependentUpon>
     </Compile>
     <Compile Include="RREPrint.cs" />
+    <Compile Include="DotMatrixPrinter.cs" />
+    <Compile Include="PrinterSetupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DotMatrixPrintPreviewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DotMatrixPrintOptionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="RRInventoryDataSet2.cs">
       <DependentUpon>RRInventoryDataSet2.xsd</DependentUpon>
     </Compile>
@@ -838,6 +911,9 @@
     </Compile>
     <Compile Include="Sales\SalesNewQuotation.designer.cs">
       <DependentUpon>SalesNewQuotation.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sales\RackStockAvailabilityForm.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Sales\SalesQuotation.cs">
       <SubType>Form</SubType>
@@ -1087,6 +1163,21 @@
     <EmbeddedResource Include="Masters\FrmUser.resx">
       <DependentUpon>FrmUser.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Masters\LocationRackMaster.resx">
+      <DependentUpon>LocationRackMaster.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Masters\LocationRackSectionControl.resx">
+      <DependentUpon>LocationRackSectionControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Masters\RackChangeDialog.resx">
+      <DependentUpon>RackChangeDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Masters\RackProductList.resx">
+      <DependentUpon>RackProductList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Masters\ProductLocationRackAssignmentControl.resx">
+      <DependentUpon>ProductLocationRackAssignmentControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Masters\Location.resx">
       <DependentUpon>Location.cs</DependentUpon>
     </EmbeddedResource>
@@ -1152,6 +1243,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Purchase\PurchaseReceipt.resx">
       <DependentUpon>PurchaseReceipt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Purchase\PurchaseReceiptRackAllocation.resx">
+      <DependentUpon>PurchaseReceiptRackAllocation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Purchase\SearchPurchaseOrder.resx">
       <DependentUpon>SearchPurchaseOrder.cs</DependentUpon>

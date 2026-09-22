@@ -1,4 +1,4 @@
-﻿
+
 using InvBal;
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,13 @@ namespace Inventory.Masters
         string imgpath = string.Empty;
         string conn = Program.connection;
         DataTable dtitems;
+        private readonly LocationRackRepository locationRackRepository = new LocationRackRepository();
+        private readonly ProductRackMappingRepository productRackMappingRepository = new ProductRackMappingRepository();
+        private readonly ProductRackWiseStockMovementRepository rackWiseStockMovementRepository = new ProductRackWiseStockMovementRepository();
+        private readonly Dictionary<int, ProductLocationRackAssignmentControl> locationRackAssignmentControls = new Dictionary<int, ProductLocationRackAssignmentControl>();
+        private bool locationRackAssignmentInitialized;
+        private int locationRackLoadedLocationCount;
+        private int locationRackLoadedRackCount;
         // ComboBox cmblocation;
         public Product()
         {
@@ -79,6 +86,7 @@ namespace Inventory.Masters
             //splitContainer1.Panel1Collapsed = true;
             //vLabel1.Enabled = false;
             //pnlLabelSearch.Visible = false;
+            LoadLocationRackAssignmentControls();
         }
       
         public Button btn;
@@ -258,8 +266,278 @@ namespace Inventory.Masters
 
         private void Product_Load(object sender, EventArgs e)
         {
-           
+            if (!locationRackAssignmentInitialized)
+            {
+                LoadLocationRackAssignmentControls();
+            }
+        }
 
+        private void LoadLocationRackAssignmentControls()
+        {
+            locationRackAssignmentControls.Clear();
+            locationRackLoadedLocationCount = 0;
+            locationRackLoadedRackCount = 0;
+            locationRackAssignmentInitialized = false;
+            ConfigureLocationRackAssignmentContainer();
+            flpProductLocationRackAssignments.SuspendLayout();
+            flpProductLocationRackAssignments.Controls.Clear();
+
+            try
+            {
+                DataTable locations = locationRackRepository.GetLocations();
+                locationRackLoadedLocationCount = locations == null ? 0 : locations.Rows.Count;
+                if (locations == null)
+                {
+                    ShowLocationRackAssignmentMessage("No active locations with active racks found.");
+                    return;
+                }
+
+                string locationIdColumn = GetColumnName(locations, "LocationId");
+                string locationNameColumn = GetColumnName(locations, "LocationName");
+                if (string.IsNullOrEmpty(locationIdColumn) || string.IsNullOrEmpty(locationNameColumn))
+                {
+                    throw new InvalidOperationException("sp_Location_List must return LocationId and LocationName.");
+                }
+
+                for (int i = 0; i < locations.Rows.Count; i++)
+                {
+                    int locationId;
+                    if (!int.TryParse(Convert.ToString(locations.Rows[i][locationIdColumn]), out locationId))
+                    {
+                        continue;
+                    }
+
+                    DataTable racks = locationRackRepository.GetRacks(locationId);
+                    if (racks == null || racks.Rows.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    locationRackLoadedRackCount += racks.Rows.Count;
+                    ProductLocationRackAssignmentControl locationControl = new ProductLocationRackAssignmentControl();
+                    locationControl.Anchor = ((AnchorStyles)(((AnchorStyles.Top | AnchorStyles.Left) | AnchorStyles.Right)));
+                    locationControl.Margin = new Padding(0, 0, 0, 10);
+                    locationControl.Visible = true;
+                    locationControl.Width = GetLocationRackAssignmentControlWidth();
+                    locationControl.LoadLocation(locationId, Convert.ToString(locations.Rows[i][locationNameColumn]), racks);
+                    locationControl.SizeChanged += ProductLocationRackAssignment_SizeChanged;
+
+                    locationRackAssignmentControls.Add(locationId, locationControl);
+                    flpProductLocationRackAssignments.Controls.Add(locationControl);
+                }
+
+                if (locationRackAssignmentControls.Count == 0)
+                {
+                    ShowLocationRackAssignmentMessage("No active locations with active racks found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowLocationRackAssignmentMessage("Location / Rack Assignment could not be loaded: " + ex.Message);
+                MessageBox.Show("Location / Rack Assignment could not be loaded." + Environment.NewLine + ex.Message, "Location / Rack Assignment", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                locationRackAssignmentInitialized = true;
+                flpProductLocationRackAssignments.ResumeLayout();
+                ResizeLocationRackAssignmentArea();
+            }
+        }
+
+        private void LoadProductRackMappings(string productIdText)
+        {
+            ClearLocationRackSelections();
+
+            int productId;
+            if (!int.TryParse(productIdText, out productId) || productId <= 0)
+            {
+                return;
+            }
+
+            DataTable mappings;
+            try
+            {
+                mappings = productRackMappingRepository.GetMappings(productId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Product rack mappings could not be loaded." + Environment.NewLine + ex.Message, "Location / Rack Assignment", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            for (int i = 0; i < mappings.Rows.Count; i++)
+            {
+                int locationId;
+                int rackId;
+                if (!int.TryParse(Convert.ToString(mappings.Rows[i]["LocationId"]), out locationId)
+                    || !int.TryParse(Convert.ToString(mappings.Rows[i]["RackId"]), out rackId))
+                {
+                    continue;
+                }
+
+                ProductLocationRackAssignmentControl locationControl;
+                if (!locationRackAssignmentControls.TryGetValue(locationId, out locationControl))
+                {
+                    continue;
+                }
+
+                locationControl.AddSelectedRack(rackId, Convert.ToString(mappings.Rows[i]["RackCaption"]));
+            }
+
+            ResizeLocationRackAssignmentArea();
+            SyncLegacyRackTextFromSelections();
+        }
+
+        private void ClearLocationRackSelections()
+        {
+            if (!locationRackAssignmentInitialized)
+            {
+                return;
+            }
+
+            foreach (ProductLocationRackAssignmentControl locationControl in locationRackAssignmentControls.Values)
+            {
+                locationControl.ClearSelections();
+            }
+
+            ResizeLocationRackAssignmentArea();
+        }
+
+        private bool SyncLegacyRackTextFromSelections()
+        {
+            string rackText = BuildSelectedRackCaptionText();
+            if (rackText.Length > 255)
+            {
+                MessageBox.Show("The assigned rack names exceed the maximum Rack Name length.");
+                return false;
+            }
+
+            txtRack.Text = rackText;
+            return true;
+        }
+
+        private string BuildSelectedRackCaptionText()
+        {
+            List<string> captions = new List<string>();
+            HashSet<string> captionSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (Control control in flpProductLocationRackAssignments.Controls)
+            {
+                ProductLocationRackAssignmentControl locationControl = control as ProductLocationRackAssignmentControl;
+                if (locationControl == null)
+                {
+                    continue;
+                }
+
+                List<string> selectedCaptions = locationControl.SelectedRackCaptions;
+                for (int i = 0; i < selectedCaptions.Count; i++)
+                {
+                    string caption = Convert.ToString(selectedCaptions[i]).Trim();
+                    if (caption.Length == 0 || captionSet.Contains(caption))
+                    {
+                        continue;
+                    }
+
+                    captionSet.Add(caption);
+                    captions.Add(caption);
+                }
+            }
+
+            return string.Join(", ", captions.ToArray());
+        }
+
+        private void SaveRackWiseStockMovementFlag(int productId)
+        {
+            if (productId > 0)
+            {
+                rackWiseStockMovementRepository.SaveRackWiseStockMovement(productId, chkRackWiseStockMovement.Checked);
+            }
+        }
+
+        private void LoadRackWiseStockMovementFlag(string productIdText)
+        {
+            int productId;
+            if (!int.TryParse(productIdText, out productId) || productId <= 0)
+            {
+                chkRackWiseStockMovement.Checked = false;
+                return;
+            }
+
+            try
+            {
+                chkRackWiseStockMovement.Checked = rackWiseStockMovementRepository.GetRackWiseStockMovement(productId);
+            }
+            catch (Exception ex)
+            {
+                chkRackWiseStockMovement.Checked = false;
+                MessageBox.Show("Rack wise stock movement flag could not be loaded." + Environment.NewLine + ex.Message, "Rack Wise Stock Movement", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ProductLocationRackAssignment_SizeChanged(object sender, EventArgs e)
+        {
+            ResizeLocationRackAssignmentArea();
+        }
+
+        private void ResizeLocationRackAssignmentArea()
+        {
+            if (groupLocationRackAssignment == null || flpProductLocationRackAssignments == null || panel3 == null)
+            {
+                return;
+            }
+
+            int availableWidth = GetLocationRackAssignmentControlWidth();
+            for (int i = 0; i < flpProductLocationRackAssignments.Controls.Count; i++)
+            {
+                if (flpProductLocationRackAssignments.Controls[i].Width != availableWidth)
+                {
+                    flpProductLocationRackAssignments.Controls[i].Width = availableWidth;
+                }
+            }
+        }
+
+        private void ConfigureLocationRackAssignmentContainer()
+        {
+            groupLocationRackAssignment.Visible = true;
+            flpProductLocationRackAssignments.Dock = DockStyle.Fill;
+            flpProductLocationRackAssignments.AutoScroll = true;
+            flpProductLocationRackAssignments.FlowDirection = FlowDirection.TopDown;
+            flpProductLocationRackAssignments.WrapContents = false;
+        }
+
+        private string GetColumnName(DataTable table, string columnName)
+        {
+            if (table == null)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < table.Columns.Count; i++)
+            {
+                if (string.Equals(table.Columns[i].ColumnName, columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return table.Columns[i].ColumnName;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private int GetLocationRackAssignmentControlWidth()
+        {
+            int scrollbarWidth = flpProductLocationRackAssignments.VerticalScroll.Visible ? SystemInformation.VerticalScrollBarWidth : 0;
+            return Math.Max(100, flpProductLocationRackAssignments.ClientSize.Width - scrollbarWidth - 4);
+        }
+
+        private void ShowLocationRackAssignmentMessage(string message)
+        {
+            Label messageLabel = new Label();
+            messageLabel.AutoSize = true;
+            messageLabel.Font = new Font("Calibri", 9F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+            messageLabel.ForeColor = Color.Firebrick;
+            messageLabel.Margin = new Padding(0, 4, 0, 8);
+            messageLabel.Text = message;
+            flpProductLocationRackAssignments.Controls.Add(messageLabel);
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -1314,6 +1592,7 @@ namespace Inventory.Masters
             txtreorderqty.Clear();
             txtreorderpt.Clear();
             txtRack.Clear();
+            chkRackWiseStockMovement.Checked = false;
             txtRemarks.Clear();
             cmbTax.SelectedIndex = 0;
             textBox2.Text = "";
@@ -1326,6 +1605,7 @@ namespace Inventory.Masters
             pcphoto.Image = null;
             filename = null;
             lblhidden.Text = string.Empty;
+            ClearLocationRackSelections();
           
 
         }
@@ -1556,6 +1836,11 @@ namespace Inventory.Masters
             }
 
             int Status = 0;
+            if (!SyncLegacyRackTextFromSelections())
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(Convert.ToString(lblhidden.Text)))
             {
                 ObjProductBAL.id = "";
@@ -1639,6 +1924,18 @@ namespace Inventory.Masters
             ObjProductBAL.SalesPrice = txtSalesPrice.Text;
             Status = ProductBAL.SaveProduct(ObjProductBAL);
             UpdateProductMRP(Status);
+            if (Status > 0)
+            {
+                try
+                {
+                    SaveRackWiseStockMovementFlag(Status);
+                    SaveProductRackMappings(Status);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Product saved, but rack mappings could not be saved: " + ex.Message, "Location / Rack Assignment", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
 
             DataTable dt = new DataTable();
 
@@ -1739,6 +2036,36 @@ namespace Inventory.Masters
             {
                 MessageBox.Show("Projduct already exist ");
                 txtitemcodes.Focus();
+            }
+        }
+
+        private void SaveProductRackMappings(int productId)
+        {
+            if (productId <= 0)
+            {
+                return;
+            }
+
+            HashSet<int> selectedRackIds = new HashSet<int>();
+            foreach (ProductLocationRackAssignmentControl locationControl in locationRackAssignmentControls.Values)
+            {
+                List<int> rackIds = locationControl.SelectedRackIds;
+                for (int i = 0; i < rackIds.Count; i++)
+                {
+                    if (rackIds[i] > 0)
+                    {
+                        selectedRackIds.Add(rackIds[i]);
+                    }
+                }
+            }
+
+            int updatedBy = 0;
+            int.TryParse(Program.userid, out updatedBy);
+
+            productRackMappingRepository.DeleteAllMappings(productId);
+            foreach (int rackId in selectedRackIds)
+            {
+                productRackMappingRepository.AddMapping(productId, rackId, updatedBy);
             }
         }
 
@@ -1867,6 +2194,11 @@ namespace Inventory.Masters
             }
 
             int Status = 0;
+            if (!SyncLegacyRackTextFromSelections())
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(Convert.ToString(lblhidden.Text)))
             {
                 ObjProductBAL.id = "";
@@ -1947,6 +2279,18 @@ namespace Inventory.Masters
             ObjProductBAL.SalesPrice = txtSalesPrice.Text;
             Status = ProductBAL.SaveProductPending(ObjProductBAL);
             UpdateProductMRP(Status);
+            if (Status > 0)
+            {
+                try
+                {
+                    SaveRackWiseStockMovementFlag(Status);
+                    SaveProductRackMappings(Status);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Product saved, but rack settings could not be saved: " + ex.Message, "Location / Rack Assignment", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
 
             DataTable dt = new DataTable();
 
@@ -2278,6 +2622,8 @@ namespace Inventory.Masters
                     txtRemarks.Text = Convert.ToString(dgvProduct.Rows[e.RowIndex].Cells["Remarks"].Value);
                     txtSalesPrice.Text = Convert.ToString(dgvProduct.Rows[e.RowIndex].Cells["SalesPrice"].Value);
                     txtMRP.Text = GetProductMRP(lblhidden.Text, dgvProduct, e.RowIndex);
+                    LoadProductRackMappings(lblhidden.Text);
+                    LoadRackWiseStockMovementFlag(lblhidden.Text);
 
                     if (!string.IsNullOrEmpty(filename))
                     {
@@ -2692,6 +3038,8 @@ namespace Inventory.Masters
                 txtreorderpt.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["ReorderPoint"].Value);
                 filename = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Imagepath"].Value);
                 txtRemarks.Text = Convert.ToString(dgvSearch.Rows[e.RowIndex].Cells["Remarks"].Value);
+                LoadProductRackMappings(lblhidden.Text);
+                LoadRackWiseStockMovementFlag(lblhidden.Text);
                 if (!string.IsNullOrEmpty(filename))
                 {
                     //pcphoto.Image = new Bitmap(imgpath);

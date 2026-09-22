@@ -47,6 +47,7 @@ namespace Inventory
         private bool showprevsum = false;
         public string _strRefText;
         public string _strRef;
+        public bool ShowPrintPreview = true;
         public DataSet dsMain1;
 
 
@@ -200,34 +201,33 @@ namespace Inventory
             this.rdr.WriteLine("");
             this.rdr.WriteLine("");
         }
-        public void RREPrintQuotation()
+        public string GenerateQuotationPrintOutput()
         {
-            bool result = true;
+            string output = null;
 
             for (int i = 1; i <= Copies; i++)
             {
-                string StrOutPut = GetPrintOut(_strRefText, _strRef, PrintHeader(), PrintDetails(), PrintFooter(), PrintReturn());
-                //dsMain.Tables[1].Clear();
-                //string StrOutPutCashOut = GetPrintOut1(_strRefText, _strRef, PrintHeader1(), PrintDetails1(), PrintFooter1());
-                //dsMain1.Clear();
-
-                StreamWriter sr = new StreamWriter("d:\\bill.txt");
-                sr.Write(StrOutPut);
-                sr.Close();
-
+                output = GetPrintOut(_strRefText, _strRef, PrintHeader(), PrintDetails(), PrintFooter(), PrintReturn());
             }
 
+            return output;
+        }
 
+        public void RREPrintQuotation()
+        {
+            string StrOutPut = GenerateQuotationPrintOutput();
 
-            new Process
+            if (StrOutPut != null)
             {
-                StartInfo =
+                if (ShowPrintPreview)
                 {
-                    FileName = "d:\\Bill.bat",
-                    WindowStyle = ProcessWindowStyle.Hidden
-
+                    DotMatrixPrintPreviewForm.ShowPreview(StrOutPut);
                 }
-            }.Start();
+                else
+                {
+                    DotMatrixPrinter.Print(StrOutPut);
+                }
+            }
         }
         private string GetPrintOut(string strRefText, string strRef, string Header, string Detail, string Footer, string Return)
         {
@@ -707,7 +707,8 @@ namespace Inventory
                 strPrintFooter += this.GetFormatedText(Convert.ToString(" Rtn:"), 5);
                 strPrintFooter += this.GetFormatedText(Convert.ToString(value), 13);
                 strPrintFooter += this.GetRightFormatedText(Convert.ToString("ToT:"), 4);
-                strPrintFooter += this.GetFormatedText(Convert.ToString(this.Total), 13) + "\n"; 
+                strPrintFooter += this.GetFormatedText(Convert.ToString(this.Total), 13) + "\n";
+                strPrintFooter += this.GetFormatedText("GOODS ONCE SOLD CANNOT BE RETURNED OR EXCHANGED.", 80) + "\n";
             }
 
             return strPrintFooter;

@@ -1,4 +1,4 @@
-﻿using InvBal;
+using InvBal;
 using Inventory.Accounts;
 using Inventory.Adjustment;
 using Inventory.Commission;
@@ -1391,6 +1391,7 @@ namespace Inventory
             uOMToolStripMenuItem.Visible = false;
             categoryToolStripMenuItem.Visible = false;
             locationToolStripMenuItem.Visible = false;
+            locationRackMasterToolStripMenuItem.Visible = false;
             userCreationToolStripMenuItem.Visible = false;
             rolesToolStripMenuItem.Visible = false;
             employeeToolStripMenuItem.Visible = false;
@@ -1520,6 +1521,7 @@ namespace Inventory
             uOMToolStripMenuItem.Visible = true;
             categoryToolStripMenuItem.Visible = true;
             locationToolStripMenuItem.Visible = true;
+            locationRackMasterToolStripMenuItem.Visible = true;
             userCreationToolStripMenuItem.Visible = true;
             rolesToolStripMenuItem.Visible = true;
             employeeToolStripMenuItem.Visible = true;
@@ -1746,6 +1748,11 @@ namespace Inventory
                 else if (menu == "LocationMaster")
                 {
                     locationToolStripMenuItem.Visible = true;
+                }
+                else if (menu == "LocationRackMaster")
+                {
+                    locationRackMasterToolStripMenuItem.Visible = true;
+                    mastersToolStripMenuItem.Visible = true;
                 }
                 else if (menu == "UserCreation")
                 {
@@ -3093,6 +3100,33 @@ namespace Inventory
             }
             Program.objBrand.MdiParent = this;
             Program.objBrand.Show();
+        }
+
+        private void locationRackMasterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objLocationRackMaster == null)
+            {
+                LocationRackMaster objLocationRackMaster = new LocationRackMaster();
+                Program.objLocationRackMaster = objLocationRackMaster;
+            }
+            else
+            {
+                Program.objLocationRackMaster.Dispose();
+                LocationRackMaster objLocationRackMaster = new LocationRackMaster();
+                Program.objLocationRackMaster = objLocationRackMaster;
+            }
+            Program.objLocationRackMaster.MdiParent = this;
+            Program.objLocationRackMaster.Show();
+        }
+
+        private void locationRackMasterToolStripMenuItem_MouseEnter(object sender, EventArgs e)
+        {
+            mastersToolStripMenuItem.ForeColor = Color.Black;
+        }
+
+        private void locationRackMasterToolStripMenuItem_MouseLeave(object sender, EventArgs e)
+        {
+            mastersToolStripMenuItem.ForeColor = Color.White;
         }
 
         private void viewStockAdjustmentToolStripMenuItem_Click(object sender, EventArgs e)

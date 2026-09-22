@@ -20,10 +20,10 @@ function columnName(index) {
 }
 
 function buildSheetXml(columns, rows) {
-  const tableRows = [
-    columns.map((column) => column.header),
-    ...rows.map((row) => columns.map((column) => column.value(row))),
-  ]
+  const tableRows = [columns.map((column) => column.header)]
+  rows.forEach((row) => {
+    tableRows.push(columns.map((column) => column.value(row)))
+  })
 
   const xmlRows = tableRows.map((values, rowIndex) => {
     const cells = values.map((value, columnIndex) => {
@@ -83,6 +83,20 @@ function writeUint32(bytes, value) {
   bytes.push(value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, (value >>> 24) & 0xff)
 }
 
+function appendBytes(bytes, values) {
+  for (let index = 0; index < values.length; index += 1) {
+    bytes.push(values[index])
+  }
+}
+
+function toUint8Array(bytes) {
+  const output = new Uint8Array(bytes.length)
+  for (let index = 0; index < bytes.length; index += 1) {
+    output[index] = bytes[index]
+  }
+  return output
+}
+
 function createZip(entries) {
   const encoder = new TextEncoder()
   const fileBytes = []
@@ -105,7 +119,8 @@ function createZip(entries) {
     writeUint32(fileBytes, contentBytes.length)
     writeUint16(fileBytes, nameBytes.length)
     writeUint16(fileBytes, 0)
-    fileBytes.push(...nameBytes, ...contentBytes)
+    appendBytes(fileBytes, nameBytes)
+    appendBytes(fileBytes, contentBytes)
 
     writeUint32(centralDirectory, 0x02014b50)
     writeUint16(centralDirectory, 20)
@@ -124,11 +139,11 @@ function createZip(entries) {
     writeUint16(centralDirectory, 0)
     writeUint32(centralDirectory, 0)
     writeUint32(centralDirectory, localOffset)
-    centralDirectory.push(...nameBytes)
+    appendBytes(centralDirectory, nameBytes)
   })
 
   const centralDirectoryOffset = fileBytes.length
-  fileBytes.push(...centralDirectory)
+  appendBytes(fileBytes, centralDirectory)
 
   writeUint32(fileBytes, 0x06054b50)
   writeUint16(fileBytes, 0)
@@ -139,7 +154,7 @@ function createZip(entries) {
   writeUint32(fileBytes, centralDirectoryOffset)
   writeUint16(fileBytes, 0)
 
-  return new Blob([new Uint8Array(fileBytes)], {
+  return new Blob([toUint8Array(fileBytes)], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
 }

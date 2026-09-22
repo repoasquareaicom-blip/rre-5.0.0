@@ -41,6 +41,11 @@ namespace Inventory
         string clickstatus = string.Empty;
         bool savevads = false;
         string firstname, firstvalue, secondname, secondvalue, thirdname, thirdvalue;
+        private readonly PdiRackRepository pdiRackRepository = new PdiRackRepository();
+        private readonly Dictionary<int, Dictionary<int, decimal>> pdiRackAllocationsByProduct = new Dictionary<int, Dictionary<int, decimal>>();
+        private readonly Dictionary<int, decimal> pdiRackRequestedQtyByProduct = new Dictionary<int, decimal>();
+        private bool suppressPdiRackStatusChange = false;
+        private Label lblPendingMoveNotice;
         public SalesPDI()
         {
             InitializeComponent();
@@ -201,6 +206,8 @@ namespace Inventory
         private void LoadPorts()
         {
             dgvOrder.Rows.Clear();
+            dgvOrder.AllowUserToAddRows = false;
+            dgvOrder.AllowUserToDeleteRows = false;
             dgvOrder.ColumnCount = 9;
             //dgvOrder.RowCount = 16;
 
@@ -215,6 +222,15 @@ namespace Inventory
             dgvOrder.Columns[7].Name = "Pending Quantity";
             dgvOrder.Columns[8].Name = "Product Serial.No";
             dgvOrder.Columns[3].Visible = false;
+            if (!dgvOrder.Columns.Contains("Stock Movement"))
+            {
+                DataGridViewTextBoxColumn movementColumn = new DataGridViewTextBoxColumn();
+                movementColumn.Name = "Stock Movement";
+                movementColumn.HeaderText = "Stock Movement";
+                movementColumn.ReadOnly = true;
+                movementColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                dgvOrder.Columns.Add(movementColumn);
+            }
 
             this.dgvOrder.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -257,6 +273,7 @@ namespace Inventory
             this.dgvOrder.Columns["Amount"].ReadOnly = true;
 
             this.dgvOrder.Columns[7].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            this.dgvOrder.Columns["Stock Movement"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 
             Rectangle resolution = Screen.PrimaryScreen.Bounds;
@@ -301,6 +318,7 @@ namespace Inventory
             cmb.FlatStyle = FlatStyle.Popup;
             dgvOrder.Columns.Add(cmb);
 
+            EnsurePendingMoveNotice();
 
 
 
@@ -327,7 +345,7 @@ namespace Inventory
 
             for (int i = 0; i < dgvOrder.Columns.Count; i++)
             {
-                if (dgvOrder.Columns[i].HeaderText == "S.NO" || dgvOrder.Columns[i].HeaderText == "Items" || dgvOrder.Columns[i].HeaderText == "UOM" || dgvOrder.Columns[i].HeaderText == "productid" || dgvOrder.Columns[i].HeaderText == "Rate" || dgvOrder.Columns[i].HeaderText == "Amount" || dgvOrder.Columns[i].HeaderText == "Pending Quantity")
+                if (dgvOrder.Columns[i].HeaderText == "S.NO" || dgvOrder.Columns[i].HeaderText == "Items" || dgvOrder.Columns[i].HeaderText == "UOM" || dgvOrder.Columns[i].HeaderText == "productid" || dgvOrder.Columns[i].HeaderText == "Rate" || dgvOrder.Columns[i].HeaderText == "Amount" || dgvOrder.Columns[i].HeaderText == "Pending Quantity" || dgvOrder.Columns[i].HeaderText == "Stock Movement")
                 {
                     this.dgvOrder.Columns[i].ReadOnly = true;
                 }
@@ -406,63 +424,13 @@ namespace Inventory
                 {
                     if (keyData == (Keys.Alt | Keys.Insert))
                     {
-
-                        if (dgvOrder.Rows.Count <= 0)
-                        {
-                            dgvOrder.Rows.Add();
-                        }
-                        else
-                        {
-                            int rowindex = dgvOrder.CurrentRow.Index;
-                            int colindex = dgvOrder.CurrentCell.ColumnIndex;
-                            //dgvOrder.Rows.Insert(rowindex, dgvOrder.Rows.Add(1));
-                            dgvOrder.Rows.Insert(rowindex, 1);
-
-                            return true;
-                        }
-                        getsino();
+                        return true;
 
                     }
 
                     if (keyData == (Keys.Alt | Keys.Delete))
                     {
-                        DialogResult result = MessageBox.Show("Do you want to Delete?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                        if (result == DialogResult.Yes)
-                        {
-                            if (dgvOrder.Rows.Count > 0)
-                            {
-                                try
-                                {
-                                    int rowindex = dgvOrder.CurrentRow.Index;
-                                    int colindex = dgvOrder.CurrentCell.ColumnIndex;
-                                    dgvOrder.Rows.RemoveAt(rowindex);
-                                }
-                                catch
-                                {
-                                    if (dgvOrder.Rows.Count - 1 == dgvOrder.CurrentCell.RowIndex)
-                                    {
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[0].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[1].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[2].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[3].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[4].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[5].Value = "";
-                                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[6].Value = "";
-
-                                    }
-                                }
-
-                            }
-                            pnsearch.Visible = false;
-                            getsino();
-                            return true;
-                        }
-
-                        if (dgvOrder.Rows.Count == 0)
-                        {
-                            dgvOrder.Rows.Add();
-                        }
+                        return true;
 
                     }
                 }
@@ -560,11 +528,7 @@ namespace Inventory
                 {
 
                     dgvOrder.Focus();
-                    if (dgvOrder.Rows.Count == 0)
-                    {
-                        dgvOrder.Rows.Add();
-                    }
-                    dgvOrder.CurrentCell = dgvOrder[1, 0];
+                    MoveToNextPdiStatus(0);
 
                     return true;
                 }
@@ -618,10 +582,7 @@ namespace Inventory
                 if (keyData == (Keys.Tab))
                 {
                     this.ActiveControl = dgvOrder;
-                    if (dgvOrder.Rows.Count == 0)
-                    {
-                        dgvOrder.Rows.Add();
-                    }
+                    MoveToNextPdiStatus(0);
                     return true;
                 }
 
@@ -638,25 +599,28 @@ namespace Inventory
             }
             try
             {
-                if (keyData == Keys.Tab)
+                if (keyData == Keys.Tab && dgvOrder.CurrentCell != null)
                 {
-                    if (dgvOrder.CurrentCell.ColumnIndex == 8)
+                    string currentColumnName = dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name;
+                    int rowIndex = dgvOrder.CurrentCell.RowIndex;
+                    if (currentColumnName == "cmbAction")
                     {
-
-                        if (Convert.ToString(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[8].Value) == "Pending")
+                        dgvOrder.EndEdit();
+                        if (Convert.ToString(dgvOrder.Rows[rowIndex].Cells["cmbAction"].Value) == "Pending")
                         {
                             dgvOrder.Focus();
-                            dgvOrder.CurrentCell = dgvOrder[7, dgvOrder.CurrentCell.RowIndex];
-                            return true;
-                        }
-                        else
-                        {
-                            dgvOrder.Focus();
-                            dgvOrder.CurrentCell = dgvOrder[8, dgvOrder.CurrentCell.RowIndex + 1];
+                            dgvOrder.CurrentCell = dgvOrder.Rows[rowIndex].Cells["Pending Quantity"];
                             return true;
                         }
 
-
+                        MoveToNextPdiStatus(rowIndex + 1);
+                        return true;
+                    }
+                    if (currentColumnName == "Pending Quantity")
+                    {
+                        dgvOrder.EndEdit();
+                        MoveToNextPdiStatus(rowIndex + 1);
+                        return true;
                     }
                 }
             }
@@ -919,67 +883,139 @@ namespace Inventory
 
             for (int k = 0; k < dgvOrder.RowCount; k++)
             {
-                if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[k].Cells[1].Value)))
+                string cellValue = Convert.ToString(dgvOrder.Rows[k].Cells[1].Value);
+
+                if (!string.IsNullOrEmpty(cellValue.Trim()))
                 {
-                    DataGridViewComboBoxCell thisCbCell = (DataGridViewComboBoxCell)dgvOrder.Rows[k].Cells["cmbAction"];
-                    //DataGridViewComboBoxCell thisCbCell = (DataGridViewComboBoxCell)dgvOrder.Rows[k].Cells["cmbAction"];
-                    if (string.IsNullOrEmpty(Convert.ToString(thisCbCell.Value)))
+                    DataGridViewComboBoxCell thisCbCell =
+                        (DataGridViewComboBoxCell)dgvOrder.Rows[k].Cells["cmbAction"];
+
+                    string action = Convert.ToString(thisCbCell.Value).Trim();
+
+                    // Validate Status
+                    if (string.IsNullOrEmpty(action) || action == "-Select-")
                     {
                         i++;
-                        message = message + "* Please Select Status." + "\n";
+                        message = message + "* Please Select Status.\n";
+
                         if (i == 1)
                             this.ActiveControl = dgvOrder;
-                        dgvOrder.CurrentCell = dgvOrder["cmbAction", dgvOrder.CurrentCell.RowIndex];
+
+                        dgvOrder.CurrentCell = dgvOrder.Rows[k].Cells["cmbAction"];
+
+                        status = false;
                         break;
                     }
 
-
-                    else if (Convert.ToString(thisCbCell.Value) == "-Select-")
+                    // Validate Pending Quantity
+                    if (action == "Pending")
                     {
-                        i++;
-                        message = message + "* Please Select Status." + "\n";
-                        if (i == 1)
-                            this.ActiveControl = dgvOrder;
-                        dgvOrder.CurrentCell = dgvOrder["cmbAction", dgvOrder.CurrentCell.RowIndex];
-                        break;
-                    }
+                        string pendingQtyText =
+                            Convert.ToString(
+                                dgvOrder.Rows[k].Cells["Pending Quantity"].Value
+                            ).Trim();
 
+                        string qtyText =
+                            Convert.ToString(
+                                dgvOrder.Rows[k].Cells["Quantity"].Value
+                            ).Trim();
 
-                    else if (Convert.ToString(thisCbCell.Value) == "Pending")
-                    {
-                        if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value)) || Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == "." || Convert.ToInt32(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == 0)
+                        double pendingQty = 0;
+                        double quantity = 0;
+
+                        // Pending Quantity blank / invalid
+                        if (string.IsNullOrEmpty(pendingQtyText) ||
+                            pendingQtyText == "." ||
+                            !double.TryParse(pendingQtyText, out pendingQty) ||
+                            pendingQty == 0)
                         {
                             i++;
-                            message = message + "* Please Enter Pending Quantity." + "\n";
+
+                            message = message +
+                                "* Please Enter Valid Pending Quantity.\n";
+
                             if (i == 1)
                                 this.ActiveControl = dgvOrder;
-                            dgvOrder.CurrentCell = dgvOrder["Pending Quantity", dgvOrder.CurrentCell.RowIndex];
+
+                            dgvOrder.CurrentCell =
+                                dgvOrder.Rows[k].Cells["Pending Quantity"];
+
+                            status = false;
                             break;
                         }
 
-                        else if (Convert.ToDouble(dgvOrder.Rows[k].Cells["Quantity"].Value) < Convert.ToDouble(dgvOrder.Rows[k].Cells["Pending Quantity"].Value))
+                        // Quantity blank / invalid
+                        if (string.IsNullOrEmpty(qtyText) ||
+                            !double.TryParse(qtyText, out quantity))
                         {
                             i++;
-                            message = message + "* Pending Quantity Should Not Be Greater Than Quantity." + "\n";
+
+                            message = message +
+                                "* Invalid Quantity.\n";
+
                             if (i == 1)
                                 this.ActiveControl = dgvOrder;
-                            dgvOrder.CurrentCell = dgvOrder["Pending Quantity", dgvOrder.CurrentCell.RowIndex];
-                            status = false;
-                            break;
-                        }
-                        else if (Convert.ToDouble(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) < 0)
-                        {
-                            message = message + "* Pending Quantity Should Not Be Negitive." + "\n";
-                            status = false;
-                            break;
-                        }
-                        else if (Convert.ToDouble(dgvOrder.Rows[k].Cells["Quantity"].Value) < 0)
-                        {
-                            message = message + "* Quantity is Negitive should not be pending." + "\n";
+
+                            dgvOrder.CurrentCell =
+                                dgvOrder.Rows[k].Cells["Quantity"];
+
                             status = false;
                             break;
                         }
 
+                        // Pending quantity cannot be negative
+                        if (pendingQty < 0)
+                        {
+                            i++;
+
+                            message = message +
+                                "* Pending Quantity Should Not Be Negative.\n";
+
+                            if (i == 1)
+                                this.ActiveControl = dgvOrder;
+
+                            dgvOrder.CurrentCell =
+                                dgvOrder.Rows[k].Cells["Pending Quantity"];
+
+                            status = false;
+                            break;
+                        }
+
+                        // Quantity cannot be negative
+                        if (quantity < 0)
+                        {
+                            i++;
+
+                            message = message +
+                                "* Quantity Is Negative And Cannot Be Pending.\n";
+
+                            if (i == 1)
+                                this.ActiveControl = dgvOrder;
+
+                            dgvOrder.CurrentCell =
+                                dgvOrder.Rows[k].Cells["Quantity"];
+
+                            status = false;
+                            break;
+                        }
+
+                        // Pending quantity should not exceed actual quantity
+                        if (pendingQty > quantity)
+                        {
+                            i++;
+
+                            message = message +
+                                "* Pending Quantity Should Not Be Greater Than Quantity.\n";
+
+                            if (i == 1)
+                                this.ActiveControl = dgvOrder;
+
+                            dgvOrder.CurrentCell =
+                                dgvOrder.Rows[k].Cells["Pending Quantity"];
+
+                            status = false;
+                            break;
+                        }
                     }
                 }
             }
@@ -1175,6 +1211,8 @@ namespace Inventory
 
         private void clear()
         {
+            pdiRackAllocationsByProduct.Clear();
+            pdiRackRequestedQtyByProduct.Clear();
             dgvOrder.ReadOnly = true;
             pnsearch.Visible = false;
             btnSavePending.Enabled = false;
@@ -1190,6 +1228,7 @@ namespace Inventory
             lblperare.Text = Program.Userfullname;
             lbltotalquantity.Text = "0";
             lbltotalamount.Text = "0";
+            UpdatePendingMoveNotice();
             cmbcustomername.Focus();
             cmbloaction.SelectedIndex = 0;
             cmbstatus.Text = "Open";
@@ -1288,29 +1327,26 @@ namespace Inventory
                 objQuotationbal.status = "Quote Completed";
             }
             objQuotationbal.Updatedby = Program.userid;
-            dt = DataGridView2DataTable(dgvOrder);
-            for (int i = 0; i < 3; i++)
-            {
-                dt.Columns.RemoveAt(0);
-            }
-
-            //dt.Columns.RemoveAt(4);
-
-            dt.Columns[4].ColumnName = "PQuantity";
-
-            dt.Columns["cmbAction"].ColumnName = "Status";
-
-
-
-            RemoveNullColumnFromDataTable(dt);
+            dt = BuildQuotationPdiDetailsForSave();
 
             bool dtval = RemoveDuplicateRows(dt, "ProductId");
 
 
             if (dtval)
             {
+                DataTable rackDetails;
+                if (!TryBuildPdiRackDetailsForSave(out rackDetails))
+                {
+                    panel1.Enabled = true;
+                    btnSavePending.Enabled = true;
+                    btnSave.Enabled = true;
+                    btnPrint.Enabled = true;
+                    Pnloading.Visible = false;
+                    return;
+                }
 
-                string output = objQuotationbal.SaveQuotationPdi(objQuotationbal, dt);
+                dt = BuildQuotationPdiDetailsForSave();
+                string output = SaveQuotationPdiRackWise(dt, rackDetails);
                 if (!string.IsNullOrEmpty(output) && string.IsNullOrEmpty(txtorder.Text))
                 {
                     panel1.Enabled = true;
@@ -1402,6 +1438,7 @@ namespace Inventory
             {
                 dt.Columns.RemoveAt(0);
             }
+            RemoveGridOnlyPdiColumns(dt);
 
             //dt.Columns.RemoveAt(4);
 
@@ -1450,6 +1487,287 @@ namespace Inventory
             }
         }
 
+        private DataTable BuildQuotationPdiDetailsForSave()
+        {
+            DataTable dt = DataGridView2DataTable(dgvOrder);
+            for (int i = 0; i < 3; i++)
+            {
+                dt.Columns.RemoveAt(0);
+            }
+            RemoveGridOnlyPdiColumns(dt);
+
+            dt.Columns[4].ColumnName = "PQuantity";
+            dt.Columns["cmbAction"].ColumnName = "Status";
+            RemoveNullColumnFromDataTable(dt);
+            return dt;
+        }
+
+        private string SaveQuotationPdiRackWise(DataTable quotationDetails, DataTable rackDetails)
+        {
+            PdiRackSaveRequest request = new PdiRackSaveRequest();
+            request.IsNew = objQuotationbal.isnew;
+            request.QuotationId = objQuotationbal.Quotationid;
+            request.CustomerId = objQuotationbal.Customerid;
+            request.Date = objQuotationbal.date;
+            request.ReferenceId = objQuotationbal.Referenceid;
+            request.Assist = objQuotationbal.Assist;
+            request.Status = objQuotationbal.status;
+            request.UpdatedBy = Convert.ToString(objQuotationbal.Updatedby);
+            request.AssistName = objQuotationbal.Assistnames;
+            request.CustomerName = objQuotationbal.Customername;
+            request.City = objQuotationbal.City;
+            request.QuotationDetails = quotationDetails;
+            request.RackDetails = rackDetails;
+
+            PdiRackSaveResult result = pdiRackRepository.SaveQuotationPdi(request);
+            return result.Result;
+        }
+
+        private bool TryBuildPdiRackDetailsForSave(out DataTable rackDetails)
+        {
+            rackDetails = CreatePdiRackDetailsTable();
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["productid"].Value);
+                string productName = Convert.ToString(row.Cells["Items"].Value);
+                decimal requestedQty = CellDecimal(row, "Quantity");
+                decimal pendingQty = CellDecimal(row, "Pending Quantity");
+                string status = Convert.ToString(row.Cells["cmbAction"].Value);
+
+                if (productId <= 0 || requestedQty <= 0)
+                {
+                    continue;
+                }
+
+                if (pdiRackRepository.GetRackWiseStockMovement(productId))
+                {
+                    decimal requiredRackQty = requestedQty - pendingQty;
+                    if (requiredRackQty < 0)
+                    {
+                        MessageBox.Show("Pending Quantity should not be greater than Quantity for " + productName + ".");
+                        dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+                        return false;
+                    }
+
+                    if (status == "Verified" && pendingQty != 0)
+                    {
+                        MessageBox.Show("Verified rack-wise product must have Pending Quantity 0 for " + productName + ".");
+                        dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+                        return false;
+                    }
+
+                    if (status == "Pending" && pendingQty <= 0)
+                    {
+                        MessageBox.Show("Please enter Pending Quantity for " + productName + ".");
+                        dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+                        return false;
+                    }
+
+                    decimal allocatedQty = AddManualRackDetails(rackDetails, productId);
+                    if ((status == "Verified" || status == "Pending") && allocatedQty != requiredRackQty)
+                    {
+                        MessageBox.Show("Rack allocation total must be " + requiredRackQty.ToString("0.###") + " for " + productName + ".");
+                        dgvOrder.CurrentCell = row.Cells["cmbAction"];
+                        return false;
+                    }
+                }
+                else
+                {
+                    DataTable availability = pdiRackRepository.GetEligibleRackAvailability(productId);
+                    decimal totalAvailable = RackAvailabilityTotal(availability);
+                    if (requestedQty > totalAvailable)
+                    {
+                        MessageBox.Show("Available stock for " + productName + " is only " + totalAvailable.ToString("0.000") + ". Quantity cannot be greater than available stock.");
+                        dgvOrder.CurrentCell = row.Cells["Quantity"];
+                        return false;
+                    }
+
+                    SetPdiStatus(row, "Verified");
+                    row.Cells["Pending Quantity"].Value = "0";
+                    row.Cells["Pending Quantity"].ReadOnly = true;
+
+                    decimal allocatedQty = AddAutomaticRackDetails(rackDetails, productId, requestedQty, availability);
+                    if (allocatedQty != requestedQty)
+                    {
+                        MessageBox.Show("Available rack allocation for " + productName + " is only " + allocatedQty.ToString("0.000") + ". Quantity cannot be greater than available stock.");
+                        dgvOrder.CurrentCell = row.Cells["Quantity"];
+                        return false;
+                    }
+                }
+            }
+
+            UpdatePendingMoveNotice();
+            return true;
+        }
+
+        private DataTable CreatePdiRackDetailsTable()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ProductId", typeof(int));
+            dt.Columns.Add("RackId", typeof(int));
+            dt.Columns.Add("Quantity", typeof(decimal));
+            return dt;
+        }
+
+        private decimal AddManualRackDetails(DataTable rackDetails, int productId)
+        {
+            decimal total = 0;
+            Dictionary<int, decimal> allocations;
+            if (!pdiRackAllocationsByProduct.TryGetValue(productId, out allocations))
+            {
+                return total;
+            }
+
+            foreach (KeyValuePair<int, decimal> allocation in allocations)
+            {
+                if (allocation.Value > 0)
+                {
+                    AddPdiRackDetail(rackDetails, productId, allocation.Key, allocation.Value);
+                    total += allocation.Value;
+                }
+            }
+
+            return total;
+        }
+
+        private decimal AddAutomaticRackDetails(DataTable rackDetails, int productId, decimal requestedQty, DataTable availability)
+        {
+            decimal balance = requestedQty;
+            decimal total = 0;
+
+            foreach (DataRow rackRow in availability.Rows)
+            {
+                if (balance <= 0)
+                {
+                    break;
+                }
+
+                int rackId = SafeInt(rackRow["RackId"]);
+                decimal availableQty = SafeDecimal(rackRow["AvailableQuantity"]);
+                if (rackId <= 0 || availableQty <= 0)
+                {
+                    continue;
+                }
+
+                decimal pickQty = availableQty < balance ? availableQty : balance;
+                AddPdiRackDetail(rackDetails, productId, rackId, pickQty);
+                total += pickQty;
+                balance -= pickQty;
+            }
+
+            return total;
+        }
+
+        private void AddPdiRackDetail(DataTable rackDetails, int productId, int rackId, decimal quantity)
+        {
+            DataRow dr = rackDetails.NewRow();
+            dr["ProductId"] = productId;
+            dr["RackId"] = rackId;
+            dr["Quantity"] = quantity;
+            rackDetails.Rows.Add(dr);
+        }
+
+        private decimal RackAvailabilityTotal(DataTable availability)
+        {
+            decimal total = 0;
+            foreach (DataRow row in availability.Rows)
+            {
+                total += SafeDecimal(row["AvailableQuantity"]);
+            }
+
+            return total;
+        }
+
+        private bool ValidatePdiRackAllocations()
+        {
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["productid"].Value);
+                string productName = Convert.ToString(row.Cells["Items"].Value);
+                if (productId <= 0 || !pdiRackRepository.GetRackWiseStockMovement(productId))
+                {
+                    continue;
+                }
+
+                string status = Convert.ToString(row.Cells["cmbAction"].Value);
+                decimal requestedQty = CellDecimal(row, "Quantity");
+                decimal pendingQty = CellDecimal(row, "Pending Quantity");
+                decimal requiredRackQty = requestedQty - pendingQty;
+                decimal allocatedQty = PdiRackTotal(productId);
+
+                if (requiredRackQty < 0)
+                {
+                    MessageBox.Show("Pending Quantity should not be greater than Quantity for " + productName + ".");
+                    dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+                    return false;
+                }
+
+                if (status == "Verified" && pendingQty != 0)
+                {
+                    MessageBox.Show("Verified rack-wise product must have Pending Quantity 0 for " + productName + ".");
+                    dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+                    return false;
+                }
+
+                if ((status == "Verified" || status == "Pending") && allocatedQty != requiredRackQty)
+                {
+                    MessageBox.Show("Rack allocation total must be " + requiredRackQty.ToString("0.###") + " for " + productName + ".");
+                    dgvOrder.CurrentCell = row.Cells["cmbAction"];
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private DataTable BuildPdiRackDetails()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ProductId", typeof(int));
+            dt.Columns.Add("RackId", typeof(int));
+            dt.Columns.Add("Quantity", typeof(decimal));
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["productid"].Value);
+                Dictionary<int, decimal> allocations;
+                if (!pdiRackAllocationsByProduct.TryGetValue(productId, out allocations))
+                {
+                    continue;
+                }
+
+                foreach (KeyValuePair<int, decimal> allocation in allocations)
+                {
+                    if (allocation.Value > 0)
+                    {
+                        DataRow dr = dt.NewRow();
+                        dr["ProductId"] = productId;
+                        dr["RackId"] = allocation.Key;
+                        dr["Quantity"] = allocation.Value;
+                        dt.Rows.Add(dr);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
         public void savereceived()
         {
 
@@ -1484,6 +1802,7 @@ namespace Inventory
             {
                 dt.Columns.RemoveAt(0);
             }
+            RemoveGridOnlyPdiColumns(dt);
 
             dt.Columns.RemoveAt(1);
             dt.Columns.RemoveAt(2);
@@ -1510,16 +1829,11 @@ namespace Inventory
             //{
             if (dt.Rows.Count > 0)
             {
-                DialogResult result = MessageBox.Show("Some Items Are Pending, Do You Want To Move Received?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                string output = objQuotationbal.SaveIssuedreceivedwin(objQuotationbal, dt);
+                if (!string.IsNullOrEmpty(output))
                 {
-                    string output = objQuotationbal.SaveIssuedreceivedwin(objQuotationbal, dt);
-                    if (!string.IsNullOrEmpty(output))
-                    {
-                        GetReport(output);
-                        clear();
-                    }
+                    GetReport(output);
+                    clear();
                 }
 
             }
@@ -1717,6 +2031,7 @@ namespace Inventory
                 dgvOrder.Rows[rowindex].Cells[2].Value = lblitemcode.Text;
                 dgvOrder.Rows[rowindex].Cells[4].Value = lblrack.Text;
                 dgvOrder.Rows[rowindex].Cells[0].Value = rowindex + 1;
+                SetProductMovementIndicator(dgvOrder.Rows[rowindex]);
                 DgvAutoRefNo.Visible = false;
                 //  btnLess.Enabled = true;
                 pnsearch.Visible = false;
@@ -1805,7 +2120,9 @@ namespace Inventory
         {
             for (int i = dt.Rows.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrEmpty(Convert.ToString(dt.Rows[i]["Quantity"])))
+                decimal quantity;
+                string quantityText = Convert.ToString(dt.Rows[i]["Quantity"]);
+                if (string.IsNullOrEmpty(quantityText) || !decimal.TryParse(quantityText, out quantity) || quantity <= 0)
                     dt.Rows[i].Delete();
             }
             dt.AcceptChanges();
@@ -1820,7 +2137,11 @@ namespace Inventory
             if (headerText.Equals("Status"))
             {
                 cmbActionstatus = e.Control as ComboBox;
-                cmbActionstatus.SelectedIndexChanged += cmbActionstatus_SelectedIndexChanged;
+                if (cmbActionstatus != null)
+                {
+                    cmbActionstatus.SelectionChangeCommitted -= cmbActionstatus_SelectionChangeCommitted;
+                    cmbActionstatus.SelectionChangeCommitted += cmbActionstatus_SelectionChangeCommitted;
+                }
             }
 
             if (headerText.Equals("Pending Quantity"))
@@ -1863,18 +2184,185 @@ namespace Inventory
             }
         }
 
-        private void cmbActionstatus_SelectedIndexChanged(object sender, EventArgs e)
+        private void cmbActionstatus_SelectionChangeCommitted(object sender, EventArgs e)
         {
-            string s = cmbActionstatus.Text;
-            if (s == "Pending" && !string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Items"].Value)))
+            ComboBox statusCombo = sender as ComboBox;
+            if (suppressPdiRackStatusChange || statusCombo == null || dgvOrder.CurrentCell == null)
+            {
+                return;
+            }
+
+            string s = statusCombo.Text;
+            int rowIndex = dgvOrder.CurrentCell.RowIndex;
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            if (s == "Verified" || s == "Pending" || s == "-Select-")
+            {
+                SetPdiStatus(row, s);
+                dgvOrder.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+
+            if (s == "Verified" && !string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value)))
+            {
+                if (HandlePdiRackStatusSelection(rowIndex))
+                {
+                    return;
+                }
+            }
+
+            if (s == "Pending" && !string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value)))
             {
                 //Gridviewreadonly();
-                dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Pending Quantity"].ReadOnly = false;
+                row.Cells["Pending Quantity"].ReadOnly = false;
+                dgvOrder.CurrentCell = row.Cells["Pending Quantity"];
+            }
+            else if (s == "Verified" && !string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value)))
+            {
+                row.Cells["Pending Quantity"].Value = "0";
+                row.Cells["Pending Quantity"].ReadOnly = true;
+                MoveToNextPdiStatus(rowIndex + 1);
             }
             else
             {
-                dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Pending Quantity"].Value = "";
-                dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Pending Quantity"].ReadOnly = true;
+                row.Cells["Pending Quantity"].Value = "";
+                row.Cells["Pending Quantity"].ReadOnly = true;
+            }
+            UpdatePendingMoveNotice();
+        }
+
+        private bool HandlePdiRackStatusSelection(int rowIndex)
+        {
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            int productId = SafeInt(row.Cells["productid"].Value);
+            if (productId <= 0 || !pdiRackRepository.GetRackWiseStockMovement(productId))
+            {
+                return false;
+            }
+
+            decimal requestedQty = CellDecimal(row, "Quantity");
+            if (requestedQty <= 0)
+            {
+                MessageBox.Show("Enter Quantity before rack allocation.");
+                SetPdiStatus(row, "-Select-");
+                return true;
+            }
+
+            if (!OpenPdiRackAllocation(rowIndex, requestedQty))
+            {
+                SetPdiStatus(row, "-Select-");
+                row.Cells["Pending Quantity"].Value = "";
+                row.Cells["Pending Quantity"].ReadOnly = true;
+                dgvOrder.CurrentCell = row.Cells["cmbAction"];
+                UpdatePendingMoveNotice();
+                return true;
+            }
+
+            decimal selectedQty = PdiRackTotal(productId);
+            if (selectedQty == requestedQty)
+            {
+                SetPdiStatus(row, "Verified");
+                row.Cells["Pending Quantity"].Value = "0";
+                row.Cells["Pending Quantity"].ReadOnly = true;
+                UpdatePendingMoveNotice();
+                MoveToNextPdiStatus(rowIndex + 1);
+                return true;
+            }
+
+            decimal balance = requestedQty - selectedQty;
+            DialogResult result = MessageBox.Show(
+                "Selected quantity is " + selectedQty.ToString("0.###") + ". Balance quantity " + balance.ToString("0.###") + " will be marked as Pending. Do you want to continue?",
+                "Rack Allocation",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.No)
+            {
+                if (OpenPdiRackAllocation(rowIndex, requestedQty))
+                {
+                    return HandlePdiRackStatusSelection(rowIndex);
+                }
+
+                SetPdiStatus(row, "-Select-");
+                row.Cells["Pending Quantity"].Value = "";
+                row.Cells["Pending Quantity"].ReadOnly = true;
+                dgvOrder.CurrentCell = row.Cells["cmbAction"];
+                UpdatePendingMoveNotice();
+                return true;
+            }
+
+            SetPdiStatus(row, "Pending");
+            row.Cells["Pending Quantity"].ReadOnly = false;
+            row.Cells["Pending Quantity"].Value = balance.ToString("0.###");
+            UpdatePendingMoveNotice();
+            MoveToNextPdiStatus(rowIndex + 1);
+
+            return true;
+        }
+
+        private bool OpenPdiRackAllocation(int rowIndex, decimal requestedQty)
+        {
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            int productId = SafeInt(row.Cells["productid"].Value);
+            string productName = Convert.ToString(row.Cells["Items"].Value);
+            DataTable racks = pdiRackRepository.GetSalesRacksForProduct(productId);
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show("No active sales rack is assigned to " + productName + ". Please assign rack(s) in Product Master first.");
+                return false;
+            }
+
+            Dictionary<int, decimal> existingAllocation = new Dictionary<int, decimal>();
+            Dictionary<int, decimal> savedAllocation;
+            if (pdiRackAllocationsByProduct.TryGetValue(productId, out savedAllocation))
+            {
+                foreach (KeyValuePair<int, decimal> item in savedAllocation)
+                {
+                    existingAllocation[item.Key] = item.Value;
+                }
+            }
+
+            using (PdiRackAllocationDialog dialog = new PdiRackAllocationDialog(productName, requestedQty, racks, existingAllocation))
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    pdiRackAllocationsByProduct[productId] = dialog.Allocations;
+                    pdiRackRequestedQtyByProduct[productId] = requestedQty;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void SetPdiStatus(DataGridViewRow row, string status)
+        {
+            suppressPdiRackStatusChange = true;
+            row.Cells["cmbAction"].Value = status;
+            suppressPdiRackStatusChange = false;
+        }
+
+        private void MoveToNextPdiStatus(int startRowIndex)
+        {
+            if (!dgvOrder.Columns.Contains("cmbAction"))
+            {
+                return;
+            }
+
+            for (int rowIndex = Math.Max(0, startRowIndex); rowIndex < dgvOrder.Rows.Count; rowIndex++)
+            {
+                DataGridViewRow row = dgvOrder.Rows[rowIndex];
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                dgvOrder.Focus();
+                dgvOrder.CurrentCell = row.Cells["cmbAction"];
+                return;
+            }
+
+            if (btnSave.Enabled)
+            {
+                btnSave.Focus();
             }
         }
 
@@ -2051,6 +2539,8 @@ namespace Inventory
         }
         public void getquotaion(string s)
         {
+            pdiRackAllocationsByProduct.Clear();
+            pdiRackRequestedQtyByProduct.Clear();
             this.dgvOrder.Columns["Amount"].ReadOnly = true;
             this.dgvOrder.Columns[0].ReadOnly = true;
             this.dgvOrder.Columns["Items"].ReadOnly = true;
@@ -2149,11 +2639,20 @@ namespace Inventory
                     {
                         dgvOrder.Rows[i].Cells["cmbAction"].Value = Convert.ToString(ds.Tables[1].Rows[i]["Status"]);
                     }
+                    if (Convert.ToString(dgvOrder.Rows[i].Cells["cmbAction"].Value) == "Verified"
+                        && string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[i].Cells["Pending Quantity"].Value)))
+                    {
+                        dgvOrder.Rows[i].Cells["Pending Quantity"].Value = "0";
+                        dgvOrder.Rows[i].Cells["Pending Quantity"].ReadOnly = true;
+                    }
+                    SetProductMovementIndicator(dgvOrder.Rows[i]);
                 }
 
 
                 dgvOrder.Focus();
-                dgvOrder.CurrentCell = dgvOrder[8, 0];
+                MoveToNextPdiStatus(0);
+                LoadExistingPdiRackAllocations(txtorder.Text);
+                UpdatePendingMoveNotice();
 
 
                 //for (int i = 0; i < dgvOrder.Rows.Count; i++)
@@ -2947,6 +3446,7 @@ namespace Inventory
 
 
                     dgvOrder.Rows[rowindex].Cells[0].Value = rowindex + 1;
+                    SetProductMovementIndicator(dgvOrder.Rows[rowindex]);
                     DgvAutoRefNo.Visible = false;
                     dgvOrder.Rows[rowindex].Cells["cmbAction"].Value = "-Select-";
 
@@ -2975,34 +3475,46 @@ namespace Inventory
         {
             try
             {
-
-
-                double sa = Convert.ToDouble(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Quantity"].Value);
-                double pq = Convert.ToDouble(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Pending Quantity"].Value);
-                if (!string.IsNullOrEmpty(pq.ToString()))
+                if (e.RowIndex < 0 || e.ColumnIndex < 0)
                 {
-                    if (Convert.ToDouble(pq) > sa)
+                    return;
+                }
+
+                string changedColumnName = dgvOrder.Columns[e.ColumnIndex].Name;
+                if (changedColumnName == "Quantity")
+                {
+                    ClearPdiRackAllocationIfQuantityChanged(e.RowIndex);
+                }
+
+                if (changedColumnName == "Pending Quantity")
+                {
+                    double sa = 0;
+                    double pq = 0;
+                    double.TryParse(Convert.ToString(dgvOrder.Rows[e.RowIndex].Cells["Quantity"].Value), out sa);
+                    if (double.TryParse(Convert.ToString(dgvOrder.Rows[e.RowIndex].Cells["Pending Quantity"].Value), out pq))
                     {
-                        MessageBox.Show("Pending Quantity Shold Not Be Greater Than Quantity.");
-                        dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["Pending Quantity"].Value = "";
-                        dgvOrder.Focus();
-                        dgvOrder.CurrentCell = dgvOrder[7, dgvOrder.CurrentCell.RowIndex];
-                        edit = true;
-                    }
-                    else
-                    {
-                        dgvOrder.Focus();
-                        dgvOrder.CurrentCell = dgvOrder[8, dgvOrder.CurrentCell.RowIndex+1];
+                        if (Convert.ToDouble(pq) > sa)
+                        {
+                            MessageBox.Show("Pending Quantity Shold Not Be Greater Than Quantity.");
+                            dgvOrder.Rows[e.RowIndex].Cells["Pending Quantity"].Value = "";
+                            dgvOrder.Focus();
+                            dgvOrder.CurrentCell = dgvOrder.Rows[e.RowIndex].Cells["Pending Quantity"];
+                            edit = true;
+                        }
+                        else
+                        {
+                            MoveToNextPdiStatus(e.RowIndex + 1);
+                        }
                     }
                 }
 
 
-                if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[5].Value)))
+                if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[e.RowIndex].Cells[5].Value)))
                 {
-                    decimal rate = Convert.ToDecimal(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[4].Value);
+                    decimal rate = Convert.ToDecimal(dgvOrder.Rows[e.RowIndex].Cells[4].Value);
                     //decimal amt = rate * Convert.ToDecimal(tb.Text);
 
-                    decimal amt = rate * Convert.ToDecimal(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[5].Value);
+                    decimal amt = rate * Convert.ToDecimal(dgvOrder.Rows[e.RowIndex].Cells[5].Value);
 
                     if (amt > 0)
                     {
@@ -3040,7 +3552,7 @@ namespace Inventory
 
                         }
                     }
-                    dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[6].Value = amt;
+                    dgvOrder.Rows[e.RowIndex].Cells[6].Value = amt;
                 }
 
 
@@ -3107,6 +3619,7 @@ namespace Inventory
             //}
 
             total();
+            UpdatePendingMoveNotice();
         }
 
 
@@ -3116,6 +3629,193 @@ namespace Inventory
             {
                 dgvOrder.Rows[i].Cells[0].Value = i + 1;
             }
+        }
+
+        private void ClearPdiRackAllocationIfQuantityChanged(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+            {
+                return;
+            }
+
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            int productId = SafeInt(row.Cells["productid"].Value);
+            if (productId <= 0)
+            {
+                return;
+            }
+
+            decimal requestedQty = CellDecimal(row, "Quantity");
+            decimal oldQty;
+            if (pdiRackRequestedQtyByProduct.TryGetValue(productId, out oldQty) && oldQty != requestedQty)
+            {
+                pdiRackAllocationsByProduct.Remove(productId);
+                pdiRackRequestedQtyByProduct.Remove(productId);
+                if (Convert.ToString(row.Cells["cmbAction"].Value) == "Verified")
+                {
+                    SetPdiStatus(row, "-Select-");
+                    row.Cells["Pending Quantity"].Value = "";
+                }
+                UpdatePendingMoveNotice();
+            }
+        }
+
+        private void LoadExistingPdiRackAllocations(string quotationId)
+        {
+            Dictionary<int, Dictionary<int, decimal>> allocations = pdiRackRepository.GetExistingRackAllocations(quotationId);
+            foreach (KeyValuePair<int, Dictionary<int, decimal>> productAllocation in allocations)
+            {
+                pdiRackAllocationsByProduct[productAllocation.Key] = productAllocation.Value;
+            }
+
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                int productId = SafeInt(row.Cells["productid"].Value);
+                if (pdiRackAllocationsByProduct.ContainsKey(productId))
+                {
+                    pdiRackRequestedQtyByProduct[productId] = CellDecimal(row, "Quantity");
+                }
+            }
+        }
+
+        private bool IsBlankPdiProductRow(DataGridViewRow row)
+        {
+            return string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value))
+                && SafeInt(row.Cells["productid"].Value) == 0;
+        }
+
+        private decimal PdiRackTotal(int productId)
+        {
+            decimal total = 0;
+            Dictionary<int, decimal> allocations;
+            if (!pdiRackAllocationsByProduct.TryGetValue(productId, out allocations))
+            {
+                return total;
+            }
+
+            foreach (decimal quantity in allocations.Values)
+            {
+                total += quantity;
+            }
+
+            return total;
+        }
+
+        private decimal CellDecimal(DataGridViewRow row, string columnName)
+        {
+            if (!dgvOrder.Columns.Contains(columnName))
+            {
+                return 0;
+            }
+
+            return SafeDecimal(row.Cells[columnName].Value);
+        }
+
+        private void RemoveGridOnlyPdiColumns(DataTable dt)
+        {
+            if (dt.Columns.Contains("Stock Movement"))
+            {
+                dt.Columns.Remove("Stock Movement");
+            }
+        }
+
+        private void EnsurePendingMoveNotice()
+        {
+            if (lblPendingMoveNotice == null)
+            {
+                lblPendingMoveNotice = new Label();
+                lblPendingMoveNotice.Name = "lblPendingMoveNotice";
+                lblPendingMoveNotice.AutoSize = false;
+                lblPendingMoveNotice.BackColor = Color.LightYellow;
+                lblPendingMoveNotice.BorderStyle = BorderStyle.FixedSingle;
+                lblPendingMoveNotice.Font = new Font("Arial", 9F, FontStyle.Bold);
+                lblPendingMoveNotice.ForeColor = Color.Firebrick;
+                lblPendingMoveNotice.TextAlign = ContentAlignment.MiddleLeft;
+                lblPendingMoveNotice.Padding = new Padding(6, 0, 6, 0);
+                lblPendingMoveNotice.Visible = false;
+                lblPendingMoveNotice.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                panel2.Controls.Add(lblPendingMoveNotice);
+                lblPendingMoveNotice.BringToFront();
+            }
+
+            lblPendingMoveNotice.Location = new Point(dgvOrder.Left, Math.Max(0, dgvOrder.Top - 24));
+            lblPendingMoveNotice.Size = new Size(dgvOrder.Width, 22);
+        }
+
+        private void UpdatePendingMoveNotice()
+        {
+            EnsurePendingMoveNotice();
+            decimal pendingTotal = 0;
+            int pendingItems = 0;
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || IsBlankPdiProductRow(row))
+                {
+                    continue;
+                }
+
+                decimal pendingQty = CellDecimal(row, "Pending Quantity");
+                if (pendingQty > 0)
+                {
+                    pendingTotal += pendingQty;
+                    pendingItems++;
+                }
+            }
+
+            lblPendingMoveNotice.Visible = pendingItems > 0;
+            if (pendingItems > 0)
+            {
+                lblPendingMoveNotice.Text = pendingItems.ToString() + " pending item(s), total qty " + pendingTotal.ToString("0.###") + ", will be moved to Pending to Issue process.";
+            }
+        }
+
+        private void SetProductMovementIndicator(DataGridViewRow row)
+        {
+            if (row == null || !dgvOrder.Columns.Contains("Stock Movement"))
+            {
+                return;
+            }
+
+            int productId = SafeInt(row.Cells["productid"].Value);
+            if (productId <= 0)
+            {
+                row.Cells["Stock Movement"].Value = "";
+                row.Cells["Stock Movement"].Style.BackColor = dgvOrder.DefaultCellStyle.BackColor;
+                row.Cells["Stock Movement"].Style.ForeColor = dgvOrder.DefaultCellStyle.ForeColor;
+                return;
+            }
+
+            bool rackWise = pdiRackRepository.GetRackWiseStockMovement(productId);
+            row.Cells["Stock Movement"].Value = rackWise ? "Rack" : "Normal";
+            row.Cells["Stock Movement"].Style.BackColor = rackWise ? Color.Honeydew : Color.WhiteSmoke;
+            row.Cells["Stock Movement"].Style.ForeColor = rackWise ? Color.DarkGreen : Color.DimGray;
+        }
+
+        private int SafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            int result;
+            return int.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private decimal SafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : 0;
         }
 
 
@@ -3151,6 +3851,7 @@ namespace Inventory
 
 
                         dgvOrder.Rows[rowindex].Cells[0].Value = rowindex + 1;
+                        SetProductMovementIndicator(dgvOrder.Rows[rowindex]);
                         DgvAutoRefNo.Visible = false;
                         dgvOrder.Rows[rowindex].Cells["cmbAction"].Value = "-Select-";
                         pnsearch.Visible = false;

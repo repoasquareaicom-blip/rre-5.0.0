@@ -112,6 +112,7 @@
             this.btnNew = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pnlSearch = new System.Windows.Forms.Panel();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.cmbcustomer = new System.Windows.Forms.TextBox();
             this.cmbIscombined = new System.Windows.Forms.CheckBox();
             this.DTPTodate = new System.Windows.Forms.DateTimePicker();
@@ -132,7 +133,6 @@
             this.vLabel3 = new VSM.Q_and_A.VLabel();
             this.vLabel2 = new VSM.Q_and_A.VLabel();
             this.vLabel1 = new VSM.Q_and_A.VLabel();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.pnlOrder.SuspendLayout();
             this.pnlLabelSearch.SuspendLayout();
             this.pnlCollapse2.SuspendLayout();
@@ -301,7 +301,7 @@
             this.lblPreparedBy.AutoSize = true;
             this.lblPreparedBy.Location = new System.Drawing.Point(8, 5);
             this.lblPreparedBy.Name = "lblPreparedBy";
-            this.lblPreparedBy.Size = new System.Drawing.Size(68, 15);
+            this.lblPreparedBy.Size = new System.Drawing.Size(73, 15);
             this.lblPreparedBy.TabIndex = 397;
             this.lblPreparedBy.Text = "Prepared By";
             // 
@@ -931,9 +931,9 @@
             this.label20.Location = new System.Drawing.Point(-5, 1);
             this.label20.Name = "label20";
             this.label20.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.label20.Size = new System.Drawing.Size(74, 28);
+            this.label20.Size = new System.Drawing.Size(154, 28);
             this.label20.TabIndex = 1;
-            this.label20.Text = "Issued";
+            this.label20.Text = "Issue Pending ";
             this.label20.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnClear
@@ -1026,6 +1026,17 @@
             this.pnlSearch.Name = "pnlSearch";
             this.pnlSearch.Size = new System.Drawing.Size(252, 664);
             this.pnlSearch.TabIndex = 1;
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Font = new System.Drawing.Font("Arial", 8.25F);
+            this.checkBox1.Location = new System.Drawing.Point(108, 145);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(111, 18);
+            this.checkBox1.TabIndex = 418;
+            this.checkBox1.Text = "Delivered Product";
+            this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // cmbcustomer
             // 
@@ -1258,17 +1269,6 @@
             this.vLabel1.Size = new System.Drawing.Size(1020, 664);
             this.vLabel1.TabIndex = 1;
             this.vLabel1.Text = "Search";
-            // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Font = new System.Drawing.Font("Arial", 8.25F);
-            this.checkBox1.Location = new System.Drawing.Point(108, 145);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(111, 18);
-            this.checkBox1.TabIndex = 418;
-            this.checkBox1.Text = "Delivered Product";
-            this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // Issued
             // 

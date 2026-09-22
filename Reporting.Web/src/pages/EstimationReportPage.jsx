@@ -42,14 +42,16 @@ const config = {
   ],
   getSummaryCards: (summary) => [
     { label: 'Nos', value: formatStock(summary.totalEstimations) },
-    { label: 'Taxable', value: formatMoney(summary.taxableValue) },
-    { label: 'GST', value: formatMoney(summary.gstAmount) },
+    { label: 'Gross Value', value: formatMoney(summary.grossValue) },
+    { label: 'Less', value: formatMoney(summary.lessAmount) },
     { label: 'Value', value: formatMoney(summary.estimationValue) },
   ],
   sumSummary: (total, { result }) => ({
     totalEstimations: total.totalEstimations + result.summary.totalEstimations,
     taxableValue: total.taxableValue + result.summary.taxableValue,
     gstAmount: total.gstAmount + result.summary.gstAmount,
+    grossValue: total.grossValue + result.summary.grossValue,
+    lessAmount: total.lessAmount + result.summary.lessAmount,
     estimationValue: total.estimationValue + result.summary.estimationValue,
     cancelled: total.cancelled + result.summary.cancelled,
   }),

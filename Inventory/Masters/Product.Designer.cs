@@ -1,4 +1,4 @@
-﻿namespace Inventory.Masters
+namespace Inventory.Masters
 {
     partial class Product
     {
@@ -56,6 +56,7 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label37 = new System.Windows.Forms.Label();
             this.lightValue = new System.Windows.Forms.CheckBox();
+            this.chkRackWiseStockMovement = new System.Windows.Forms.CheckBox();
             this.txtRack = new System.Windows.Forms.TextBox();
             this.label36 = new System.Windows.Forms.Label();
             this.label33 = new System.Windows.Forms.Label();
@@ -90,6 +91,9 @@
             this.label22 = new System.Windows.Forms.Label();
             this.dropunitofmeasure = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.cmbTax = new System.Windows.Forms.ComboBox();
+            this.label23 = new System.Windows.Forms.Label();
+            this.label34 = new System.Windows.Forms.Label();
             this.txtMRP = new System.Windows.Forms.TextBox();
             this.label38 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
@@ -109,11 +113,10 @@
             this.label26 = new System.Windows.Forms.Label();
             this.label25 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.cmbTax = new System.Windows.Forms.ComboBox();
-            this.label23 = new System.Windows.Forms.Label();
-            this.label34 = new System.Windows.Forms.Label();
             this.lblhidden = new System.Windows.Forms.Label();
             this.txtRemarks = new System.Windows.Forms.TextBox();
+            this.groupLocationRackAssignment = new System.Windows.Forms.GroupBox();
+            this.flpProductLocationRackAssignments = new System.Windows.Forms.FlowLayoutPanel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.groupBasicinfo = new System.Windows.Forms.GroupBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -167,7 +170,7 @@
             this.groupBox3.SuspendLayout();
             this.groupStockInfo.SuspendLayout();
             this.groupStorageInfo.SuspendLayout();
-            this.groupBox4.SuspendLayout();
+            this.groupLocationRackAssignment.SuspendLayout();
             this.panel3.SuspendLayout();
             this.groupBasicinfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvProduct)).BeginInit();
@@ -467,6 +470,7 @@
             this.panel2.Controls.Add(this.groupBox4);
             this.panel2.Controls.Add(this.lblhidden);
             this.panel2.Controls.Add(this.txtRemarks);
+            this.panel2.Controls.Add(this.groupLocationRackAssignment);
             this.panel2.Controls.Add(this.panel3);
             this.panel2.Controls.Add(this.grouppicture);
             this.panel2.Controls.Add(this.label6);
@@ -505,6 +509,7 @@
             this.groupBox1.Controls.Add(this.textBox2);
             this.groupBox1.Controls.Add(this.label37);
             this.groupBox1.Controls.Add(this.lightValue);
+            this.groupBox1.Controls.Add(this.chkRackWiseStockMovement);
             this.groupBox1.Controls.Add(this.txtRack);
             this.groupBox1.Controls.Add(this.label36);
             this.groupBox1.Controls.Add(this.label33);
@@ -588,10 +593,23 @@
             // txtRack
             // 
             this.txtRack.Location = new System.Drawing.Point(96, 227);
-            this.txtRack.MaxLength = 100;
+            this.txtRack.MaxLength = 255;
             this.txtRack.Name = "txtRack";
             this.txtRack.Size = new System.Drawing.Size(246, 22);
             this.txtRack.TabIndex = 0;
+            this.txtRack.Visible = false;
+            // 
+            // chkRackWiseStockMovement
+            // 
+            this.chkRackWiseStockMovement.AutoSize = true;
+            this.chkRackWiseStockMovement.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.chkRackWiseStockMovement.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.chkRackWiseStockMovement.Location = new System.Drawing.Point(96, 227);
+            this.chkRackWiseStockMovement.Name = "chkRackWiseStockMovement";
+            this.chkRackWiseStockMovement.Size = new System.Drawing.Size(169, 19);
+            this.chkRackWiseStockMovement.TabIndex = 910;
+            this.chkRackWiseStockMovement.Text = "Rack Wise Stock Movement";
+            this.chkRackWiseStockMovement.UseVisualStyleBackColor = true;
             // 
             // label36
             // 
@@ -614,6 +632,7 @@
             this.label33.Size = new System.Drawing.Size(67, 15);
             this.label33.TabIndex = 101;
             this.label33.Text = "Rack Name";
+            this.label33.Visible = false;
             // 
             // chkIncentive
             // 
@@ -963,6 +982,9 @@
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.cmbTax);
+            this.groupBox3.Controls.Add(this.label23);
+            this.groupBox3.Controls.Add(this.label34);
             this.groupBox3.Controls.Add(this.txtMRP);
             this.groupBox3.Controls.Add(this.label38);
             this.groupBox3.Controls.Add(this.label32);
@@ -971,10 +993,51 @@
             this.groupBox3.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox3.Location = new System.Drawing.Point(464, 173);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(236, 73);
+            this.groupBox3.Size = new System.Drawing.Size(236, 100);
             this.groupBox3.TabIndex = 5;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = " Price Info";
+            // 
+            // cmbTax
+            // 
+            this.cmbTax.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbTax.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbTax.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.cmbTax.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTax.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.cmbTax.FormattingEnabled = true;
+            this.cmbTax.Items.AddRange(new object[] {
+            "--Select--",
+            "0",
+            "5",
+            "12",
+            "18",
+            "28"});
+            this.cmbTax.Location = new System.Drawing.Point(102, 67);
+            this.cmbTax.Name = "cmbTax";
+            this.cmbTax.Size = new System.Drawing.Size(123, 22);
+            this.cmbTax.TabIndex = 455;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.label23.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.label23.Location = new System.Drawing.Point(6, 70);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(27, 15);
+            this.label23.TabIndex = 103;
+            this.label23.Text = "GST";
+            // 
+            // label34
+            // 
+            this.label34.Font = new System.Drawing.Font("Arial", 25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label34.ForeColor = System.Drawing.Color.Red;
+            this.label34.Location = new System.Drawing.Point(76, 61);
+            this.label34.Name = "label34";
+            this.label34.Size = new System.Drawing.Size(34, 25);
+            this.label34.TabIndex = 454;
+            this.label34.Text = "*";
             // 
             // txtMRP
             // 
@@ -1170,9 +1233,6 @@
             // 
             // groupBox4
             // 
-            this.groupBox4.Controls.Add(this.cmbTax);
-            this.groupBox4.Controls.Add(this.label23);
-            this.groupBox4.Controls.Add(this.label34);
             this.groupBox4.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox4.Location = new System.Drawing.Point(699, 175);
             this.groupBox4.Name = "groupBox4";
@@ -1180,47 +1240,7 @@
             this.groupBox4.TabIndex = 6;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "GST Info";
-            // 
-            // cmbTax
-            // 
-            this.cmbTax.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.cmbTax.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbTax.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.cmbTax.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbTax.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.cmbTax.FormattingEnabled = true;
-            this.cmbTax.Items.AddRange(new object[] {
-            "--Select--",
-            "0",
-            "5",
-            "12",
-            "18",
-            "28"});
-            this.cmbTax.Location = new System.Drawing.Point(45, 17);
-            this.cmbTax.Name = "cmbTax";
-            this.cmbTax.Size = new System.Drawing.Size(120, 22);
-            this.cmbTax.TabIndex = 455;
-            // 
-            // label23
-            // 
-            this.label23.AutoSize = true;
-            this.label23.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.label23.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.label23.Location = new System.Drawing.Point(15, 21);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(27, 15);
-            this.label23.TabIndex = 103;
-            this.label23.Text = "GST";
-            // 
-            // label34
-            // 
-            this.label34.Font = new System.Drawing.Font("Arial", 25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label34.ForeColor = System.Drawing.Color.Red;
-            this.label34.Location = new System.Drawing.Point(56, -7);
-            this.label34.Name = "label34";
-            this.label34.Size = new System.Drawing.Size(34, 25);
-            this.label34.TabIndex = 454;
-            this.label34.Text = "*";
+            this.groupBox4.Visible = false;
             // 
             // lblhidden
             // 
@@ -1238,7 +1258,37 @@
             this.txtRemarks.Name = "txtRemarks";
             this.txtRemarks.Size = new System.Drawing.Size(372, 62);
             this.txtRemarks.TabIndex = 7;
+            this.txtRemarks.Visible = false;
             this.txtRemarks.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtRemarks_KeyPress);
+            // 
+            // groupLocationRackAssignment
+            // 
+            this.groupLocationRackAssignment.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupLocationRackAssignment.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.groupLocationRackAssignment.Controls.Add(this.flpProductLocationRackAssignments);
+            this.groupLocationRackAssignment.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupLocationRackAssignment.ForeColor = System.Drawing.Color.SteelBlue;
+            this.groupLocationRackAssignment.Location = new System.Drawing.Point(706, 13);
+            this.groupLocationRackAssignment.Name = "groupLocationRackAssignment";
+            this.groupLocationRackAssignment.Size = new System.Drawing.Size(247, 262);
+            this.groupLocationRackAssignment.TabIndex = 106;
+            this.groupLocationRackAssignment.TabStop = false;
+            this.groupLocationRackAssignment.Text = "Location / Rack Assignment";
+            this.groupLocationRackAssignment.SizeChanged += new System.EventHandler(this.ProductLocationRackAssignment_SizeChanged);
+            // 
+            // flpProductLocationRackAssignments
+            // 
+            this.flpProductLocationRackAssignments.AutoScroll = true;
+            this.flpProductLocationRackAssignments.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flpProductLocationRackAssignments.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flpProductLocationRackAssignments.Location = new System.Drawing.Point(3, 19);
+            this.flpProductLocationRackAssignments.Margin = new System.Windows.Forms.Padding(3, 3, 3, 8);
+            this.flpProductLocationRackAssignments.Name = "flpProductLocationRackAssignments";
+            this.flpProductLocationRackAssignments.Padding = new System.Windows.Forms.Padding(0, 3, 0, 3);
+            this.flpProductLocationRackAssignments.Size = new System.Drawing.Size(241, 240);
+            this.flpProductLocationRackAssignments.TabIndex = 0;
+            this.flpProductLocationRackAssignments.WrapContents = false;
             // 
             // panel3
             // 
@@ -1248,9 +1298,9 @@
             this.panel3.Controls.Add(this.groupBasicinfo);
             this.panel3.Controls.Add(this.dgvProduct);
             this.panel3.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.panel3.Location = new System.Drawing.Point(13, 328);
+            this.panel3.Location = new System.Drawing.Point(13, 286);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(970, 436);
+            this.panel3.Size = new System.Drawing.Size(970, 478);
             this.panel3.TabIndex = 4;
             // 
             // groupBasicinfo
@@ -1462,6 +1512,7 @@
             this.grouppicture.TabIndex = 4;
             this.grouppicture.TabStop = false;
             this.grouppicture.Text = "Picture";
+            this.grouppicture.Visible = false;
             // 
             // tableLayoutPanel3
             // 
@@ -1528,6 +1579,7 @@
             this.label6.Size = new System.Drawing.Size(54, 15);
             this.label6.TabIndex = 98;
             this.label6.Text = "Remarks";
+            this.label6.Visible = false;
             // 
             // panel1
             // 
@@ -1742,8 +1794,7 @@
             this.groupStockInfo.PerformLayout();
             this.groupStorageInfo.ResumeLayout(false);
             this.groupStorageInfo.PerformLayout();
-            this.groupBox4.ResumeLayout(false);
-            this.groupBox4.PerformLayout();
+            this.groupLocationRackAssignment.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.groupBasicinfo.ResumeLayout(false);
             this.groupBasicinfo.PerformLayout();
@@ -1881,5 +1932,8 @@
         private System.Windows.Forms.Label label37;
         private System.Windows.Forms.ComboBox cmbTax;
         private System.Windows.Forms.CheckBox chkArchive;
+        private System.Windows.Forms.CheckBox chkRackWiseStockMovement;
+        private System.Windows.Forms.GroupBox groupLocationRackAssignment;
+        private System.Windows.Forms.FlowLayoutPanel flpProductLocationRackAssignments;
     }
 }

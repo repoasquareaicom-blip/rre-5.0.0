@@ -398,9 +398,12 @@ async function fetchAllBranchReport(config, reportRequest, signal, exportAll = f
     throw new Error('All branches are currently unavailable.')
   }
 
-  const mergedRows = successful
-    .flatMap(({ branch, result }) => result.rows.map((row) => withBranch(row, branch)))
-    .sort(sortByUpdatedOnThenId(config.idField))
+  let mergedRows = []
+  successful.forEach(({ branch, result }) => {
+    mergedRows = mergedRows.concat(result.rows.map((row) => withBranch(row, branch)))
+  })
+
+  mergedRows = mergedRows.sort(sortByUpdatedOnThenId(config.idField))
 
   const rows = exportAll
     ? mergedRows

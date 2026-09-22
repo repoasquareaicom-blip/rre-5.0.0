@@ -1,38 +1,15 @@
-using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using RREInventoryLauncher.Models;
 
 namespace RREInventoryLauncher.Services
 {
     public class ApplicationLauncher
     {
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        private const int SwRestore = 9;
-
-        public bool BringRunningInventoryToFront(string inventoryExe)
+        public bool IsInventoryRunning(string inventoryExe)
         {
             string processName = Path.GetFileNameWithoutExtension(inventoryExe);
-            Process[] processes = Process.GetProcessesByName(processName);
-            foreach (Process process in processes)
-            {
-                if (process.MainWindowHandle == IntPtr.Zero)
-                {
-                    continue;
-                }
-
-                ShowWindow(process.MainWindowHandle, SwRestore);
-                SetForegroundWindow(process.MainWindowHandle);
-                return true;
-            }
-
-            return processes.Length > 0;
+            return Process.GetProcessesByName(processName).Length > 0;
         }
 
         public void LaunchInventory(LauncherConfig config)

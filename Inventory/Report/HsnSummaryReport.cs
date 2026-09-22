@@ -199,35 +199,102 @@ namespace Inventory.Report
 SELECT
     ISNULL(NULLIF(LTRIM(RTRIM(pm.HSN)), ''), '') AS HSN,
     MAX(ISNULL(um.UOM, pm.UOM)) AS UOM,
-    CAST(SUM(CASE WHEN ISNUMERIC(sd.Quantity) = 1 THEN CONVERT(decimal(18, 3), sd.Quantity) ELSE 0 END) AS decimal(18, 3)) AS [Total Quantity],
+
+    CAST(
+        SUM(
+            CASE
+                WHEN ISNUMERIC(sd.Quantity) = 1
+                    THEN CONVERT(decimal(18, 3), sd.Quantity)
+                ELSE 0
+            END
+        ) AS decimal(18, 3)
+    ) AS [Total Quantity],
+
     CAST(SUM(line.AmountIncludingTax) AS decimal(18, 2)) AS TotalAmount,
+
     CAST(SUM(line.TaxableAmount) AS decimal(18, 2)) AS TaxableValue,
-    CAST(SUM((line.AmountIncludingTax - line.TaxableAmount) / 2) AS decimal(18, 2)) AS CGST,
-    CAST(SUM((line.AmountIncludingTax - line.TaxableAmount) / 2) AS decimal(18, 2)) AS SGST,
+
+    CAST(
+        SUM(
+            CASE
+                WHEN UPPER(LTRIM(RTRIM(ISNULL(s.GstText, '')))) = 'IGST'
+                    THEN 0
+                ELSE (line.AmountIncludingTax - line.TaxableAmount) / 2
+            END
+        ) AS decimal(18, 2)
+    ) AS CGST,
+
+    CAST(
+        SUM(
+            CASE
+                WHEN UPPER(LTRIM(RTRIM(ISNULL(s.GstText, '')))) = 'IGST'
+                    THEN 0
+                ELSE (line.AmountIncludingTax - line.TaxableAmount) / 2
+            END
+        ) AS decimal(18, 2)
+    ) AS SGST,
+
+    CAST(
+        SUM(
+            CASE
+                WHEN UPPER(LTRIM(RTRIM(ISNULL(s.GstText, '')))) = 'IGST'
+                    THEN (line.AmountIncludingTax - line.TaxableAmount)
+                ELSE 0
+            END
+        ) AS decimal(18, 2)
+    ) AS IGST,
+
     CAST(MAX(ISNULL(sd.gst, 0)) AS decimal(18, 2)) AS [Tax %]
+
 FROM " + salesTable + @" s
-INNER JOIN " + detailsTable + @" sd ON sd.Salesid = s.Salesid
-LEFT JOIN ProductMaster pm ON CONVERT(varchar(50), pm.id) = LTRIM(RTRIM(sd.Productid))
-LEFT JOIN UOM um ON CONVERT(varchar(50), um.Uomid) = LTRIM(RTRIM(pm.UOM)) AND ISNULL(um.IsDeleted, 0) = 0
+
+INNER JOIN " + detailsTable + @" sd
+    ON sd.Salesid = s.Salesid
+
+LEFT JOIN ProductMaster pm
+    ON CONVERT(varchar(50), pm.id) = LTRIM(RTRIM(sd.Productid))
+
+LEFT JOIN UOM um
+    ON CONVERT(varchar(50), um.Uomid) = LTRIM(RTRIM(pm.UOM))
+   AND ISNULL(um.IsDeleted, 0) = 0
+
 CROSS APPLY (
     SELECT
-        CASE WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 2), sd.Amount) ELSE 0 END AS AmountIncludingTax,
         CASE
-            WHEN ISNULL(sd.gst, 0) > 0 AND ISNUMERIC(sd.Amount) = 1
-                THEN CONVERT(decimal(18, 6), sd.Amount) * 100 / (100 + ISNULL(sd.gst, 0))
-            WHEN ISNUMERIC(sd.Amount) = 1 THEN CONVERT(decimal(18, 6), sd.Amount)
+            WHEN ISNUMERIC(sd.Amount) = 1
+                THEN CONVERT(decimal(18, 2), sd.Amount)
+            ELSE 0
+        END AS AmountIncludingTax,
+
+        CASE
+            WHEN ISNULL(sd.gst, 0) > 0
+                 AND ISNUMERIC(sd.Amount) = 1
+                THEN CONVERT(decimal(18, 6), sd.Amount)
+                     * 100 / (100 + ISNULL(sd.gst, 0))
+
+            WHEN ISNUMERIC(sd.Amount) = 1
+                THEN CONVERT(decimal(18, 6), sd.Amount)
+
             ELSE 0
         END AS TaxableAmount
 ) line
+
 WHERE s.Updatedon >= @fromdate
   AND s.Updatedon < @todate
+
   AND (
-        (@includeB2B = 1 AND NULLIF(LTRIM(RTRIM(ISNULL(s.Tin, ''))), '') IS NOT NULL)
+        (@includeB2B = 1
+            AND NULLIF(LTRIM(RTRIM(ISNULL(s.Tin, ''))), '') IS NOT NULL)
+
         OR
-        (@includeB2C = 1 AND NULLIF(LTRIM(RTRIM(ISNULL(s.Tin, ''))), '') IS NULL)
+
+        (@includeB2C = 1
+            AND NULLIF(LTRIM(RTRIM(ISNULL(s.Tin, ''))), '') IS NULL)
       )
+
 GROUP BY
     ISNULL(NULLIF(LTRIM(RTRIM(pm.HSN)), ''), '')
+
 ORDER BY
     ISNULL(NULLIF(LTRIM(RTRIM(pm.HSN)), ''), '')";
         }

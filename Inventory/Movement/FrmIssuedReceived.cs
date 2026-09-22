@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using WarrantyDal;
 using Inventory.Sales;
 using System.Collections;
+using Inventory.Purchase;
 
 namespace Inventory.Movement
 {
@@ -34,6 +35,8 @@ namespace Inventory.Movement
         string srole = string.Empty;
         string mianid;
         string selectedtab = string.Empty;
+        private readonly WarrantyRackRepository warrantyRackRepository = new WarrantyRackRepository();
+        private readonly Dictionary<DataGridViewRow, Dictionary<int, decimal>> warrantyRackAllocations = new Dictionary<DataGridViewRow, Dictionary<int, decimal>>();
 
         string IDFloorCheckout = string.Empty, IDPDI = string.Empty, IDDELIVERY=string.Empty;
 
@@ -68,6 +71,8 @@ namespace Inventory.Movement
            // LoadPortsFloorCheckOut();
             LoadPortsChecking();
             LoadPortsDelivery();
+            dgvOrder.CellClick += dgvOrder_CellClick;
+            dgvOrder.CellDoubleClick += dgvOrder_CellDoubleClick;
 
             RemoveWarrantySkippedTabs();
 
@@ -98,6 +103,16 @@ namespace Inventory.Movement
         }
         private void RemoveWarrantySkippedTabs()
         {
+            if (MainTabSalesBill.TabPages.Contains(TabPDI))
+            {
+                MainTabSalesBill.TabPages.Remove(TabPDI);
+            }
+
+            if (MainTabSalesBill.TabPages.Contains(TabDelivery))
+            {
+                MainTabSalesBill.TabPages.Remove(TabDelivery);
+            }
+
             if (MainTabSalesBill.TabPages.Contains(TabfloorApproval))
             {
                 MainTabSalesBill.TabPages.Remove(TabfloorApproval);
@@ -1142,6 +1157,11 @@ namespace Inventory.Movement
                 }
             }
 
+            if (status && !ValidateWarrantyRackAllocations())
+            {
+                status = false;
+            }
+
 
 
 
@@ -1151,6 +1171,41 @@ namespace Inventory.Movement
                 status = false;
             }
             return status;
+        }
+
+        private bool ValidateWarrantyRackAllocations()
+        {
+            foreach (DataGridViewRow row in dgvOrder.Rows)
+            {
+                if (row.IsNewRow || string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value)))
+                {
+                    continue;
+                }
+
+                decimal quantity;
+                if (!decimal.TryParse(Convert.ToString(row.Cells["Quantity"].Value), out quantity) || quantity <= 0)
+                {
+                    continue;
+                }
+
+                Dictionary<int, decimal> allocations;
+                if (!warrantyRackAllocations.TryGetValue(row, out allocations) || allocations.Count == 0)
+                {
+                    MessageBox.Show("Click the Quantity cell and enter rack-wise quantity for " + Convert.ToString(row.Cells["Items"].Value) + ".", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    dgvOrder.CurrentCell = row.Cells["Quantity"];
+                    return false;
+                }
+
+                decimal allocatedQuantity = warrantyRackRepository.AllocationTotal(allocations);
+                if (allocatedQuantity != quantity)
+                {
+                    MessageBox.Show("Rack-wise quantity must equal warranty quantity for " + Convert.ToString(row.Cells["Items"].Value) + ".", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    dgvOrder.CurrentCell = row.Cells["Quantity"];
+                    return false;
+                }
+            }
+
+            return true;
         }
         #region Buttons
         private void btnsave_Click(object sender, EventArgs e)
@@ -1442,6 +1497,7 @@ namespace Inventory.Movement
 
              if (select == "TabNew")
             {
+                warrantyRackAllocations.Clear();
                 //ddlLocation.SelectedIndex = 1;
                 GetCustomers();
                 ddlcustomers.SelectedIndex = 0;
@@ -1567,6 +1623,7 @@ namespace Inventory.Movement
              {
 
                  HidLblMain.Text = IssuedReceivedBAL.SaveWRHeaderNew(objIssuedReceivedBAL);
+                 DataTable warrantyRackDetails = warrantyRackRepository.CreateRackDetailsTable();
 
 
 
@@ -1594,7 +1651,13 @@ namespace Inventory.Movement
                          string subid = IssuedReceivedBAL.SaveWRDetails(objIssuedReceivedBAL);
 
                          dgvOrder.Rows[i].Cells[7].Value = subid;
+                         AddWarrantyRackDetailsForRow(warrantyRackDetails, dgvOrder.Rows[i], subid);
                      }
+                 }
+
+                 if (warrantyRackDetails.Rows.Count > 0)
+                 {
+                     warrantyRackRepository.SaveWarrantyRackStock(warrantyRackDetails, Program.userid);
                  }
 
                  MarkWarrantyReadyForPdi(HidLblMain.Text);
@@ -2172,10 +2235,7 @@ namespace Inventory.Movement
                 }
                 else if (dgvOrder.CurrentCell.ColumnIndex == 2)
                 {
-                    // dgvOrder.Focus();
-                    //// this.ActiveControl = Quantitytomove1;
-                    // dgvOrder.CurrentCell = dgvOrder[3, dgvOrder.CurrentCell.RowIndex];
-
+                    OpenWarrantyRackAllocationForCurrentRow();
                 }
                 else if (dgvOrder.CurrentCell.ColumnIndex == 3)
                 {
@@ -2205,6 +2265,141 @@ namespace Inventory.Movement
             {
                // MessageBox.Show("Enter product to move");
             }
+        }
+
+        private void dgvOrder_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dgvOrder.Columns[e.ColumnIndex].Name == "Quantity")
+            {
+                OpenWarrantyRackAllocation(e.RowIndex);
+            }
+        }
+
+        private void dgvOrder_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dgvOrder.Columns[e.ColumnIndex].Name == "Quantity")
+            {
+                OpenWarrantyRackAllocation(e.RowIndex);
+            }
+        }
+
+        private void OpenWarrantyRackAllocationForCurrentRow()
+        {
+            if (dgvOrder.CurrentCell == null)
+            {
+                return;
+            }
+
+            OpenWarrantyRackAllocation(dgvOrder.CurrentCell.RowIndex);
+        }
+
+        private void OpenWarrantyRackAllocation(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+            {
+                return;
+            }
+
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            if (row.IsNewRow || string.IsNullOrEmpty(Convert.ToString(row.Cells["Items"].Value)))
+            {
+                return;
+            }
+
+            int productId = SafeInt(row.Cells["ProductId"].Value);
+            string productName = Convert.ToString(row.Cells["Items"].Value);
+            decimal quantity = SafeDecimal(row.Cells["Quantity"].Value);
+
+            if (productId <= 0)
+            {
+                MessageBox.Show("Please select a valid product before rack allocation.", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (quantity <= 0)
+            {
+                MessageBox.Show("Enter Quantity before rack allocation.", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                dgvOrder.CurrentCell = row.Cells["Quantity"];
+                return;
+            }
+
+            DataTable racks = warrantyRackRepository.GetActiveRacksForProduct(productId);
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show("No racks are assigned to " + productName + ". Please assign rack(s) in Product Master first.", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Dictionary<int, decimal> existingAllocation = new Dictionary<int, decimal>();
+            Dictionary<int, decimal> savedAllocation;
+            if (warrantyRackAllocations.TryGetValue(row, out savedAllocation))
+            {
+                foreach (KeyValuePair<int, decimal> item in savedAllocation)
+                {
+                    existingAllocation[item.Key] = item.Value;
+                }
+            }
+
+            using (PurchaseReceiptRackAllocation dialog = new PurchaseReceiptRackAllocation(productId, productName, quantity, racks, existingAllocation))
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    if (dialog.TotalReceived != quantity)
+                    {
+                        MessageBox.Show("Rack-wise quantity must equal warranty quantity.", "Warranty Rack Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    warrantyRackAllocations[row] = dialog.Allocations;
+                }
+            }
+        }
+
+        private void AddWarrantyRackDetailsForRow(DataTable rackDetails, DataGridViewRow row, string transId)
+        {
+            Dictionary<int, decimal> allocations;
+            if (!warrantyRackAllocations.TryGetValue(row, out allocations))
+            {
+                return;
+            }
+
+            int productId = SafeInt(row.Cells["ProductId"].Value);
+            foreach (KeyValuePair<int, decimal> allocation in allocations)
+            {
+                if (allocation.Value <= 0)
+                {
+                    continue;
+                }
+
+                DataRow detail = rackDetails.NewRow();
+                detail["TransId"] = transId;
+                detail["ProductId"] = productId;
+                detail["RackId"] = allocation.Key;
+                detail["Quantity"] = allocation.Value;
+                rackDetails.Rows.Add(detail);
+            }
+        }
+
+        private int SafeInt(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            int result;
+            return int.TryParse(Convert.ToString(value), out result) ? result : 0;
+        }
+
+        private decimal SafeDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            return decimal.TryParse(Convert.ToString(value), out result) ? result : 0;
         }
 
         private void dgvOrder_SelectionChanged(object sender, EventArgs e)

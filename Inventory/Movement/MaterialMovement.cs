@@ -26,6 +26,7 @@ namespace Inventory
         SqlConnection ObjConn = new SqlConnection(Program.connection);
         QuotationBal objQuotationbal = new QuotationBal();
         ProductMovementBal objProductMovementBal = new ProductMovementBal();
+        private readonly MaterialMovementRackRepository rackRepository = new MaterialMovementRackRepository();
         string role1 = string.Empty;
         string srole = string.Empty;
         DataTable datatableitem;
@@ -37,6 +38,8 @@ namespace Inventory
 
             pnlOrder.Visible = false;
             vLabel2.Visible = false;
+            label23.Visible = false;
+            lblrack.Visible = false;
 
             this.WindowState = FormWindowState.Maximized;
             srole = Program.userid;
@@ -51,6 +54,9 @@ namespace Inventory
             GetLacation();
             // ddlLocation.SelectedIndex = 0;
             LoadPorts();
+            ConfigureRackColumns();
+            dgvOrder.CellValueChanged += dgvOrder_CellValueChanged;
+            dgvOrder.CurrentCellDirtyStateChanged += dgvOrder_CurrentCellDirtyStateChanged;
             LocationBind();
             //LoadPortsFloorCheckIN();
             Txtitem.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
@@ -508,6 +514,8 @@ namespace Inventory
 
 
 
+            ConfigureRackColumns();
+
 
 
 
@@ -519,6 +527,191 @@ namespace Inventory
 
 
 
+        }
+
+        private void ConfigureRackColumns()
+        {
+            if (dgvOrder.Columns.Contains("cmblocation"))
+            {
+                dgvOrder.Columns["cmblocation"].Visible = false;
+            }
+
+            if (dgvOrder.Columns.Contains("FromRack"))
+            {
+                dgvOrder.Columns["FromRack"].DisplayIndex = 4;
+                dgvOrder.Columns["FromRack"].Width = 170;
+                dgvOrder.Columns["FromRack"].SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+            if (dgvOrder.Columns.Contains("ToRack"))
+            {
+                dgvOrder.Columns["ToRack"].DisplayIndex = 5;
+                dgvOrder.Columns["ToRack"].Width = 170;
+                dgvOrder.Columns["ToRack"].SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+            if (dgvOrder.Columns.Contains("ProductId"))
+            {
+                dgvOrder.Columns["ProductId"].Visible = false;
+            }
+
+            if (dgvOrder.Columns.Contains("TransId"))
+            {
+                dgvOrder.Columns["TransId"].Visible = false;
+            }
+        }
+
+        private DataTable GetRackComboSource(int productId, bool sourceRack)
+        {
+            DataTable source = new DataTable();
+            source.Columns.Add("RackId", typeof(int));
+            source.Columns.Add("RackDisplayName", typeof(string));
+            source.Columns.Add("LocationId", typeof(int));
+            source.Columns.Add("AvailableQuantity", typeof(decimal));
+
+            if (productId <= 0)
+            {
+                return source;
+            }
+
+            DataTable racks = rackRepository.GetRackAvailability(productId);
+            foreach (DataRow rack in racks.Rows)
+            {
+                decimal availableQuantity = ToDecimal(rack["AvailableQuantity"]);
+                if (sourceRack && availableQuantity <= 0)
+                {
+                    continue;
+                }
+
+                string displayName = Convert.ToString(rack["LocationName"]) + " / " + Convert.ToString(rack["RackCaption"]);
+                if (sourceRack)
+                {
+                    displayName = displayName + " (" + availableQuantity.ToString("0.###") + ")";
+                }
+
+                source.Rows.Add(Convert.ToInt32(rack["RackId"]), displayName, Convert.ToInt32(rack["LocationId"]), availableQuantity);
+            }
+
+            return source;
+        }
+
+        private void PrepareRackCells(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+            {
+                return;
+            }
+
+            int productId;
+            if (!int.TryParse(Convert.ToString(dgvOrder.Rows[rowIndex].Cells["ProductId"].Value), out productId))
+            {
+                productId = 0;
+            }
+
+            DataTable fromSource = GetRackComboSource(productId, true);
+            DataTable toSource = GetRackComboSource(productId, false);
+            BindRackCell(rowIndex, "FromRack", fromSource);
+            BindRackCell(rowIndex, "ToRack", toSource);
+        }
+
+        private void BindRackCell(int rowIndex, string columnName, DataTable source)
+        {
+            DataGridViewComboBoxCell cell = dgvOrder.Rows[rowIndex].Cells[columnName] as DataGridViewComboBoxCell;
+            if (cell == null)
+            {
+                return;
+            }
+
+            object currentValue = cell.Value;
+            cell.DataSource = source;
+            cell.ValueMember = "RackId";
+            cell.DisplayMember = "RackDisplayName";
+
+            if (currentValue != null && currentValue != DBNull.Value && source.Select("RackId = " + Convert.ToString(currentValue)).Length > 0)
+            {
+                cell.Value = currentValue;
+            }
+            else
+            {
+                cell.Value = null;
+            }
+        }
+
+        private void MoveToRackCell(string columnName)
+        {
+            if (dgvOrder.CurrentCell == null)
+            {
+                return;
+            }
+
+            PrepareRackCells(dgvOrder.CurrentCell.RowIndex);
+            dgvOrder.CurrentCell = dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[columnName];
+        }
+
+        private void MoveToNextMovementRow()
+        {
+            int rowIndex = dgvOrder.CurrentCell.RowIndex;
+            try
+            {
+                if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[rowIndex + 1].Cells[5].Value)))
+                {
+                    dgvOrder.CurrentCell = dgvOrder[1, rowIndex + 1];
+                    return;
+                }
+            }
+            catch
+            {
+            }
+
+            dgvOrder.Rows.Add(1);
+            LocationBind();
+            dgvOrder.CurrentCell = dgvOrder[1, rowIndex + 1];
+            if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["cmblocation"].Value)))
+            {
+                dgvOrder["cmblocation", dgvOrder.CurrentCell.RowIndex].Value = "";
+            }
+        }
+
+        private void SetHiddenDestinationLocationFromRack(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+            {
+                return;
+            }
+
+            DataGridViewComboBoxCell toRackCell = dgvOrder.Rows[rowIndex].Cells["ToRack"] as DataGridViewComboBoxCell;
+            if (toRackCell == null || toRackCell.Value == null || toRackCell.DataSource == null)
+            {
+                return;
+            }
+
+            DataTable source = toRackCell.DataSource as DataTable;
+            if (source == null)
+            {
+                return;
+            }
+
+            DataRow[] selectedRows = source.Select("RackId = " + Convert.ToString(toRackCell.Value));
+            if (selectedRows.Length > 0)
+            {
+                dgvOrder.Rows[rowIndex].Cells["cmblocation"].Value = selectedRows[0]["LocationId"];
+            }
+        }
+
+        private decimal ToDecimal(object value)
+        {
+            if (value == null || value == DBNull.Value || Convert.ToString(value).Trim().Length == 0)
+            {
+                return 0;
+            }
+
+            decimal result;
+            if (decimal.TryParse(Convert.ToString(value), out result))
+            {
+                return result;
+            }
+
+            return 0;
         }
 
         private void dgvOrder_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
@@ -626,6 +819,10 @@ namespace Inventory
                     pnsearch.Visible = false; ;
                 }
 
+                if (dgvOrder.Columns[e.ColumnIndex].Name == "FromRack" || dgvOrder.Columns[e.ColumnIndex].Name == "ToRack")
+                {
+                    PrepareRackCells(e.RowIndex);
+                }
 
                 if (e.ColumnIndex == 4)
                 {
@@ -672,6 +869,32 @@ namespace Inventory
             }
 
         }
+
+        private void dgvOrder_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dgvOrder.IsCurrentCellDirty && dgvOrder.CurrentCell != null)
+            {
+                string columnName = dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name;
+                if (columnName == "FromRack" || columnName == "ToRack")
+                {
+                    dgvOrder.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            }
+        }
+
+        private void dgvOrder_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+            {
+                return;
+            }
+
+            if (dgvOrder.Columns[e.ColumnIndex].Name == "ToRack")
+            {
+                SetHiddenDestinationLocationFromRack(e.RowIndex);
+            }
+        }
+
         private void dgvOrder_KeyDown(object sender, KeyEventArgs e)
         {
             try
@@ -682,7 +905,7 @@ namespace Inventory
 
                     string headerText = dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].HeaderText;
 
-                    if (headerText == "Location")
+                    if (headerText == "Location" || headerText == "From Rack" || headerText == "To Rack")
                     {
                         SendKeys.Send("{F4}");
                         e.SuppressKeyPress = true;
@@ -722,10 +945,19 @@ namespace Inventory
                         else
                         {
 
-                            dgvOrder.CurrentCell = dgvOrder[4, dgvOrder.CurrentCell.RowIndex];
+                            MoveToRackCell("FromRack");
                         }
 
 
+                    }
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "FromRack")
+                    {
+                        MoveToRackCell("ToRack");
+                    }
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "ToRack")
+                    {
+                        SetHiddenDestinationLocationFromRack(dgvOrder.CurrentCell.RowIndex);
+                        MoveToNextMovementRow();
                     }
                     else if (dgvOrder.CurrentCell.ColumnIndex == 4)
                     {
@@ -814,10 +1046,19 @@ namespace Inventory
                         else
                         {
 
-                            dgvOrder.CurrentCell = dgvOrder[4, dgvOrder.CurrentCell.RowIndex];
+                            MoveToRackCell("FromRack");
                         }
 
 
+                    }
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "FromRack")
+                    {
+                        MoveToRackCell("ToRack");
+                    }
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "ToRack")
+                    {
+                        SetHiddenDestinationLocationFromRack(dgvOrder.CurrentCell.RowIndex);
+                        MoveToNextMovementRow();
                     }
                     else if (dgvOrder.CurrentCell.ColumnIndex == 4)
                     {
@@ -1079,11 +1320,7 @@ namespace Inventory
                 {
                     dgvOrder.Focus();
                     dgvOrder.Select();
-                    dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[4].Selected = true;
-
-                    dgvOrder.CurrentCell = dgvOrder["cmblocation", dgvOrder.CurrentCell.RowIndex];
-
-                    dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells["cmblocation"].Selected = true;
+                    MoveToRackCell("FromRack");
 
                 }
 
@@ -1158,14 +1395,24 @@ namespace Inventory
                         }
 
                     }
-                    if (dgvOrder.CurrentCell.ColumnIndex == 2)
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "FromRack")
+                    {
+                        MoveToRackCell("ToRack");
+                    }
+
+                    else if (dgvOrder.Columns[dgvOrder.CurrentCell.ColumnIndex].Name == "ToRack")
+                    {
+                        SetHiddenDestinationLocationFromRack(dgvOrder.CurrentCell.RowIndex);
+                        MoveToNextMovementRow();
+                    }
+                    else if (dgvOrder.CurrentCell.ColumnIndex == 2)
                     {
                         dgvOrder.CurrentCell = dgvOrder[dgvOrder.CurrentCell.ColumnIndex + 1, dgvOrder.CurrentCell.RowIndex];
                     }
 
-                    if (dgvOrder.CurrentCell.ColumnIndex == 3)
+                    else if (dgvOrder.CurrentCell.ColumnIndex == 3)
                     {
-                        dgvOrder.CurrentCell = dgvOrder[dgvOrder.CurrentCell.ColumnIndex + 1, dgvOrder.CurrentCell.RowIndex];
+                        MoveToRackCell("FromRack");
                     }
                 }
                 catch
@@ -1266,10 +1513,12 @@ namespace Inventory
                     dgvOrder.CurrentCell = dgvOrder.Rows[dgvOrder.CurrentCell.RowIndex].Cells[3];
                     dgvOrder.Rows[rowindex].Cells[5].Value = lblproductid.Text;
                     dgvOrder.Rows[rowindex].Cells[1].Value = lblitemname.Text.ToUpper();
-                    dgvOrder.Rows[rowindex].Cells[2].Value = lblrack.Text;
+                    int selectedProductId = Convert.ToInt32(lblproductid.Text);
+                    dgvOrder.Rows[rowindex].Cells[2].Value = rackRepository.GetCurrentProductStock(selectedProductId).ToString("0.###");
                     //dgvOrder.Rows[rowindex].Cells[3].Value = 1;
                     double val = Convert.ToDouble(lblprice.Text);
                     dgvOrder.Rows[rowindex].Cells[0].Value = rowindex + 1;
+                    PrepareRackCells(rowindex);
                     pnsearch.Visible = false;
                     lblproductid.Text = string.Empty;
                     Txtitem.Text = string.Empty;
@@ -1314,19 +1563,6 @@ namespace Inventory
                 if (i == 1)
                     this.ActiveControl = ddlLocation;
             }
-            for (int j = 0; j < dgvOrder.Rows.Count; j++)
-            {
-                if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[j].Cells["cmblocation"].Value)) || Convert.ToString(dgvOrder.Rows[j].Cells["cmblocation"].Value) == "--Select--")
-                {
-                    i++;
-                    message = message + "* Please Select To location" + "\n";
-                    if (i == 1)
-                        this.ActiveControl = dgvOrder;
-                    break;
-                }
-            }
-
-
             string val = Convert.ToString(dgvOrder[1, 0].Value);
             if (string.IsNullOrEmpty(val))
             {
@@ -1337,44 +1573,69 @@ namespace Inventory
             }
 
 
-            bool st = true;
-            bool ddd = true;
-
             for (int j = 0; j < dgvOrder.Rows.Count; j++)
             {
                 if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[j].Cells[1].Value)))
                 {
-                    if (Convert.ToString((ddlLocation.SelectedValue)) == Convert.ToString(dgvOrder.Rows[j].Cells[4].Value))
+                    int productId;
+                    int fromRackId;
+                    int toRackId;
+                    decimal quantity;
+
+                    if (!int.TryParse(Convert.ToString(dgvOrder.Rows[j].Cells["ProductId"].Value), out productId) || productId <= 0)
                     {
-                        st = false;
+                        i++;
+                        message = message + "* Please select a valid product in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["Items"];
+                        continue;
                     }
-                    // 
+
+                    if (!decimal.TryParse(Convert.ToString(dgvOrder.Rows[j].Cells["Quantitytomove"].Value), out quantity) || quantity <= 0)
+                    {
+                        i++;
+                        message = message + "* Please enter valid quantity in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["Quantitytomove"];
+                        continue;
+                    }
+
+                    if (!int.TryParse(Convert.ToString(dgvOrder.Rows[j].Cells["FromRack"].Value), out fromRackId) || fromRackId <= 0)
+                    {
+                        i++;
+                        message = message + "* Please select From Rack in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["FromRack"];
+                        continue;
+                    }
+
+                    if (!int.TryParse(Convert.ToString(dgvOrder.Rows[j].Cells["ToRack"].Value), out toRackId) || toRackId <= 0)
+                    {
+                        i++;
+                        message = message + "* Please select To Rack in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["ToRack"];
+                        continue;
+                    }
+
+                    if (fromRackId == toRackId)
+                    {
+                        i++;
+                        message = message + "* From Rack and To Rack should not be same in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["ToRack"];
+                        continue;
+                    }
+
+                    decimal availableQuantity = rackRepository.GetCurrentRackStock(productId, fromRackId);
+                    if (quantity > availableQuantity)
+                    {
+                        i++;
+                        message = message + "* Quantity exceeds From Rack stock in row " + (j + 1).ToString() + "\n";
+                        if (i == 1)
+                            dgvOrder.CurrentCell = dgvOrder.Rows[j].Cells["Quantitytomove"];
+                    }
                 }
-
-            }
-
-            if (st == false)
-            {
-                i++;
-                message = message + "* From And To Location Should Not Be Same" + "\n";
-                if (i == 1)
-                    dgvOrder.CurrentCell = dgvOrder.Rows[0].Cells[1];
-            }
-
-            for (int j = 0; j < dgvOrder.Rows.Count; j++)
-            {
-                if (Convert.ToString(dgvOrder.Rows[j].Cells[3].Value).Trim() == "." || Convert.ToString(dgvOrder.Rows[j].Cells[3].Value).Trim() == "")
-                {
-                    ddd = false;
-                    // 
-                }
-
-            }
-            if (ddd == false)
-            {
-                i++;
-                message = message + "* *Please Enter Valid Quantity" + "\n";
-
             }
             if (!string.IsNullOrEmpty(message))
             {
@@ -1480,100 +1741,32 @@ namespace Inventory
 
             try
             {
-                DateTime myDateTime = DateTime.Now;
-                string sqlFormattedDate = myDateTime.ToString("yyyy-MM-dd");
-                objProductMovementBal.Movedby = Program.UserName;
-                if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[0].Cells["TransId"].Value)))
-                {
-                    headid = ProductMovementBal.SaveMateialMovementheader(objProductMovementBal);
-                }
-
-
+                DataTable rackDetails = rackRepository.CreateSimpleRackDetailTable();
+                int lineNo = 1;
                 for (int i = 0; i < dgvOrder.Rows.Count; i++)
                 {
                     if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[i].Cells[1].Value)))
                     {
-                        objProductMovementBal.fromlocation = Convert.ToInt32(ddlLocation.SelectedValue);
-                        objProductMovementBal.Tolocation = Convert.ToInt32(dgvOrder.Rows[i].Cells[4].Value);
-                        objProductMovementBal.ProductID = Convert.ToInt32(dgvOrder.Rows[i].Cells["ProductId"].Value);
-                        objProductMovementBal.Quantity = Convert.ToDecimal(dgvOrder.Rows[i].Cells["Quantitytomove"].Value);
-                        objProductMovementBal.Movedby = Program.UserName;
-                        objProductMovementBal.MainID = Convert.ToInt32(headid);
-                        objProductMovementBal.Estid = lblhidden.Text;
-                        objProductMovementBal.stock = Convert.ToString(dgvOrder.Rows[i].Cells[2].Value);
-                        if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[i].Cells["TransId"].Value)))
-                        {
-                            objProductMovementBal.transid = Convert.ToString(dgvOrder.Rows[i].Cells["TransId"].Value);
-                            string delres = ProductMovementBal.DeleteMaterialTranscation(objProductMovementBal);
-                        }
-                        else
-                        {
-                            objProductMovementBal.transid = string.Empty;
-
-                        }
-                        string transid = ProductMovementBal.SaveMateialMovementDetails(objProductMovementBal);
-                        dgvOrder.Rows[i].Cells["TransId"].Value = transid;
-
+                        DataRow row = rackDetails.NewRow();
+                        row["LineNo"] = lineNo;
+                        row["ProductId"] = Convert.ToInt32(dgvOrder.Rows[i].Cells["ProductId"].Value);
+                        row["FromRackId"] = Convert.ToInt32(dgvOrder.Rows[i].Cells["FromRack"].Value);
+                        row["ToRackId"] = Convert.ToInt32(dgvOrder.Rows[i].Cells["ToRack"].Value);
+                        row["Quantity"] = Convert.ToDecimal(dgvOrder.Rows[i].Cells["Quantitytomove"].Value);
+                        rackDetails.Rows.Add(row);
+                        lineNo++;
                     }
-
                 }
 
-                DataTable dt = new DataTable();
-                dt.Columns.Add("TransId", typeof(int));
-                dt.Columns.Add("TranscationType", typeof(string));
-                dt.Columns.Add("TranscationDate", typeof(DateTime));
-                dt.Columns.Add("MaterailId", typeof(int));
-                dt.Columns.Add("Quantity", typeof(float));
-                dt.Columns.Add("LocationId", typeof(int));
-                dt.Columns.Add("Type", typeof(string));
-                for (int i = 0; i < dgvOrder.Rows.Count; i++)
+                string res = rackRepository.SaveRackWiseMovement(Program.UserName, lblhidden.Text, rackDetails);
+                if (!string.IsNullOrEmpty(res))
                 {
-                    if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[i].Cells["Items"].Value)))
-                    {
-                        DataRow dr = dt.NewRow();
-                        dr["TransId"] = dgvOrder.Rows[i].Cells[6].Value.ToString();
-                        dr["TranscationType"] = "Product Movement";
-                        DateTime myDateTime1 = DateTime.Now;
-                        dr["TranscationDate"] = myDateTime1.ToString("yyyy-MM-dd");
-                        dr["MaterailId"] = dgvOrder.Rows[i].Cells[5].Value.ToString();
-                        dr["Quantity"] = dgvOrder.Rows[i].Cells[3].Value.ToString().Trim();
-                        dr["LocationId"] = ddlLocation.SelectedValue;
-                        dr["Type"] = "OUT" + dgvOrder.Rows[i].Cells[4].Value.ToString().Trim();
-                        dt.Rows.Add(dr);
-                    }
-
-                }
-                string res = ProductMovementBal.SaveMaterialTranscation(dt);
-                //if (dt.Rows.Count > 0)
-                //{
-                //    dt.Rows.Clear();
-                //}
-
-                //for (int i = 0; i < dgvOrder.Rows.Count; i++)
-                //{
-                //    if (!string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[i].Cells["Items"].Value)))
-                //    {
-                //        DataRow dr = dt.NewRow();
-                //        dr["TransId"] = dgvOrder.Rows[i].Cells[6].Value.ToString();
-                //        dr["TranscationType"] = "Product Movement";
-                //        dr["TranscationDate"] = myDateTime.ToString("yyyy-MM-dd");
-                //        dr["MaterailId"] = dgvOrder.Rows[i].Cells[5].Value.ToString();
-                //        dr["Quantity"] = dgvOrder.Rows[i].Cells[3].Value.ToString();
-                //        dr["LocationId"] = Convert.ToInt32(dgvOrder.Rows[i].Cells[4].Value);
-                //        dr["Type"] = "IN";
-                //        dt.Rows.Add(dr);
-                //    }
-
-                //}
-                //string res1 = ProductMovementBal.SaveMaterialTranscation(dt);
-                if (res == "1")
-                {
-                    MessageBox.Show("Successfully Product MovedOut");
+                    MessageBox.Show(res);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                //MessageBox.Show(e.Message.ToString());
+                MessageBox.Show(ex.Message.ToString());
             }
 
         }
