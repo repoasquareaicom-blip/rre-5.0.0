@@ -209,7 +209,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\it-004\Desktop\SalesReportDAL\SalesReportDAL\bin\Debug\SalesReportDAL.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
+    <Reference Include="System">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(WINDIR)\Microsoft.NET\Framework\v2.0.50727\System.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />

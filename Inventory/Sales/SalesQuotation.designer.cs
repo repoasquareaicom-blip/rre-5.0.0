@@ -1,6 +1,6 @@
 ﻿namespace Inventory
 {
-    partial class SalesQuotation1
+    partial class SalesQuotation1 : System.Windows.Forms.Form
     {
         /// <summary>
         /// Required designer variable.
