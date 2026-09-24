@@ -27,6 +27,38 @@ namespace Inventory
     {
         static string Conn = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
         QuotationBal objQuotationbal = new QuotationBal();
+        string pendingPaymentSalesId = "";
+        RadioButton rdCashBill;
+        RadioButton rdCreditBill;
+        RadioButton rdPartialCredit;
+        GroupBox groupPayMode;
+        RadioButton rbPayCard;
+        RadioButton rbPayCash;
+        RadioButton rbPayCashCard;
+        RadioButton rbPayUpi;
+        RadioButton rbPayUpiCash;
+        RadioButton rbPayUpiCard;
+        Panel cashpl;
+        TextBox txtCashAmount;
+        Label lblPayDue;
+        Label lblAmountCaption;
+        Label lblCashTitle;
+        Label lblCardTitle;
+        Button btnCashPay;
+        Button btnPayConfirm;
+        Panel panelTransaction;
+        Panel pntransction;
+        TextBox lblcardammount;
+        ComboBox cmbbank;
+        TextBox txtcardno;
+        TextBox txttransactionid;
+        TextBox txtUpiReference;
+        Label lblUpiReference;
+        Label lblChequeNo;
+        Label label148;
+        Label label149;
+        bool payBankLoaded;
+        bool updatingPayAmount;
         TextBox tb;
         public bool edit = false;
         string userid = "";
@@ -35,6 +67,7 @@ namespace Inventory
         public SalesReport()
         {
             InitializeComponent();
+            AddSalesPaymentFields();
             userid = Convert.ToString(Program.userid);
             this.WindowState = FormWindowState.Maximized;
             LoadPorts();
@@ -89,6 +122,7 @@ namespace Inventory
             bindLocation();
             cmbloaction.SelectedIndex = 0;
             cmbpaymode.SelectedIndex = 0;
+            ResetSalesPaymentSelection();
             cmbstatus.SelectedIndex = 0;
             SearchPurchaseOrder();
             lblperare.Text = Program.UserName;
@@ -896,12 +930,13 @@ namespace Inventory
             //        this.ActiveControl = cmbreference;
             //}
 
-            if (cmbpaymode.SelectedIndex <= 0)
+            string paymentMessage = ValidateSalesPaymentAmounts();
+            if (!string.IsNullOrEmpty(paymentMessage))
             {
                 i++;
-                message = message + "* Please select Paymentmode" + "\n";
-                if (i == 1)
-                    this.ActiveControl = cmbpaymode;
+                message = message + paymentMessage;
+                if (i == 1 && rdCashBill != null)
+                    this.ActiveControl = rdCashBill;
             }
 
 
@@ -994,7 +1029,8 @@ namespace Inventory
             cmbcustomername.Focus();
             cmbloaction.SelectedIndex = 0;
             panel2.Enabled = true;
-            cmbpaymode.SelectedIndex = 0;
+            pendingPaymentSalesId = "";
+            ResetSalesPaymentSelection();
             lblgrandtotal.Text = "0.00";
             txtless.Text = "0.00";
             txtAddressLine1.Clear();
@@ -1040,6 +1076,17 @@ namespace Inventory
 
         public void save(int v)
         {
+            if (!string.IsNullOrEmpty(pendingPaymentSalesId))
+            {
+                string retryId = pendingPaymentSalesId;
+                if (SaveSalesPaymentComponents(retryId))
+                {
+                    pendingPaymentSalesId = "";
+                    ContinueSalesSaveAfterPayment(retryId);
+                }
+                return;
+            }
+
             panel1.Enabled = false;
             panel2.Enabled = false;
 
@@ -1061,7 +1108,7 @@ namespace Inventory
             objQuotationbal.City = Convert.ToString(cmdcity.Text);
             objQuotationbal.Referenceid = Convert.ToString(cmbreference.SelectedValue);
             objQuotationbal.Assist = Convert.ToString(cmbassistby.SelectedValue);
-            objQuotationbal.Paymentmode = Convert.ToString(cmbpaymode.Text);
+            objQuotationbal.Paymentmode = SelectedSalesPaymentMode();
             objQuotationbal.Total = Convert.ToString(lbltotalamount.Text);
 
 
@@ -1127,7 +1174,7 @@ namespace Inventory
             // }
             // else
             // {
-            int shop = Convert.ToInt32(lblShop.Text);
+            int shop = ApplySelectedCompany();
             string selectedState = SGSTval.Checked ? comboBox2.Text : comboBox1.Text;
             string selectedGstText = IGSTval.Checked ? "IGST" : "";
 
@@ -1180,7 +1227,7 @@ namespace Inventory
                 cmd.Parameters.AddWithValue("@Referenceid", Convert.ToString(cmbreference.SelectedValue));
                 cmd.Parameters.AddWithValue("@Assist", Convert.ToString(cmbassistby.SelectedValue));
                 cmd.Parameters.AddWithValue("@Updatedby", Program.userid);
-                cmd.Parameters.AddWithValue("@paymentmode", Convert.ToString(cmbpaymode.Text));
+                cmd.Parameters.AddWithValue("@paymentmode", SelectedSalesPaymentMode());
                 cmd.Parameters.AddWithValue("@TotalAmount", Convert.ToString(lbltotalamount.Text));
                 if (string.IsNullOrEmpty(txtless.Text))
                 {
@@ -1240,23 +1287,13 @@ namespace Inventory
                 panel1.Enabled = true;
                 panel2.Enabled = true;
                 Pnloading.Visible = false;
-                getsaleamount(shop);
-                //MessageBox.Show("save successfully");
-                //    txtorder.Text = output;
-
-
-                string configvalue2 = ConfigurationManager.AppSettings["PrePrinted"];
-
-                if (configvalue2 == "Yes")
+                if (!SaveSalesPaymentComponents(output))
                 {
-                    GetrrlightsReport(output);
+                    pendingPaymentSalesId = output;
+                    txtorder.Text = output;
+                    return;
                 }
-                else
-                {
-
-                    GetReport(output, shop);
-                    clear();
-                }
+                ContinueSalesSaveAfterPayment(output);
 
                 // GetReport(output);
 
@@ -1291,11 +1328,817 @@ namespace Inventory
                 //        }
                 //    }
                 // }
-                btnSearch.PerformClick();
             }
         }
 
 
+
+        private void ContinueSalesSaveAfterPayment(string output)
+        {
+            panel1.Enabled = true;
+            panel2.Enabled = true;
+            Pnloading.Visible = false;
+            int shop = Convert.ToInt32(lblShop.Text);
+            getsaleamount(shop);
+            string configvalue2 = ConfigurationManager.AppSettings["PrePrinted"];
+            if (configvalue2 == "Yes")
+            {
+                GetrrlightsReport(output);
+            }
+            else
+            {
+                GetReport(output, shop);
+                clear();
+            }
+            btnSearch.PerformClick();
+        }
+
+        private void AddSalesPaymentFields()
+        {
+            cmbpaymode.Visible = false;
+            labl.Visible = false;
+            groupBox5.Text = "Cash/Credit";
+            groupBox5.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            groupBox5.Size = new Size(360, 78);
+
+            rdCashBill = NewPayRadio("Cash Bill", 8, 28, BillTypeChanged);
+            rdCreditBill = NewPayRadio("Credit Bill", 100, 28, BillTypeChanged);
+            rdPartialCredit = NewPayRadio("Partial Credit Bill", 210, 28, BillTypeChanged);
+            groupBox5.Controls.Add(rdCashBill);
+            groupBox5.Controls.Add(rdCreditBill);
+            groupBox5.Controls.Add(rdPartialCredit);
+
+            groupPayMode = new GroupBox();
+            groupPayMode.Text = "Payment Mode";
+            groupPayMode.Font = new Font("Calibri", 9.75F, FontStyle.Bold);
+            groupPayMode.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            groupPayMode.Location = new Point(groupBox5.Right + 8, groupBox5.Top);
+            groupPayMode.Size = new Size(300, 78);
+            groupPayMode.Enabled = false;
+            rbPayCard = NewPayRadio("Card", 6, 18, PayModeChanged);
+            rbPayCash = NewPayRadio("Cash", 62, 17, PayModeChanged);
+            rbPayCashCard = NewPayRadio("Cash and  Card", 120, 16, PayModeChanged);
+            rbPayUpi = NewPayRadio("UPI", 6, 48, PayModeChanged);
+            rbPayUpiCash = NewPayRadio("UPI and Cash", 60, 48, PayModeChanged);
+            rbPayUpiCard = NewPayRadio("UPI and Card", 175, 48, PayModeChanged);
+            groupPayMode.Controls.Add(rbPayCard);
+            groupPayMode.Controls.Add(rbPayCash);
+            groupPayMode.Controls.Add(rbPayCashCard);
+            groupPayMode.Controls.Add(rbPayUpi);
+            groupPayMode.Controls.Add(rbPayUpiCash);
+            groupPayMode.Controls.Add(rbPayUpiCard);
+            pntab.Controls.Add(groupPayMode);
+            groupPayMode.BringToFront();
+
+            BuildCashPanel();
+            BuildCardPanel();
+        }
+
+        private RadioButton NewPayRadio(string text, int x, int y, EventHandler handler)
+        {
+            RadioButton radio = new RadioButton();
+            radio.AutoSize = true;
+            radio.Text = text;
+            radio.Location = new Point(x, y);
+            radio.CheckedChanged += handler;
+            return radio;
+        }
+
+        private void BuildCashPanel()
+        {
+            cashpl = new Panel();
+            cashpl.BackColor = SystemColors.ActiveCaption;
+            cashpl.BorderStyle = BorderStyle.Fixed3D;
+            cashpl.Location = new Point(430, 80);
+            cashpl.Size = new Size(390, 150);
+            cashpl.Visible = false;
+            lblCashTitle = new Label();
+            lblCashTitle.Text = "Cash";
+            lblCashTitle.Font = new Font("Calibri", 14F, FontStyle.Bold);
+            lblCashTitle.Location = new Point(12, 6);
+            lblCashTitle.AutoSize = true;
+            lblPayDue = new Label();
+            lblPayDue.Text = "Amount To Pay :";
+            lblPayDue.Font = new Font("Calibri", 14F, FontStyle.Bold);
+            lblPayDue.Location = new Point(12, 48);
+            lblPayDue.AutoSize = true;
+            txtCashAmount = new TextBox();
+            txtCashAmount.Location = new Point(170, 48);
+            txtCashAmount.Size = new Size(190, 27);
+            txtCashAmount.MaxLength = 10;
+            txtCashAmount.Font = new Font("Calibri", 12F);
+            btnCashPay = new Button();
+            btnCashPay.Text = "Pay";
+            btnCashPay.Location = new Point(270, 96);
+            btnCashPay.Size = new Size(90, 30);
+            btnCashPay.Click += new EventHandler(btnCashPay_Click);
+            Button closeCash = new Button();
+            closeCash.Text = "X";
+            closeCash.Location = new Point(340, 4);
+            closeCash.Size = new Size(32, 26);
+            closeCash.Click += new EventHandler(CloseCashPanel);
+            cashpl.Controls.Add(lblCashTitle);
+            cashpl.Controls.Add(lblPayDue);
+            cashpl.Controls.Add(txtCashAmount);
+            cashpl.Controls.Add(btnCashPay);
+            cashpl.Controls.Add(closeCash);
+            pntab.Controls.Add(cashpl);
+        }
+
+        private void BuildCardPanel()
+        {
+            panelTransaction = new Panel();
+            panelTransaction.BackColor = SystemColors.ActiveCaption;
+            panelTransaction.BorderStyle = BorderStyle.Fixed3D;
+            panelTransaction.Location = new Point(430, 80);
+            panelTransaction.Size = new Size(390, 270);
+            panelTransaction.Visible = false;
+            lblCardTitle = new Label();
+            lblCardTitle.Text = "Card";
+            lblCardTitle.Font = new Font("Calibri", 14F, FontStyle.Bold);
+            lblCardTitle.Location = new Point(8, 2);
+            lblCardTitle.AutoSize = true;
+            pntransction = new Panel();
+            pntransction.BackColor = Color.Gainsboro;
+            pntransction.Location = new Point(4, 28);
+            pntransction.Size = new Size(378, 230);
+            lblAmountCaption = new Label();
+            lblAmountCaption.Text = "Amount";
+            lblAmountCaption.Font = new Font("Calibri", 14F, FontStyle.Bold);
+            lblAmountCaption.Location = new Point(8, 10);
+            lblAmountCaption.AutoSize = true;
+            lblcardammount = new TextBox();
+            lblcardammount.Location = new Point(170, 8);
+            lblcardammount.Size = new Size(190, 27);
+            lblcardammount.MaxLength = 10;
+            lblcardammount.Font = new Font("Calibri", 12F);
+            lblcardammount.TextChanged += new EventHandler(lblcardammount_TextChanged);
+            label148 = new Label();
+            label148.Text = "Bank";
+            label148.Font = new Font("Calibri", 14F);
+            label148.Location = new Point(8, 48);
+            label148.AutoSize = true;
+            cmbbank = new ComboBox();
+            cmbbank.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbbank.Location = new Point(140, 46);
+            cmbbank.Size = new Size(220, 27);
+            cmbbank.Font = new Font("Calibri", 12F);
+            label149 = new Label();
+            label149.Text = "Card No";
+            label149.Font = new Font("Calibri", 14F);
+            label149.Location = new Point(8, 84);
+            label149.AutoSize = true;
+            txtcardno = new TextBox();
+            txtcardno.Location = new Point(140, 82);
+            txtcardno.Size = new Size(220, 27);
+            txtcardno.MaxLength = 20;
+            txtcardno.Font = new Font("Calibri", 12F);
+            lblChequeNo = new Label();
+            lblChequeNo.Text = "Transaction Id";
+            lblChequeNo.Font = new Font("Calibri", 14F);
+            lblChequeNo.Location = new Point(8, 120);
+            lblChequeNo.AutoSize = true;
+            txttransactionid = new TextBox();
+            txttransactionid.Location = new Point(140, 118);
+            txttransactionid.Size = new Size(220, 27);
+            txttransactionid.Font = new Font("Calibri", 12F);
+            lblUpiReference = new Label();
+            lblUpiReference.Text = "UPI Reference";
+            lblUpiReference.Font = new Font("Calibri", 14F);
+            lblUpiReference.Location = new Point(8, 156);
+            lblUpiReference.AutoSize = true;
+            lblUpiReference.Visible = false;
+            txtUpiReference = new TextBox();
+            txtUpiReference.Location = new Point(140, 154);
+            txtUpiReference.Size = new Size(220, 27);
+            txtUpiReference.MaxLength = 30;
+            txtUpiReference.Font = new Font("Calibri", 12F);
+            txtUpiReference.Visible = false;
+            btnPayConfirm = new Button();
+            btnPayConfirm.Text = "Pay";
+            btnPayConfirm.Size = new Size(80, 28);
+            btnPayConfirm.Click += new EventHandler(btnCardPay_Click);
+            Button closeCard = new Button();
+            closeCard.Text = "X";
+            closeCard.Location = new Point(346, 2);
+            closeCard.Size = new Size(32, 24);
+            closeCard.Click += new EventHandler(CloseCardPanel);
+            pntransction.Controls.Add(lblAmountCaption);
+            txtCashAmount.TextChanged += new EventHandler(txtCashAmount_TextChanged);
+            pntransction.Controls.Add(lblPayDue);
+            pntransction.Controls.Add(txtCashAmount);
+            pntransction.Controls.Add(lblcardammount);
+            pntransction.Controls.Add(label148);
+            pntransction.Controls.Add(cmbbank);
+            pntransction.Controls.Add(label149);
+            pntransction.Controls.Add(txtcardno);
+            pntransction.Controls.Add(lblChequeNo);
+            pntransction.Controls.Add(txttransactionid);
+            pntransction.Controls.Add(lblUpiReference);
+            pntransction.Controls.Add(txtUpiReference);
+            pntransction.Controls.Add(btnPayConfirm);
+            panelTransaction.Controls.Add(lblCardTitle);
+            panelTransaction.Controls.Add(closeCard);
+            panelTransaction.Controls.Add(pntransction);
+            pntab.Controls.Add(panelTransaction);
+        }
+
+        private void BillTypeChanged(object sender, EventArgs e)
+        {
+            RadioButton radio = sender as RadioButton;
+            if (radio == null || !radio.Checked)
+            {
+                return;
+            }
+            bool showModes = rdCashBill.Checked || rdPartialCredit.Checked;
+            groupPayMode.Enabled = showModes;
+            if (!showModes)
+            {
+                ClearPayModeRadios();
+                cashpl.Visible = false;
+                panelTransaction.Visible = false;
+            }
+        }
+
+        private void PayModeChanged(object sender, EventArgs e)
+        {
+            RadioButton radio = sender as RadioButton;
+            if (radio == null || !radio.Checked)
+            {
+                return;
+            }
+            decimal due = PayableGrandTotal();
+            lblCashTitle.Text = radio.Text;
+            lblCardTitle.Text = radio.Text;
+            if (rbPayCash.Checked)
+            {
+                txtCashAmount.Text = due.ToString("0.00");
+            }
+            else if (rbPayCashCard.Checked || rbPayUpiCash.Checked)
+            {
+                txtCashAmount.Text = "";
+            }
+            bool card = rbPayCard.Checked || rbPayCashCard.Checked || rbPayUpiCard.Checked;
+            bool upi = rbPayUpi.Checked || rbPayUpiCash.Checked || rbPayUpiCard.Checked;
+            cashpl.Visible = false;
+            panelTransaction.Visible = true;
+            panelTransaction.BringToFront();
+            ShowCardEntryFields(card);
+            lblUpiReference.Visible = upi;
+            txtUpiReference.Visible = upi;
+            if (card)
+            {
+                EnsurePayBankLoaded();
+            }
+            if (rbPayCash.Checked)
+            {
+                txtCashAmount.Text = due.ToString("0.00");
+                lblcardammount.Text = "";
+            }
+            else if (rbPayCard.Checked || rbPayUpi.Checked)
+            {
+                lblcardammount.Text = due.ToString("0.00");
+                txtCashAmount.Text = "";
+            }
+            else
+            {
+                lblcardammount.Text = "";
+                txtCashAmount.Text = "";
+            }
+            ArrangePaymentRows();
+        }
+
+        private void ArrangePaymentRows()
+        {
+            int y = 8;
+            bool cashOnly = rbPayCash.Checked;
+            bool cashSplit = rbPayCashCard.Checked || rbPayUpiCash.Checked;
+            bool showPrimary = !cashOnly;
+            bool showSecondAmount = cashOnly || cashSplit || rbPayUpiCard.Checked;
+            if (rbPayUpiCash.Checked)
+            {
+                lblAmountCaption.Text = "UPI";
+                lblPayDue.Text = "Cash";
+            }
+            else if (rbPayUpiCard.Checked)
+            {
+                lblAmountCaption.Text = "Card";
+                lblPayDue.Text = "UPI Amount";
+            }
+            else if (rbPayCashCard.Checked)
+            {
+                lblAmountCaption.Text = "Card";
+                lblPayDue.Text = "Cash";
+            }
+            else if (rbPayUpi.Checked)
+            {
+                lblAmountCaption.Text = "UPI";
+            }
+            else if (rbPayCard.Checked)
+            {
+                lblAmountCaption.Text = "Card";
+            }
+            else
+            {
+                lblPayDue.Text = "Cash";
+            }
+            PlacePayRow(lblAmountCaption, lblcardammount, ref y, showPrimary);
+            PlacePayRow(label148, cmbbank, ref y, label148.Visible);
+            PlacePayRow(label149, txtcardno, ref y, label149.Visible);
+            PlacePayRow(lblChequeNo, txttransactionid, ref y, lblChequeNo.Visible);
+            PlacePayRow(lblUpiReference, txtUpiReference, ref y, txtUpiReference.Visible);
+            PlacePayRow(lblPayDue, txtCashAmount, ref y, showSecondAmount);
+            btnPayConfirm.Location = new Point(260, y);
+            btnPayConfirm.Visible = true;
+            btnPayConfirm.BringToFront();
+            y += 36;
+            pntransction.Height = y + 8;
+            panelTransaction.Height = pntransction.Height + 36;
+        }
+
+        private void PlacePayRow(Label label, Control box, ref int y, bool show)
+        {
+            label.Visible = show;
+            box.Visible = show;
+            if (!show)
+            {
+                return;
+            }
+            label.Location = new Point(8, y + 4);
+            box.Location = new Point(150, y);
+            y += 36;
+        }
+
+        private void txtCashAmount_TextChanged(object sender, EventArgs e)
+        {
+            if (updatingPayAmount)
+            {
+                return;
+            }
+            if (!rbPayCashCard.Checked && !rbPayUpiCash.Checked && !rbPayUpiCard.Checked)
+            {
+                return;
+            }
+            decimal part;
+            if (!decimal.TryParse(txtCashAmount.Text, out part))
+            {
+                return;
+            }
+            updatingPayAmount = true;
+            lblcardammount.Text = (PayableGrandTotal() - part).ToString("0.00");
+            updatingPayAmount = false;
+        }
+
+        private void ShowCardEntryFields(bool show)
+        {
+            label148.Visible = show;
+            cmbbank.Visible = show;
+            label149.Visible = show;
+            txtcardno.Visible = show;
+            lblChequeNo.Visible = show;
+            txttransactionid.Visible = show;
+        }
+
+        private void ShowUpiReference(bool show)
+        {
+            lblUpiReference.Visible = show;
+            txtUpiReference.Visible = show;
+            if (show && rbPayUpiCard.Checked)
+            {
+                panelTransaction.Height = 300;
+                pntransction.Height = 260;
+            }
+            else
+            {
+                panelTransaction.Height = 270;
+                pntransction.Height = 230;
+            }
+        }
+
+        private void EnsurePayBankLoaded()
+        {
+            if (payBankLoaded)
+            {
+                return;
+            }
+            cmbbank.DataSource = objQuotationbal.getaccount();
+            cmbbank.DisplayMember = "accountno";
+            cmbbank.ValueMember = "accountno";
+            payBankLoaded = true;
+        }
+
+        private decimal CashTendered()
+        {
+            decimal total;
+            decimal.TryParse(txtCashAmount.Text, out total);
+            return total;
+        }
+
+        private void btnCashPay_Click(object sender, EventArgs e)
+        {
+            string message = ValidateCashPortion();
+            if (!string.IsNullOrEmpty(message))
+            {
+                MessageBox.Show(message);
+                return;
+            }
+            if (rbPayCashCard.Checked || rbPayUpiCash.Checked)
+            {
+                decimal remainder = PayableGrandTotal() - NetCashAmount();
+                lblcardammount.Text = remainder.ToString("0.00");
+                panelTransaction.Visible = true;
+                panelTransaction.BringToFront();
+                ShowCardEntryFields(rbPayCashCard.Checked);
+                ShowUpiReference(rbPayUpiCash.Checked);
+                if (rbPayCashCard.Checked)
+                {
+                    EnsurePayBankLoaded();
+                }
+                return;
+            }
+            cashpl.Visible = false;
+        }
+
+        private void btnCardPay_Click(object sender, EventArgs e)
+        {
+            string message = ValidateCardOrUpi();
+            if (!string.IsNullOrEmpty(message))
+            {
+                MessageBox.Show(message);
+                return;
+            }
+            panelTransaction.Visible = false;
+            cashpl.Visible = false;
+        }
+
+        private void CloseCashPanel(object sender, EventArgs e)
+        {
+            cashpl.Visible = false;
+        }
+
+        private void CloseCardPanel(object sender, EventArgs e)
+        {
+            panelTransaction.Visible = false;
+        }
+
+        private void lblcardammount_TextChanged(object sender, EventArgs e)
+        {
+            if (updatingPayAmount)
+            {
+                return;
+            }
+            if (!rbPayCashCard.Checked && !rbPayUpiCash.Checked && !rbPayUpiCard.Checked)
+            {
+                return;
+            }
+            decimal part;
+            if (!decimal.TryParse(lblcardammount.Text, out part))
+            {
+                return;
+            }
+            updatingPayAmount = true;
+            txtCashAmount.Text = (PayableGrandTotal() - part).ToString("0.00");
+            updatingPayAmount = false;
+        }
+
+        private decimal PayableGrandTotal()
+        {
+            decimal total;
+            decimal.TryParse(lblgrandtotal.Text, out total);
+            return total;
+        }
+
+        private decimal NetCashAmount()
+        {
+            decimal tendered = CashTendered();
+            decimal due = PayableGrandTotal();
+            if (rdPartialCredit.Checked && rbPayCash.Checked)
+            {
+                return tendered;
+            }
+            if (tendered > due)
+            {
+                return due;
+            }
+            return tendered;
+        }
+
+        private void ClearPayModeRadios()
+        {
+            rbPayCard.Checked = false;
+            rbPayCash.Checked = false;
+            rbPayCashCard.Checked = false;
+            rbPayUpi.Checked = false;
+            rbPayUpiCash.Checked = false;
+            rbPayUpiCard.Checked = false;
+        }
+
+        private void ResetSalesPaymentSelection()
+        {
+            if (rdCashBill == null)
+            {
+                return;
+            }
+            rdCashBill.Checked = false;
+            rdCreditBill.Checked = false;
+            rdPartialCredit.Checked = false;
+            ClearPayModeRadios();
+            cashpl.Visible = false;
+            panelTransaction.Visible = false;
+            groupPayMode.Enabled = false;
+            lblcardammount.Text = "";
+            txtcardno.Text = "";
+            txttransactionid.Text = "";
+            txtUpiReference.Text = "";
+            txtCashAmount.Text = "";
+            if (cmbbank.Items.Count > 0)
+            {
+                cmbbank.SelectedIndex = 0;
+            }
+        }
+
+        private string SelectedSalesPaymentMode()
+        {
+            if (rdCreditBill != null && rdCreditBill.Checked)
+            {
+                return "CreditBill";
+            }
+            if (rdPartialCredit != null && rdPartialCredit.Checked)
+            {
+                return "Partial Credit Bill";
+            }
+            if (rbPayCard != null && rbPayCard.Checked)
+            {
+                return "Card";
+            }
+            if (rbPayCash != null && rbPayCash.Checked)
+            {
+                return "Cash";
+            }
+            if (rbPayCashCard != null && rbPayCashCard.Checked)
+            {
+                return "Cash and Card";
+            }
+            if (rbPayUpi != null && rbPayUpi.Checked)
+            {
+                return "UPI";
+            }
+            if (rbPayUpiCash != null && rbPayUpiCash.Checked)
+            {
+                return "UPI and Cash";
+            }
+            if (rbPayUpiCard != null && rbPayUpiCard.Checked)
+            {
+                return "UPI and Card";
+            }
+            return "";
+        }
+
+        private string ValidateCashPortion()
+        {
+            decimal due = PayableGrandTotal();
+            decimal tendered = CashTendered();
+            if (tendered <= 0)
+            {
+                return "Please Enter Amount ";
+            }
+            if (rbPayCash.Checked)
+            {
+                if (!rdPartialCredit.Checked && tendered < due)
+                {
+                    return "Please Pay Full Amount ";
+                }
+                if (rdPartialCredit.Checked && tendered > due)
+                {
+                    return "Paid amount cannot be greater than the Grand Total";
+                }
+            }
+            if (rbPayCashCard.Checked || rbPayUpiCash.Checked)
+            {
+                if (tendered >= due)
+                {
+                    return "Please Enter Partial Amount ";
+                }
+            }
+            return "";
+        }
+
+        private string ValidateCardOrUpi()
+        {
+            bool card = rbPayCard.Checked || rbPayCashCard.Checked || rbPayUpiCard.Checked;
+            bool upi = rbPayUpi.Checked || rbPayUpiCash.Checked || rbPayUpiCard.Checked;
+            if (card)
+            {
+                if (cmbbank.SelectedIndex <= 0)
+                {
+                    return "Select Your Account";
+                }
+            }
+            if (upi)
+            {
+                string referenceText = txtUpiReference.Text == null ? "" : txtUpiReference.Text.Trim();
+                if (referenceText.Length > 30)
+                {
+                    return "UPI Payment Reference cannot be more than 30 characters";
+                }
+                txtUpiReference.Text = referenceText;
+            }
+            decimal due = PayableGrandTotal();
+            decimal cardAmount;
+            decimal.TryParse(lblcardammount.Text, out cardAmount);
+            if (rbPayCard.Checked || rbPayUpi.Checked)
+            {
+                if (!rdPartialCredit.Checked && cardAmount != due)
+                {
+                    return "Please Pay Full Amount";
+                }
+                if (cardAmount <= 0 || cardAmount > due)
+                {
+                    return "Enter Your Amount";
+                }
+            }
+            if (rbPayUpiCard.Checked)
+            {
+                if (cardAmount <= 0 || cardAmount >= due)
+                {
+                    return "Enter a Card amount less than the total. The remaining amount is UPI.";
+                }
+            }
+            if (rbPayCashCard.Checked || rbPayUpiCash.Checked)
+            {
+                decimal remainder = due - NetCashAmount();
+                if (cardAmount != remainder)
+                {
+                    return "The remaining amount must match the unpaid balance.";
+                }
+            }
+            return "";
+        }
+
+        private string ValidateSalesPaymentAmounts()
+        {
+            if (rdCashBill == null)
+            {
+                return "* Please select Paymentmode\n";
+            }
+            if (!rdCashBill.Checked && !rdCreditBill.Checked && !rdPartialCredit.Checked)
+            {
+                return "* Please select Paymentmode\n";
+            }
+            if (rdCreditBill.Checked)
+            {
+                return "";
+            }
+            if (!rbPayCash.Checked && !rbPayCard.Checked && !rbPayUpi.Checked && !rbPayCashCard.Checked && !rbPayUpiCash.Checked && !rbPayUpiCard.Checked)
+            {
+                return "* Please select Paymentmode\n";
+            }
+            if (rbPayCash.Checked || rbPayCashCard.Checked || rbPayUpiCash.Checked)
+            {
+                string cashMessage = ValidateCashPortion();
+                if (!string.IsNullOrEmpty(cashMessage))
+                {
+                    return "* " + cashMessage + "\n";
+                }
+            }
+            if (rbPayCard.Checked || rbPayUpi.Checked || rbPayCashCard.Checked || rbPayUpiCash.Checked || rbPayUpiCard.Checked)
+            {
+                string cardMessage = ValidateCardOrUpi();
+                if (!string.IsNullOrEmpty(cardMessage))
+                {
+                    return "* " + cardMessage + "\n";
+                }
+            }
+            return "";
+        }
+
+        private bool SaveSalesPaymentComponents(string salesId)
+        {
+            string mode = SelectedSalesPaymentMode();
+            if (mode == "CreditBill")
+            {
+                return true;
+            }
+            decimal total = PayableGrandTotal();
+            decimal cashAmount = 0;
+            decimal cardAmount = 0;
+            decimal upiAmount = 0;
+            if (mode == "Cash" || (mode == "Partial Credit Bill" && rbPayCash.Checked))
+            {
+                cashAmount = NetCashAmount();
+            }
+            else if (mode == "Card" || (mode == "Partial Credit Bill" && rbPayCard.Checked))
+            {
+                cardAmount = decimal.Parse(lblcardammount.Text);
+            }
+            else if (mode == "UPI" || (mode == "Partial Credit Bill" && rbPayUpi.Checked))
+            {
+                upiAmount = decimal.Parse(lblcardammount.Text);
+            }
+            else if (mode == "Cash and Card" || (mode == "Partial Credit Bill" && rbPayCashCard.Checked))
+            {
+                cashAmount = NetCashAmount();
+                cardAmount = total - cashAmount;
+            }
+            else if (mode == "UPI and Cash" || (mode == "Partial Credit Bill" && rbPayUpiCash.Checked))
+            {
+                cashAmount = NetCashAmount();
+                upiAmount = total - cashAmount;
+            }
+            else if (mode == "UPI and Card" || (mode == "Partial Credit Bill" && rbPayUpiCard.Checked))
+            {
+                cardAmount = decimal.Parse(lblcardammount.Text);
+                upiAmount = total - cardAmount;
+            }
+            string cardBank = cardAmount > 0 ? cmbbank.Text.Trim() : "";
+            string cardNumber = cardAmount > 0 ? txtcardno.Text.Trim() : "";
+            string cardTransId = cardAmount > 0 ? txttransactionid.Text.Trim() : "";
+            string upiReference = upiAmount > 0 ? txtUpiReference.Text.Trim() : "";
+            try
+            {
+                using (SqlConnection con = new SqlConnection(Conn))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("UPDATE " + SalesHeaderTable() + " SET CashAmount=@CashAmount, CardAmount=@CardAmount, UpiAmount=@UpiAmount, CardBank=@CardBank, CardNumber=@CardNumber, CardTransId=@CardTransId, UpiReference=@UpiReference WHERE Salesid=@Salesid", con);
+                    AddSalesAmountParameter(cmd, "@CashAmount", cashAmount);
+                    AddSalesAmountParameter(cmd, "@CardAmount", cardAmount);
+                    AddSalesAmountParameter(cmd, "@UpiAmount", upiAmount);
+                    cmd.Parameters.AddWithValue("@CardBank", cardBank.Length == 0 ? (object)DBNull.Value : cardBank);
+                    cmd.Parameters.AddWithValue("@CardNumber", cardNumber.Length == 0 ? (object)DBNull.Value : cardNumber);
+                    cmd.Parameters.AddWithValue("@CardTransId", cardTransId.Length == 0 ? (object)DBNull.Value : cardTransId);
+                    cmd.Parameters.AddWithValue("@UpiReference", upiReference.Length == 0 ? (object)DBNull.Value : upiReference);
+                    cmd.Parameters.AddWithValue("@Salesid", salesId);
+                    if (cmd.ExecuteNonQuery() == 0)
+                    {
+                        throw new InvalidOperationException("Sales bill " + salesId + " was not found.");
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Sales bill " + salesId + " was saved, but the payment amounts were not saved on the bill." + Environment.NewLine + ex.Message + Environment.NewLine + "Click Save again to retry this bill. Do not click New.");
+                return false;
+            }
+        }
+
+        private int ApplySelectedCompany()
+        {
+            int shop = SelectedSalesShop();
+            lblShop.Text = shop.ToString();
+            Program.ShopName = lblShop.Text;
+            string company = Convert.ToString(cmbcompanychange.Text).Trim();
+            if (company.Length > 0 && company != "--Select--")
+            {
+                Program.Company = company;
+            }
+            return shop;
+        }
+
+        private int SelectedSalesShop()
+        {
+            string company = Convert.ToString(cmbcompanychange.Text).Trim();
+            if (string.Equals(company, "R.R. PIPES", StringComparison.OrdinalIgnoreCase))
+            {
+                return 2;
+            }
+            if (string.Equals(company, "RR TRADERS", StringComparison.OrdinalIgnoreCase))
+            {
+                return 3;
+            }
+            if (string.Equals(company, "R.R. ELECTRICAL AGENCIES", StringComparison.OrdinalIgnoreCase))
+            {
+                return 1;
+            }
+            int shop;
+            if (int.TryParse(lblShop.Text, out shop) && shop >= 1 && shop <= 3)
+            {
+                return shop;
+            }
+            return 1;
+        }
+
+        private string SalesHeaderTable()
+        {
+            int shop = SelectedSalesShop();
+            if (shop == 2)
+            {
+                return "SalesPipes";
+            }
+            if (shop == 3)
+            {
+                return "SalesTraders";
+            }
+            return "Sales";
+        }
+
+        private static void AddSalesAmountParameter(SqlCommand cmd, string name, decimal amount)
+        {
+            SqlParameter parameter = cmd.Parameters.Add(name, SqlDbType.Decimal);
+            parameter.Precision = 18;
+            parameter.Scale = 2;
+            parameter.Value = amount;
+        }
 
         public void GetReport(string QuotationId, int shop)
         {
@@ -2860,9 +3703,7 @@ namespace Inventory
         }
         public void chages()
         {
-            Program.ShopName = Convert.ToString(cmbcompanychange.SelectedIndex);
-
-            Program.Company = Convert.ToString(cmbcompanychange.Text);
+            ApplySelectedCompany();
             recal();
         }
 

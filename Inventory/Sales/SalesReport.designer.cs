@@ -1925,7 +1925,12 @@
             this.cmbpaymode.Items.AddRange(new object[] {
             "-Select-",
             "Cash",
-            "CreditBill"});
+            "CreditBill",
+            "Card",
+            "UPI",
+            "Cash and Card",
+            "UPI and Cash",
+            "UPI and Card"});
             this.cmbpaymode.Location = new System.Drawing.Point(94, 28);
             this.cmbpaymode.Name = "cmbpaymode";
             this.cmbpaymode.Size = new System.Drawing.Size(178, 27);

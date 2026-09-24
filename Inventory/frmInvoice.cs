@@ -1,5 +1,6 @@
 ﻿using CrystalDecisions.CrystalReports.Engine;
 using CrystalDecisions.Shared;
+using RAS = CrystalDecisions.ReportAppServer.ReportDefModel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -190,6 +191,7 @@ namespace Inventory
 
                 ReportDocument rd = LoadInvoiceReport();
 
+                ApplyInvoiceHeading(rd, ds);
                 SetBillTypeParameter();
 
                 SetReportDataSource(rd, ds);
@@ -331,6 +333,56 @@ namespace Inventory
             ds.Tables[0].TableName = "BillHeader";
         }
 
+        private void ApplyInvoiceHeading(ReportDocument rd, DataSet ds)
+        {
+            string terms = "";
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0 && ds.Tables[0].Columns.Contains("BillHeader"))
+            {
+                terms = Convert.ToString(ds.Tables[0].Rows[0]["BillHeader"]).Trim();
+            }
+            if (terms.Length == 0)
+            {
+                return;
+            }
+
+            CrystalDecisions.ReportAppServer.ClientDoc.ISCDReportClientDocument client = rd.ReportClientDocument;
+            RAS.ParagraphTextElement element = new RAS.ParagraphTextElement();
+            element.Kind = RAS.CrParagraphElementKindEnum.crParagraphElementKindText;
+            element.Text = "Payment Terms: " + terms;
+            RAS.Font font = new RAS.Font();
+            font.Name = "Arial";
+            font.Size = 10;
+            font.Bold = false;
+            RAS.FontColor fontColor = new RAS.FontColor();
+            fontColor.Font = font;
+            element.FontColor = fontColor;
+            RAS.ParagraphElements elements = new RAS.ParagraphElements();
+            elements.Add(element);
+            RAS.Paragraph paragraph = new RAS.Paragraph();
+            paragraph.ParagraphElements = elements;
+            RAS.Paragraphs paragraphs = new RAS.Paragraphs();
+            paragraphs.Add(paragraph);
+            RAS.TextObject text = new RAS.TextObject();
+            text.Left = 150;
+            text.Top = 2455;
+            text.Width = 6100;
+            text.Height = 260;
+            text.Paragraphs = paragraphs;
+            RAS.Section section = client.ReportDefController.ReportDefinition.ReportFooterArea.Sections[0];
+            RAS.LineObject line = new RAS.LineObject();
+            line.Left = 50;
+            line.Top = 2380;
+            line.Right = 6370;
+            line.Bottom = 2380;
+            line.SectionName = section.Name;
+            line.EndSectionName = section.Name;
+            line.LineStyle = RAS.CrLineStyleEnum.crLineStyleSingle;
+            line.LineThickness = 20;
+            text.SectionName = section.Name;
+            client.ReportDefController.ReportObjectController.Add(line, section, -1);
+            client.ReportDefController.ReportObjectController.Add(text, section, -1);
+        }
+
         private void SetBillTypeParameter()
         {
             Val = GetSelectedCopyText();
@@ -400,6 +452,7 @@ namespace Inventory
 
                 ReportDocument rd = LoadInvoiceReport();
 
+                ApplyInvoiceHeading(rd, ds);
                 SetBillTypeParameter();
 
                 SetReportDataSource(rd, ds);

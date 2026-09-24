@@ -1584,20 +1584,25 @@ namespace Inventory
                     if (requestedQty > totalAvailable)
                     {
                         MessageBox.Show("Available stock for " + productName + " is only " + totalAvailable.ToString("0.000") + ". Quantity cannot be greater than available stock.");
-                        dgvOrder.CurrentCell = row.Cells["Quantity"];
-                        return false;
+                        if (status != "Pending")
+                        {
+                            dgvOrder.CurrentCell = row.Cells["Quantity"];
+                            return false;
+                        }
                     }
-
-                    SetPdiStatus(row, "Verified");
-                    row.Cells["Pending Quantity"].Value = "0";
-                    row.Cells["Pending Quantity"].ReadOnly = true;
-
-                    decimal allocatedQty = AddAutomaticRackDetails(rackDetails, productId, requestedQty, availability);
-                    if (allocatedQty != requestedQty)
+                    else
                     {
-                        MessageBox.Show("Available rack allocation for " + productName + " is only " + allocatedQty.ToString("0.000") + ". Quantity cannot be greater than available stock.");
-                        dgvOrder.CurrentCell = row.Cells["Quantity"];
-                        return false;
+                        SetPdiStatus(row, "Verified");
+                        row.Cells["Pending Quantity"].Value = "0";
+                        row.Cells["Pending Quantity"].ReadOnly = true;
+
+                        decimal allocatedQty = AddAutomaticRackDetails(rackDetails, productId, requestedQty, availability);
+                        if (allocatedQty != requestedQty)
+                        {
+                            MessageBox.Show("Available rack allocation for " + productName + " is only " + allocatedQty.ToString("0.000") + ". Quantity cannot be greater than available stock.");
+                            dgvOrder.CurrentCell = row.Cells["Quantity"];
+                            return false;
+                        }
                     }
                 }
             }
