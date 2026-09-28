@@ -87,6 +87,39 @@ namespace Inventory.Masters
             //vLabel1.Enabled = false;
             //pnlLabelSearch.Visible = false;
             LoadLocationRackAssignmentControls();
+            ApplyBranchPriceLock();
+        }
+
+        private void ApplyBranchPriceLock()
+        {
+            if (BranchAccess.IsMainOffice)
+                return;
+
+            txtSalesPrice.ReadOnly = true;
+            txtMRP.ReadOnly = true;
+            txtSalesPrice.BackColor = SystemColors.Control;
+            txtMRP.BackColor = SystemColors.Control;
+        }
+
+        private bool BlockNewProductOutsideSalem()
+        {
+            if (BranchAccess.IsMainOffice || !string.IsNullOrEmpty(Convert.ToString(lblhidden.Text).Trim()))
+                return false;
+
+            MessageBox.Show("New products can be created only in Salem. You can edit the other fields of an existing product.");
+            return true;
+        }
+
+        private string StoredSalesPrice(string productId)
+        {
+            using (SqlConnection con = new SqlConnection(conn))
+            using (SqlCommand cmd = new SqlCommand("SELECT CONVERT(varchar(50), SalesPrice) FROM dbo.ProductMaster WHERE id = @id", con))
+            {
+                cmd.Parameters.AddWithValue("@id", productId);
+                con.Open();
+                object price = cmd.ExecuteScalar();
+                return price == null || price == DBNull.Value ? "" : Convert.ToString(price);
+            }
         }
       
         public Button btn;
@@ -351,8 +384,11 @@ namespace Inventory.Masters
             int productId;
             if (!int.TryParse(productIdText, out productId) || productId <= 0)
             {
+                SetLocationRackProductId(0);
                 return;
             }
+
+            SetLocationRackProductId(productId);
 
             DataTable mappings;
             try
@@ -386,6 +422,19 @@ namespace Inventory.Masters
 
             ResizeLocationRackAssignmentArea();
             SyncLegacyRackTextFromSelections();
+        }
+
+        private void SetLocationRackProductId(int productId)
+        {
+            if (!locationRackAssignmentInitialized)
+            {
+                return;
+            }
+
+            foreach (ProductLocationRackAssignmentControl locationControl in locationRackAssignmentControls.Values)
+            {
+                locationControl.ProductId = productId;
+            }
         }
 
         private void ClearLocationRackSelections()
@@ -1829,11 +1878,8 @@ namespace Inventory.Masters
 
         private void InsertUpdateRightToInformation()
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+            if (BlockNewProductOutsideSalem())
                 return;
-            }
 
             int Status = 0;
             if (!SyncLegacyRackTextFromSelections())
@@ -1921,9 +1967,10 @@ namespace Inventory.Masters
 
             ObjProductBAL.DisplayName = txtitemnames.Text.Trim().ToUpper();
 
-            ObjProductBAL.SalesPrice = txtSalesPrice.Text;
+            ObjProductBAL.SalesPrice = BranchAccess.IsMainOffice ? txtSalesPrice.Text : StoredSalesPrice(lblhidden.Text);
             Status = ProductBAL.SaveProduct(ObjProductBAL);
-            UpdateProductMRP(Status);
+            if (BranchAccess.IsMainOffice)
+                UpdateProductMRP(Status);
             if (Status > 0)
             {
                 try
@@ -2062,6 +2109,34 @@ namespace Inventory.Masters
             int updatedBy = 0;
             int.TryParse(Program.userid, out updatedBy);
 
+            DataTable existingMappings = productRackMappingRepository.GetMappings(productId);
+            foreach (DataRow mapping in existingMappings.Rows)
+            {
+                int existingRackId;
+                if (!int.TryParse(Convert.ToString(mapping["RackId"]), out existingRackId) || selectedRackIds.Contains(existingRackId))
+                {
+                    continue;
+                }
+
+                decimal balance = productRackMappingRepository.GetRackBalance(productId, existingRackId);
+                if (balance != 0m)
+                {
+                    selectedRackIds.Add(existingRackId);
+                    int locationId;
+                    ProductLocationRackAssignmentControl locationControl;
+                    if (int.TryParse(Convert.ToString(mapping["LocationId"]), out locationId)
+                        && locationRackAssignmentControls.TryGetValue(locationId, out locationControl))
+                    {
+                        locationControl.AddSelectedRack(existingRackId, Convert.ToString(mapping["RackCaption"]));
+                    }
+
+                    MessageBox.Show(
+                        "This rack currently contains " + balance.ToString("0.000") + " quantity of this product in " + Convert.ToString(mapping["RackCaption"]) + "."
+                        + Environment.NewLine
+                        + "Move the stock to another rack before removing the rack allocation.");
+                }
+            }
+
             productRackMappingRepository.DeleteAllMappings(productId);
             foreach (int rackId in selectedRackIds)
             {
@@ -2187,11 +2262,8 @@ namespace Inventory.Masters
 
         private void InsertUpdatepending()
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
+            if (BlockNewProductOutsideSalem())
                 return;
-            }
 
             int Status = 0;
             if (!SyncLegacyRackTextFromSelections())
@@ -2276,9 +2348,10 @@ namespace Inventory.Masters
 
             ObjProductBAL.DisplayName = txtitemnames.Text.Trim().ToUpper();
 
-            ObjProductBAL.SalesPrice = txtSalesPrice.Text;
+            ObjProductBAL.SalesPrice = BranchAccess.IsMainOffice ? txtSalesPrice.Text : StoredSalesPrice(lblhidden.Text);
             Status = ProductBAL.SaveProductPending(ObjProductBAL);
-            UpdateProductMRP(Status);
+            if (BranchAccess.IsMainOffice)
+                UpdateProductMRP(Status);
             if (Status > 0)
             {
                 try

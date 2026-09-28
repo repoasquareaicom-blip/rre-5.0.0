@@ -11,16 +11,23 @@ namespace Inventory.Sales
         private readonly DataTable racks;
         private readonly decimal requestedQty;
         private readonly string productName;
+        private readonly bool receivingStock;
 
         public Dictionary<int, decimal> Allocations;
         public decimal TotalSelected;
 
         public PdiRackAllocationDialog(string productName, decimal requestedQty, DataTable racks, Dictionary<int, decimal> existingAllocations)
+            : this(productName, requestedQty, racks, existingAllocations, false)
+        {
+        }
+
+        public PdiRackAllocationDialog(string productName, decimal requestedQty, DataTable racks, Dictionary<int, decimal> existingAllocations, bool receivingStock)
         {
             InitializeComponent();
             this.productName = productName;
             this.requestedQty = requestedQty;
             this.racks = racks;
+            this.receivingStock = receivingStock;
             Allocations = new Dictionary<int, decimal>();
             if (existingAllocations != null)
             {
@@ -33,9 +40,9 @@ namespace Inventory.Sales
 
         private void PdiRackAllocationDialog_Load(object sender, EventArgs e)
         {
-            Text = "Rack Allocation - " + productName;
+            Text = (receivingStock ? "Sales Return Rack - " : "Rack Allocation - ") + productName;
             lblProduct.Text = productName;
-            lblRequested.Text = "Requested Qty: " + requestedQty.ToString("0.###");
+            lblRequested.Text = (receivingStock ? "Return Qty: " : "Requested Qty: ") + requestedQty.ToString("0.###");
             LoadRackGrid();
             RecalculateTotal();
         }
@@ -103,11 +110,14 @@ namespace Inventory.Sales
                 return;
             }
 
-            decimal available = SafeDecimal(dgvRacks.Rows[e.RowIndex].Cells["AvailableColumn"].Value);
-            if (quantity > available)
+            if (!receivingStock)
             {
-                e.Cancel = true;
-                MessageBox.Show("Pick Qty cannot be greater than rack available quantity.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                decimal available = SafeDecimal(dgvRacks.Rows[e.RowIndex].Cells["AvailableColumn"].Value);
+                if (quantity > available)
+                {
+                    e.Cancel = true;
+                    MessageBox.Show("Pick Qty cannot be greater than rack available quantity.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
         }
 
@@ -234,7 +244,7 @@ namespace Inventory.Sales
                     MessageBox.Show("Enter a valid non-negative pick quantity.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return false;
                 }
-                if (quantity > available)
+                if (!receivingStock && quantity > available)
                 {
                     MessageBox.Show("Pick Qty cannot be greater than rack available quantity.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return false;
@@ -248,6 +258,13 @@ namespace Inventory.Sales
             if (total > requestedQty)
             {
                 MessageBox.Show("Selected quantity cannot exceed requested quantity of " + requestedQty.ToString("0.###") + ".", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                FocusFirstPickCell();
+                return false;
+            }
+
+            if (receivingStock && total != requestedQty)
+            {
+                MessageBox.Show("Selected quantity must be " + requestedQty.ToString("0.###") + " for this sales return.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 FocusFirstPickCell();
                 return false;
             }

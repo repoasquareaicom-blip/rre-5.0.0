@@ -50,8 +50,10 @@ namespace Inventory
             AddDeliveryNoteMenuItem();
             AddProductSyncQueueMenuItem();
             AddRemembranceReportMenuItem();
+            AddMaterialTransactionReportMenuItem();
             AddBranchStockStatusMenuItem();
             ApplyCloudEyeDelightMainTheme();
+            HideStockAndRackUploadMenus();
             ApplyMainOfficeProductRestrictions();
             InitializeProductUpdatedIndicator();
             FixMdiClientArea();
@@ -436,6 +438,26 @@ namespace Inventory
             report.Show();
         }
 
+        private void AddMaterialTransactionReportMenuItem()
+        {
+            if (reportsToolStripMenuItem == null)
+                return;
+
+            ToolStripMenuItem item = new ToolStripMenuItem();
+            item.Name = "materialTransactionLedgerToolStripMenuItem";
+            item.Size = new Size(320, 22);
+            item.Text = "Material Transaction Report";
+            item.Click += new EventHandler(materialTransactionLedgerToolStripMenuItem_Click);
+            reportsToolStripMenuItem.DropDownItems.Add(item);
+        }
+
+        private void materialTransactionLedgerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MaterialTransactionReport report = new MaterialTransactionReport();
+            report.MdiParent = this;
+            report.Show();
+        }
+
         private void ApplyCloudEyeDelightMainTheme()
         {
             string versionNo = GetApplicationVersion();
@@ -676,6 +698,18 @@ namespace Inventory
 
         }
 
+        private void HideStockAndRackUploadMenus()
+        {
+            if (stockUploadToolStripMenuItem != null)
+                stockUploadToolStripMenuItem.Visible = false;
+            if (stockReUploadToolStripMenuItem != null)
+                stockReUploadToolStripMenuItem.Visible = false;
+            if (stockUploadHistoryToolStripMenuItem != null)
+                stockUploadHistoryToolStripMenuItem.Visible = false;
+            if (rackUploadToolStripMenuItem != null)
+                rackUploadToolStripMenuItem.Visible = false;
+        }
+
         private void ApplyMainOfficeProductRestrictions()
         {
             if (BranchAccess.IsMainOffice)
@@ -690,8 +724,8 @@ namespace Inventory
             }
             if (productsToolStripMenuItem != null)
             {
-                productsToolStripMenuItem.Enabled = false;
-                productsToolStripMenuItem.ToolTipText = BranchAccess.MainOfficeOnlyMessage;
+                productsToolStripMenuItem.Enabled = true;
+                productsToolStripMenuItem.ToolTipText = "Sales Price and MRP can be changed only in Salem.";
             }
             if (priceUploadToolStripMenuItem != null)
             {
@@ -760,12 +794,6 @@ namespace Inventory
 
         private void productsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!BranchAccess.IsMainOffice)
-            {
-                MessageBox.Show(BranchAccess.MainOfficeOnlyMessage);
-                return;
-            }
-
             if (Program.objProduct == null)
             {
                 Masters.Product Product = new Masters.Product();
@@ -1351,6 +1379,7 @@ namespace Inventory
                 visibleMenu(dt);
             }
 
+            HideStockAndRackUploadMenus();
         }
 
         public void invisibleall()

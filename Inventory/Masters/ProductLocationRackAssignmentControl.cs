@@ -28,6 +28,8 @@ namespace Inventory.Masters
 
         public int LocationId { get; private set; }
 
+        public int ProductId { get; set; }
+
         public string LocationName
         {
             get { return lblLocationName.Text; }
@@ -326,6 +328,21 @@ namespace Inventory.Masters
 
             if (selectedRacks.ContainsKey(rackId))
             {
+                if (ProductId > 0)
+                {
+                    decimal balance = new ProductRackMappingRepository().GetRackBalance(ProductId, rackId);
+                    if (balance != 0m)
+                    {
+                        RackSelectorItem rack = FindRack(rackId);
+                        string caption = rack == null ? rackId.ToString() : rack.RackCaption;
+                        MessageBox.Show(
+                            "This rack currently contains " + balance.ToString("0.000") + " quantity of this product in " + caption + "."
+                            + Environment.NewLine
+                            + "Move the stock to another rack before removing the rack allocation.");
+                        return;
+                    }
+                }
+
                 selectedRacks.Remove(rackId);
                 RefreshSelector();
                 RenderSelectedRacks();

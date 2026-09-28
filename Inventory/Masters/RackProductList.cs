@@ -104,6 +104,11 @@ namespace Inventory.Masters
 
             int productId = Convert.ToInt32(rowView["ProductId"]);
             string productName = Convert.ToString(rowView["ProductName"]);
+            if (ShowStockBlock(productId, false))
+            {
+                return;
+            }
+
             DialogResult result = MessageBox.Show(
                 "Remove " + productName + " from rack " + rackCaption + "?",
                 "Remove Product From Rack",
@@ -122,7 +127,10 @@ namespace Inventory.Masters
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Remove product from rack failed. " + ex.Message);
+                if (!ShowStockBlock(productId, false))
+                {
+                    MessageBox.Show("Remove product from rack failed. " + ex.Message);
+                }
             }
         }
 
@@ -135,6 +143,11 @@ namespace Inventory.Masters
             }
 
             int productId = Convert.ToInt32(rowView["ProductId"]);
+            if (ShowStockBlock(productId, true))
+            {
+                return;
+            }
+
             using (RackChangeDialog dialog = new RackChangeDialog(repository, rackId, rackCaption))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -143,6 +156,11 @@ namespace Inventory.Masters
                 }
 
                 int newRackId = dialog.SelectedRackId;
+                if (ShowStockBlock(productId, true))
+                {
+                    return;
+                }
+
                 if (MappingExists(productId, newRackId))
                 {
                     MessageBox.Show("This product is already assigned to the selected rack.");
@@ -151,15 +169,35 @@ namespace Inventory.Masters
 
                 try
                 {
-                    mappingRepository.AddMapping(productId, newRackId, repository.GetCurrentUserId());
-                    mappingRepository.DeleteMapping(productId, rackId);
+                    mappingRepository.ReplaceMapping(productId, rackId, newRackId, repository.GetCurrentUserId());
                     RefreshAfterMappingChange();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Change rack failed. " + ex.Message);
+                    if (!ShowStockBlock(productId, true))
+                    {
+                        MessageBox.Show("Change rack failed. " + ex.Message);
+                    }
                 }
             }
+        }
+
+        private bool ShowStockBlock(int productId, bool changingRack)
+        {
+            decimal balance = mappingRepository.GetRackBalance(productId, rackId);
+            if (balance == 0m)
+            {
+                return false;
+            }
+
+            string action = changingRack
+                ? "changing the rack allocation."
+                : "removing the rack allocation.";
+            MessageBox.Show(
+                "This rack currently contains " + balance.ToString("0.000") + " quantity of this product in " + rackCaption + "."
+                + Environment.NewLine
+                + "Move the stock to another rack before " + action);
+            return true;
         }
 
         private bool MappingExists(int productId, int targetRackId)

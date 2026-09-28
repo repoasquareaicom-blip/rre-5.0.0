@@ -20,8 +20,10 @@ WHERE ISNULL(q.IsPDI, 0) = 1
       SELECT 1
       FROM dbo.MaterialTranscation mt
       WHERE mt.TransId = q.Quotationid
-        AND mt.TranscationType = 'PDI'
-        AND mt.Type = 'OUT'
+        AND (
+            (mt.TranscationType = 'PDI' AND mt.Type = 'OUT')
+            OR (mt.TranscationType = 'Sales Return' AND UPPER(LTRIM(RTRIM(mt.Type))) = 'IN')
+        )
   )
   AND NOT EXISTS
   (
@@ -30,6 +32,14 @@ WHERE ISNULL(q.IsPDI, 0) = 1
       WHERE rev.TransId = q.Quotationid
         AND rev.TranscationType = 'PDI-REVERSE'
         AND rev.Type = 'IN'
+  )
+  AND NOT EXISTS
+  (
+      SELECT 1
+      FROM dbo.MaterialTranscation rev
+      WHERE rev.TransId = q.Quotationid
+        AND rev.TranscationType = 'Sales Return-REVERSE'
+        AND UPPER(LTRIM(RTRIM(rev.Type))) = 'OUT'
   )
   AND NOT EXISTS
   (
@@ -53,6 +63,14 @@ WHERE ISNULL(q.IsPDI, 0) = 1
     q.[date] AS [Date],
     q.customername AS [Customer],
     ISNULL(r.Name, '') AS [Reference],
+    CASE
+        WHEN SUM(CASE WHEN mt.TranscationType = 'Sales Return' THEN 1 ELSE 0 END) > 0
+         AND SUM(CASE WHEN mt.TranscationType = 'PDI' THEN 1 ELSE 0 END) > 0
+        THEN 'Sale + Return'
+        WHEN SUM(CASE WHEN mt.TranscationType = 'Sales Return' THEN 1 ELSE 0 END) > 0
+        THEN 'Return'
+        ELSE 'Sale'
+    END AS [Movement],
     CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS [PDI Qty],
     COUNT(1) AS [PDI Item Count]"), con))
             using (SqlDataAdapter ad = new SqlDataAdapter(cmd))
@@ -60,6 +78,23 @@ WHERE ISNULL(q.IsPDI, 0) = 1
                 DataTable dt = new DataTable();
                 ad.Fill(dt);
                 return dt;
+            }
+        }
+
+        public bool HasSalesReturn(string quotationId)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(@"
+SELECT TOP 1 1
+FROM dbo.MaterialTranscation
+WHERE TransId = @QuotationId
+  AND TranscationType = 'Sales Return'
+  AND UPPER(LTRIM(RTRIM(Type))) = 'IN';", con))
+            {
+                cmd.Parameters.Add("@QuotationId", SqlDbType.VarChar, 100).Value = quotationId ?? "";
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                return result != null && result != DBNull.Value;
             }
         }
 
@@ -90,6 +125,89 @@ ORDER BY ISNULL(pm.ItemName, ''), mt.MaterailId, mt.LocationId, mt.RackId;", con
             using (SqlDataAdapter ad = new SqlDataAdapter(cmd))
             {
                 cmd.Parameters.Add("@QuotationId", SqlDbType.VarChar, 100).Value = quotationId;
+                DataTable dt = new DataTable();
+                ad.Fill(dt);
+                return dt;
+            }
+        }
+
+        public DataTable GetReversalLines(string quotationId)
+        {
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(@"
+SELECT
+    mt.MaterailId AS ProductId,
+    ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, '')) AS ProductName,
+    CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS SignedQuantity,
+    CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS ReverseQuantity,
+    CAST(0 AS BIT) AS IsReturn,
+    CAST(1 AS BIT) AS RackWise,
+    CAST(NULL AS INT) AS RackId,
+    CAST('' AS VARCHAR(200)) AS RackCaption
+FROM dbo.MaterialTranscation mt
+LEFT JOIN dbo.ProductMaster pm
+    ON pm.id = mt.MaterailId
+WHERE mt.TransId = @QuotationId
+  AND mt.TranscationType = 'PDI'
+  AND mt.Type = 'OUT'
+  AND ISNULL(pm.RackWiseStockMovement, 0) = 1
+GROUP BY mt.MaterailId, ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, ''))
+
+UNION ALL
+
+SELECT
+    mt.MaterailId AS ProductId,
+    ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, '')) AS ProductName,
+    CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS SignedQuantity,
+    CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS ReverseQuantity,
+    CAST(0 AS BIT) AS IsReturn,
+    CAST(0 AS BIT) AS RackWise,
+    mt.RackId,
+    ISNULL(rm.RackCaption, '') AS RackCaption
+FROM dbo.MaterialTranscation mt
+LEFT JOIN dbo.ProductMaster pm
+    ON pm.id = mt.MaterailId
+LEFT JOIN dbo.RackMaster rm
+    ON rm.RackId = mt.RackId
+WHERE mt.TransId = @QuotationId
+  AND mt.TranscationType = 'PDI'
+  AND mt.Type = 'OUT'
+  AND ISNULL(pm.RackWiseStockMovement, 0) = 0
+GROUP BY
+    mt.MaterailId,
+    ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, '')),
+    mt.RackId,
+    ISNULL(rm.RackCaption, '')
+
+UNION ALL
+
+SELECT
+    mt.MaterailId AS ProductId,
+    ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, '')) AS ProductName,
+    CAST(-SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS SignedQuantity,
+    CAST(SUM(ISNULL(mt.Quantity, 0)) AS DECIMAL(18,3)) AS ReverseQuantity,
+    CAST(1 AS BIT) AS IsReturn,
+    CAST(ISNULL(pm.RackWiseStockMovement, 0) AS BIT) AS RackWise,
+    mt.RackId,
+    ISNULL(rm.RackCaption, '') AS RackCaption
+FROM dbo.MaterialTranscation mt
+LEFT JOIN dbo.ProductMaster pm
+    ON pm.id = mt.MaterailId
+LEFT JOIN dbo.RackMaster rm
+    ON rm.RackId = mt.RackId
+WHERE mt.TransId = @QuotationId
+  AND mt.TranscationType = 'Sales Return'
+  AND UPPER(LTRIM(RTRIM(mt.Type))) = 'IN'
+GROUP BY
+    mt.MaterailId,
+    ISNULL(NULLIF(pm.DisplayName, ''), ISNULL(pm.ItemName, '')),
+    CAST(ISNULL(pm.RackWiseStockMovement, 0) AS BIT),
+    mt.RackId,
+    ISNULL(rm.RackCaption, '')
+ORDER BY ProductName, IsReturn, RackCaption;", con))
+            using (SqlDataAdapter ad = new SqlDataAdapter(cmd))
+            {
+                cmd.Parameters.Add("@QuotationId", SqlDbType.VarChar, 100).Value = quotationId ?? "";
                 DataTable dt = new DataTable();
                 ad.Fill(dt);
                 return dt;
@@ -143,6 +261,10 @@ ORDER BY
                 rackDetails.TypeName = "dbo.PdiReverseRackDetailType";
                 rackDetails.Value = BuildRackDetailsTvp(request.RackDetails);
 
+                SqlParameter returnRackDetails = cmd.Parameters.Add("@ReturnRackDetails", SqlDbType.Structured);
+                returnRackDetails.TypeName = "dbo.PdiReverseRackDetailType";
+                returnRackDetails.Value = BuildRackDetailsTvp(request.ReturnRackDetails);
+
                 SqlParameter output = cmd.Parameters.Add("@output", SqlDbType.Int);
                 output.Direction = ParameterDirection.Output;
 
@@ -175,8 +297,10 @@ SELECT " + selectExpression + @"
 FROM dbo.QuotationHeader q
 INNER JOIN dbo.MaterialTranscation mt
     ON mt.TransId = q.Quotationid
-   AND mt.TranscationType = 'PDI'
-   AND mt.Type = 'OUT'
+   AND (
+        (mt.TranscationType = 'PDI' AND mt.Type = 'OUT')
+        OR (mt.TranscationType = 'Sales Return' AND UPPER(LTRIM(RTRIM(mt.Type))) = 'IN')
+   )
 LEFT JOIN dbo.[References] r
     ON r.ReferencesID = q.Referenceid
 WHERE ISNULL(q.IsPDI, 0) = 1
@@ -187,6 +311,14 @@ WHERE ISNULL(q.IsPDI, 0) = 1
       WHERE rev.TransId = q.Quotationid
         AND rev.TranscationType = 'PDI-REVERSE'
         AND rev.Type = 'IN'
+  )
+  AND NOT EXISTS
+  (
+      SELECT 1
+      FROM dbo.MaterialTranscation rev
+      WHERE rev.TransId = q.Quotationid
+        AND rev.TranscationType = 'Sales Return-REVERSE'
+        AND UPPER(LTRIM(RTRIM(rev.Type))) = 'OUT'
   )
   AND NOT EXISTS
   (
@@ -263,6 +395,7 @@ ORDER BY q.[date] DESC, q.Quotationid DESC;";
         public string QuotationId;
         public string UpdatedBy;
         public DataTable RackDetails;
+        public DataTable ReturnRackDetails;
     }
 
     public class PdiReverseResult

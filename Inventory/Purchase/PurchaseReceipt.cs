@@ -3281,7 +3281,7 @@ namespace Inventory.Purchase
                 if (e.ColumnIndex == 4)
                 {
                     double OrderedQty;
-                    int Quantity = 0;
+                    decimal Quantity = 0;
                     try
                     {
                         if (IsNewPO)
@@ -3300,7 +3300,7 @@ namespace Inventory.Purchase
                                 {
                                     Quantity = (from r in rowColl
                                                 where r.Field<string>("Productid") == v
-                                                select r.Field<int>("Quantity")).First<int>();
+                                                select r.Field<decimal>("Quantity")).First<decimal>();
                                 }
                                 catch (Exception eds)
                                 {

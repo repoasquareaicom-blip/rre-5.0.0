@@ -613,6 +613,9 @@
     <Compile Include="Sales\PdiRackAllocationDialog.Designer.cs">
       <DependentUpon>PdiRackAllocationDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Sales\PdiReverseReviewDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Sales\PdiReverseRackAllocationDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -753,6 +756,9 @@
     </Compile>
     <Compile Include="Report\MaterialTranscationreport.Designer.cs">
       <DependentUpon>MaterialTranscationreport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Report\MaterialTransactionReport.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Report\NotInEstimation.cs">
       <SubType>Form</SubType>

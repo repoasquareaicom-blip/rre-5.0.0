@@ -49,6 +49,7 @@ namespace Inventory
         public SalesQuotation1()
         {
             InitializeComponent();
+            dgvOrder.CellFormatting += dgvOrder_CellFormatting;
             EnsureFollowupDateStorage();
             srole = Program.Userrole;
             if (srole != "Admin")
@@ -1845,6 +1846,22 @@ END", con))
             catch
             {
 
+            }
+        }
+
+        private void dgvOrder_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || !dgvOrder.Columns.Contains("Quantity"))
+            {
+                return;
+            }
+
+            decimal quantity;
+            string quantityText = Convert.ToString(dgvOrder.Rows[e.RowIndex].Cells["Quantity"].Value);
+            if (decimal.TryParse(quantityText, out quantity) && quantity < 0)
+            {
+                e.CellStyle.ForeColor = Color.Red;
+                e.CellStyle.SelectionForeColor = Color.Red;
             }
         }
 

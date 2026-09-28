@@ -185,9 +185,9 @@ namespace Inventory
             this.rdr.WriteLine("");
             this.rdr.Write(this.GetFormatedText("             No guarantee for glass fittings & bulbs. Company service guarantee only", 90));
             this.rdr.WriteLine("");
-            this.rdr.Write(this.GetFormatedText("               for guarantee items. Goods once sold cannot be taken back or exchanged.", 90));
-            this.rdr.WriteLine("" + (char)18);
             this.rdr.WriteLine("");
+            this.rdr.Write(this.GetCenterdFormatedText("Kindly avoid to exchange or return the goods, thanks", 90));
+            this.rdr.WriteLine("" + (char)18);
             this.rdr.WriteLine("");
             this.rdr.WriteLine("");
             this.rdr.WriteLine("");
@@ -708,7 +708,8 @@ namespace Inventory
                 strPrintFooter += this.GetFormatedText(Convert.ToString(value), 13);
                 strPrintFooter += this.GetRightFormatedText(Convert.ToString("ToT:"), 4);
                 strPrintFooter += this.GetFormatedText(Convert.ToString(this.Total), 13) + "\n";
-                strPrintFooter += this.GetFormatedText("GOODS ONCE SOLD CANNOT BE RETURNED OR EXCHANGED.", 80) + "\n";
+                strPrintFooter += "\n";
+                strPrintFooter += this.GetCenterdFormatedText("Kindly avoid to exchange or return the goods, thanks", 80) + "\n";
             }
 
             return strPrintFooter;

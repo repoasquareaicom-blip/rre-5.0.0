@@ -339,10 +339,10 @@ namespace Inventory
                 this.rdr.WriteLine(this.GetFormatedText(Convert.ToString(this.dsMain.Tables[0].Rows[0]["Assist"]), 30));
                 this.rdr.WriteLine(this.GetCenterdFormatedText("Check the goods carefully before taking delivery", 80));
                 this.rdr.WriteLine(this.GetCenterdFormatedText("No guarantee for glass fittings & bulbs. Company service guarantee only", 80));
-                this.rdr.WriteLine(this.GetCenterdFormatedText("for guarantee items. Goods once sold cannot be taken back or exchanged.", 80));
+                this.rdr.WriteLine("");
+                this.rdr.WriteLine(this.GetCenterdFormatedText("Kindly avoid to exchange or return the goods, thanks", 80));
                 if (this.pagerecno <= 9)
                 {
-                    this.rdr.WriteLine("");
                     this.rdr.WriteLine("");
                     this.rdr.WriteLine("");
                     this.rdr.WriteLine("");
@@ -546,11 +546,11 @@ namespace Inventory
 					this.rdr.WriteLine("");
 					this.rdr.Write(this.GetFormatedText("    No guarantee for glass fittings & bulbs. Company service guarantee only", 80));
 					this.rdr.WriteLine("");
-					this.rdr.Write(this.GetFormatedText("    for guarantee items. Goods once sold cannot be taken back or exchanged.", 80));
+					this.rdr.WriteLine("");
+					this.rdr.Write(this.GetCenterdFormatedText("Kindly avoid to exchange or return the goods, thanks", 80));
 				}
 				if (this.pagerecno <= 9)
 				{
-					this.rdr.WriteLine("");
 					this.rdr.WriteLine("");
 					this.rdr.WriteLine("");
 				}

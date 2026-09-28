@@ -34,13 +34,91 @@ namespace Inventory.Sales
             }
         }
 
+        public bool HasRackAllocation(int productId)
+        {
+            if (productId <= 0)
+            {
+                return false;
+            }
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(@"
+SELECT TOP 1 1
+FROM dbo.ProductRackMapping prm
+INNER JOIN dbo.RackMaster rm ON rm.RackId = prm.RackId
+WHERE prm.ProductId = @ProductId
+  AND ISNULL(rm.IsActive, 0) = 1", con))
+            {
+                cmd.Parameters.Add("@ProductId", SqlDbType.Int).Value = productId;
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                return result != null && result != DBNull.Value;
+            }
+        }
+
         public DataTable GetSalesRacksForProduct(int productId)
         {
-            return GetEligibleRackAvailability(productId);
+            return GetEligibleRackAvailability(productId, false);
+        }
+
+        public DataTable GetReturnRacksForProduct(int productId)
+        {
+            return GetEligibleRackAvailability(productId, true);
+        }
+
+        public decimal GetSalesRackAvailableQuantity(int productId)
+        {
+            if (productId <= 0)
+            {
+                return 0;
+            }
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(@"
+SELECT CAST(ISNULL(SUM(ISNULL(stock.AvailableQuantity, 0)), 0) AS DECIMAL(18,3))
+FROM dbo.ProductRackMapping prm
+INNER JOIN dbo.RackMaster rm
+    ON rm.RackId = prm.RackId
+INNER JOIN dbo.LocationMaster lm
+    ON lm.LocationId = rm.LocationId
+OUTER APPLY
+(
+    SELECT SUM(
+        CASE
+            WHEN UPPER(ISNULL(mt.Type, '')) = 'IN' THEN ISNULL(mt.Quantity, 0)
+            WHEN UPPER(ISNULL(mt.Type, '')) = 'OUT' THEN -ISNULL(mt.Quantity, 0)
+            ELSE 0
+        END
+    ) AS AvailableQuantity
+    FROM dbo.MaterialTranscation mt
+    WHERE mt.MaterailId = prm.ProductId
+      AND mt.RackId = prm.RackId
+) stock
+WHERE prm.ProductId = @ProductId
+  AND ISNULL(rm.IsActive, 0) = 1
+  AND ISNULL(lm.IsActive, 0) = 1
+  AND ISNULL(lm.AllowForSales, 0) = 1", con))
+            {
+                cmd.Parameters.Add("@ProductId", SqlDbType.Int).Value = productId;
+                con.Open();
+                object result = cmd.ExecuteScalar();
+                if (result == null || result == DBNull.Value)
+                {
+                    return 0;
+                }
+
+                return Convert.ToDecimal(result);
+            }
         }
 
         public DataTable GetEligibleRackAvailability(int productId)
         {
+            return GetEligibleRackAvailability(productId, false);
+        }
+
+        private DataTable GetEligibleRackAvailability(int productId, bool includeZeroStock)
+        {
+            string stockFilter = includeZeroStock ? "" : "  AND ISNULL(stock.AvailableQuantity, 0) > 0";
             using (SqlConnection con = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(@"
 SELECT
@@ -75,7 +153,7 @@ WHERE prm.ProductId = @ProductId
   AND ISNULL(rm.IsActive, 0) = 1
   AND ISNULL(lm.IsActive, 0) = 1
   AND ISNULL(lm.AllowForSales, 0) = 1
-  AND ISNULL(stock.AvailableQuantity, 0) > 0
+" + stockFilter + @"
 ORDER BY
     ISNULL(lm.DisplayOrder, 0),
     ISNULL(rm.DisplayOrder, 0),

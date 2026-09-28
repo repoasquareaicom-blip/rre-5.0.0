@@ -2270,37 +2270,34 @@ namespace Inventory.Sales
                 return;
             }
 
-            DialogResult confirm = MessageBox.Show(
-                "Are you sure you want to reverse PDI for " + quotationId + "?\n\nThe PDI stock quantity will be returned to the racks.",
-                "Reverse PDI",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (confirm != DialogResult.Yes)
-            {
-                return;
-            }
-
             try
             {
-                DataTable originalPdiOut = pdiReverseRepository.GetOriginalPdiOut(quotationId);
-                if (originalPdiOut.Rows.Count == 0)
+                DataTable reversalLines = pdiReverseRepository.GetReversalLines(quotationId);
+                if (reversalLines.Rows.Count == 0)
                 {
                     MessageBox.Show("Original PDI stock transaction was not found.", "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     LoadReversePdiGrid();
                     return;
                 }
 
-                DataTable rackDetails = BuildReversePdiRackDetails(originalPdiOut);
-                if (rackDetails == null)
+                DataTable rackDetails;
+                DataTable returnRackDetails;
+                using (PdiReverseReviewDialog dialog = new PdiReverseReviewDialog(quotationId, reversalLines, pdiReverseRepository))
                 {
-                    return;
+                    if (dialog.ShowDialog(this) != DialogResult.OK || dialog.SaleRackDetails == null)
+                    {
+                        return;
+                    }
+
+                    rackDetails = dialog.SaleRackDetails;
+                    returnRackDetails = dialog.ReturnRackDetails;
                 }
 
                 PdiReverseRequest request = new PdiReverseRequest();
                 request.QuotationId = quotationId;
                 request.UpdatedBy = Program.userid;
                 request.RackDetails = rackDetails;
+                request.ReturnRackDetails = returnRackDetails;
 
                 PdiReverseResult result = pdiReverseRepository.ReversePdi(request);
                 MessageBox.Show(result.Result.Length > 0 ? result.Result : "PDI reversed successfully.", "Reverse PDI", MessageBoxButtons.OK, MessageBoxIcon.Information);
