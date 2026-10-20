@@ -100,6 +100,7 @@ namespace Inventory
             this.categoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.locationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.locationRackMasterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.productRackAllocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.userCreationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rolesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.employeeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -899,6 +900,7 @@ namespace Inventory
             this.categoryToolStripMenuItem,
             this.locationToolStripMenuItem,
             this.locationRackMasterToolStripMenuItem,
+            this.productRackAllocationToolStripMenuItem,
             this.userCreationToolStripMenuItem,
             this.rolesToolStripMenuItem,
             this.employeeToolStripMenuItem,
@@ -1006,6 +1008,17 @@ namespace Inventory
             this.locationRackMasterToolStripMenuItem.Click += new System.EventHandler(this.locationRackMasterToolStripMenuItem_Click);
             this.locationRackMasterToolStripMenuItem.MouseEnter += new System.EventHandler(this.locationRackMasterToolStripMenuItem_MouseEnter);
             this.locationRackMasterToolStripMenuItem.MouseLeave += new System.EventHandler(this.locationRackMasterToolStripMenuItem_MouseLeave);
+            // 
+            // productRackAllocationToolStripMenuItem
+            // 
+            this.productRackAllocationToolStripMenuItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.productRackAllocationToolStripMenuItem.Image = global::Inventory.Properties.Resources.world_map_icon;
+            this.productRackAllocationToolStripMenuItem.Name = "productRackAllocationToolStripMenuItem";
+            this.productRackAllocationToolStripMenuItem.Size = new System.Drawing.Size(221, 22);
+            this.productRackAllocationToolStripMenuItem.Text = "Product Rack Allocation";
+            this.productRackAllocationToolStripMenuItem.Click += new System.EventHandler(this.productRackAllocationToolStripMenuItem_Click);
+            this.productRackAllocationToolStripMenuItem.MouseEnter += new System.EventHandler(this.productRackAllocationToolStripMenuItem_MouseEnter);
+            this.productRackAllocationToolStripMenuItem.MouseLeave += new System.EventHandler(this.productRackAllocationToolStripMenuItem_MouseLeave);
             // 
             // userCreationToolStripMenuItem
             // 
@@ -1361,6 +1374,7 @@ namespace Inventory
         private System.Windows.Forms.ToolStripMenuItem issuedReceivedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem locationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem locationRackMasterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem productRackAllocationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockReportToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem userCreationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;

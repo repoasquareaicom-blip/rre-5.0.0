@@ -2885,10 +2885,11 @@
             this.ddlpaymode.FormattingEnabled = true;
             this.ddlpaymode.Items.AddRange(new object[] {
             "-Select-",
-            "Cash"});
+            "Cash",
+            "UPI / GPay"});
             this.ddlpaymode.Location = new System.Drawing.Point(53, 22);
             this.ddlpaymode.Name = "ddlpaymode";
-            this.ddlpaymode.Size = new System.Drawing.Size(100, 23);
+            this.ddlpaymode.Size = new System.Drawing.Size(140, 23);
             this.ddlpaymode.TabIndex = 383;
             this.ddlpaymode.SelectedIndexChanged += new System.EventHandler(this.ddlpaymode_SelectedIndexChanged);
             // 

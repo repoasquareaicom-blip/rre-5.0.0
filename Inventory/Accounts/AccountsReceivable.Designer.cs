@@ -114,6 +114,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.panel12 = new System.Windows.Forms.Panel();
             this.panel13 = new System.Windows.Forms.Panel();
+            this.label26 = new System.Windows.Forms.Label();
             this.dateTimePicker2 = new System.Windows.Forms.DateTimePicker();
             this.label22 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
@@ -122,7 +123,6 @@
             this.label23 = new System.Windows.Forms.Label();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.label21 = new System.Windows.Forms.Label();
-            this.label26 = new System.Windows.Forms.Label();
             this.pnlprodsearch.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel6.SuspendLayout();
@@ -641,14 +641,14 @@
             // label3
             // 
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.label3.Location = new System.Drawing.Point(813, 444);
+            this.label3.Location = new System.Drawing.Point(380, 366);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(216, 23);
+            this.label3.Size = new System.Drawing.Size(310, 28);
             this.label3.TabIndex = 403;
-            this.label3.Text = "Total Estimation Amount  :";
+            this.label3.Text = "Total Estimation Amount :";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblBalancePaidAmount
             // 
@@ -657,9 +657,9 @@
             this.lblBalancePaidAmount.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.lblBalancePaidAmount.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblBalancePaidAmount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.lblBalancePaidAmount.Location = new System.Drawing.Point(1043, 447);
+            this.lblBalancePaidAmount.Location = new System.Drawing.Point(700, 366);
             this.lblBalancePaidAmount.Name = "lblBalancePaidAmount";
-            this.lblBalancePaidAmount.Size = new System.Drawing.Size(108, 19);
+            this.lblBalancePaidAmount.Size = new System.Drawing.Size(160, 28);
             this.lblBalancePaidAmount.TabIndex = 404;
             this.lblBalancePaidAmount.Text = "0.00";
             this.lblBalancePaidAmount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -668,14 +668,14 @@
             // label5
             // 
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.label5.Location = new System.Drawing.Point(972, 511);
+            this.label5.Location = new System.Drawing.Point(380, 468);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(57, 23);
+            this.label5.Size = new System.Drawing.Size(310, 28);
             this.label5.TabIndex = 407;
-            this.label5.Text = "Mode";
+            this.label5.Text = "Mode :";
+            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // panel4
             // 
@@ -683,9 +683,9 @@
             this.panel4.Controls.Add(this.rbtnCheque);
             this.panel4.Controls.Add(this.rbtnCash);
             this.panel4.Controls.Add(this.rbtnCard);
-            this.panel4.Location = new System.Drawing.Point(1039, 508);
+            this.panel4.Location = new System.Drawing.Point(700, 466);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(256, 29);
+            this.panel4.Size = new System.Drawing.Size(560, 34);
             this.panel4.TabIndex = 410;
             // 
             // rbtnCheque
@@ -735,16 +735,16 @@
             // 
             // btnAccountReceivableSave
             // 
-            this.btnAccountReceivableSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAccountReceivableSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAccountReceivableSave.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnAccountReceivableSave.FlatAppearance.BorderSize = 0;
             this.btnAccountReceivableSave.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnAccountReceivableSave.Font = new System.Drawing.Font("Calibri", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAccountReceivableSave.Location = new System.Drawing.Point(952, 5);
+            this.btnAccountReceivableSave.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAccountReceivableSave.Location = new System.Drawing.Point(1090, 508);
             this.btnAccountReceivableSave.Name = "btnAccountReceivableSave";
-            this.btnAccountReceivableSave.Size = new System.Drawing.Size(75, 25);
+            this.btnAccountReceivableSave.Size = new System.Drawing.Size(170, 34);
             this.btnAccountReceivableSave.TabIndex = 411;
-            this.btnAccountReceivableSave.Text = "Save";
+            this.btnAccountReceivableSave.Text = "Save Payment";
             this.btnAccountReceivableSave.UseVisualStyleBackColor = true;
             this.btnAccountReceivableSave.Click += new System.EventHandler(this.btnAccountReceivableSave_Click);
             // 
@@ -766,14 +766,14 @@
             // label15
             // 
             this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.label15.Location = new System.Drawing.Point(893, 482);
+            this.label15.Location = new System.Drawing.Point(380, 434);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(136, 23);
+            this.label15.Size = new System.Drawing.Size(310, 28);
             this.label15.TabIndex = 413;
             this.label15.Text = "Amount to Pay :";
+            this.label15.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblPaidAmount
             // 
@@ -781,10 +781,10 @@
             this.lblPaidAmount.BackColor = System.Drawing.Color.Gainsboro;
             this.lblPaidAmount.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblPaidAmount.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.lblPaidAmount.Location = new System.Drawing.Point(1039, 472);
+            this.lblPaidAmount.Location = new System.Drawing.Point(700, 432);
             this.lblPaidAmount.MaxLength = 10;
             this.lblPaidAmount.Name = "lblPaidAmount";
-            this.lblPaidAmount.Size = new System.Drawing.Size(111, 30);
+            this.lblPaidAmount.Size = new System.Drawing.Size(160, 30);
             this.lblPaidAmount.TabIndex = 403;
             this.lblPaidAmount.Text = "0.00";
             this.lblPaidAmount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -801,7 +801,7 @@
             this.panel2.Controls.Add(this.dgvReceivableBalance);
             this.panel2.Location = new System.Drawing.Point(7, 34);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(1293, 406);
+            this.panel2.Size = new System.Drawing.Size(1293, 320);
             this.panel2.TabIndex = 0;
             // 
             // panel9
@@ -810,7 +810,7 @@
             this.panel9.Controls.Add(this.button1);
             this.panel9.Controls.Add(this.panel10);
             this.panel9.Controls.Add(this.label18);
-            this.panel9.Location = new System.Drawing.Point(793, 53);
+            this.panel9.Location = new System.Drawing.Point(380, 36);
             this.panel9.Name = "panel9";
             this.panel9.Size = new System.Drawing.Size(480, 224);
             this.panel9.TabIndex = 454;
@@ -879,9 +879,9 @@
             this.panelEstimation.Controls.Add(this.btnEstimationPanelClose);
             this.panelEstimation.Controls.Add(this.panel5);
             this.panelEstimation.Controls.Add(this.label1);
-            this.panelEstimation.Location = new System.Drawing.Point(5, 28);
+            this.panelEstimation.Location = new System.Drawing.Point(16, 6);
             this.panelEstimation.Name = "panelEstimation";
-            this.panelEstimation.Size = new System.Drawing.Size(774, 248);
+            this.panelEstimation.Size = new System.Drawing.Size(1255, 300);
             this.panelEstimation.TabIndex = 414;
             this.panelEstimation.Visible = false;
             // 
@@ -893,7 +893,7 @@
             this.btnEstimationPanelClose.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.btnEstimationPanelClose.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnEstimationPanelClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnEstimationPanelClose.Location = new System.Drawing.Point(731, 2);
+            this.btnEstimationPanelClose.Location = new System.Drawing.Point(1210, 2);
             this.btnEstimationPanelClose.Name = "btnEstimationPanelClose";
             this.btnEstimationPanelClose.Size = new System.Drawing.Size(39, 26);
             this.btnEstimationPanelClose.TabIndex = 439;
@@ -906,9 +906,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel5.Controls.Add(this.dgvEstimationBill);
-            this.panel5.Location = new System.Drawing.Point(5, 29);
+            this.panel5.Location = new System.Drawing.Point(8, 32);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(761, 232);
+            this.panel5.Size = new System.Drawing.Size(1239, 260);
             this.panel5.TabIndex = 402;
             // 
             // dgvEstimationBill
@@ -922,12 +922,11 @@
             this.dgvEstimationBill.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvEstimationBill.BackgroundColor = System.Drawing.SystemColors.ScrollBar;
             this.dgvEstimationBill.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvEstimationBill.Location = new System.Drawing.Point(-1, 0);
+            this.dgvEstimationBill.Location = new System.Drawing.Point(0, 0);
             this.dgvEstimationBill.Name = "dgvEstimationBill";
             this.dgvEstimationBill.ReadOnly = true;
             this.dgvEstimationBill.RowHeadersVisible = false;
-            this.dgvEstimationBill.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.dgvEstimationBill.Size = new System.Drawing.Size(763, 219);
+            this.dgvEstimationBill.Size = new System.Drawing.Size(1239, 260);
             this.dgvEstimationBill.TabIndex = 399;
             this.dgvEstimationBill.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvEstimationBill_CellClick);
             // 
@@ -959,21 +958,21 @@
             this.dgvReceivableBalance.Name = "dgvReceivableBalance";
             this.dgvReceivableBalance.ReadOnly = true;
             this.dgvReceivableBalance.RowHeadersVisible = false;
-            this.dgvReceivableBalance.Size = new System.Drawing.Size(1290, 402);
+            this.dgvReceivableBalance.Size = new System.Drawing.Size(1290, 316);
             this.dgvReceivableBalance.TabIndex = 399;
             this.dgvReceivableBalance.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvReceivableBalance_CellClick);
             // 
             // label6
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
-            this.label6.Location = new System.Drawing.Point(595, 465);
+            this.label6.Location = new System.Drawing.Point(380, 400);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(161, 23);
+            this.label6.Size = new System.Drawing.Size(310, 28);
             this.label6.TabIndex = 441;
-            this.label6.Text = "Discount Amount  :";
+            this.label6.Text = "Discount Amount :";
+            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // txtDiscount
             // 
@@ -981,10 +980,10 @@
             this.txtDiscount.BackColor = System.Drawing.Color.Gainsboro;
             this.txtDiscount.Font = new System.Drawing.Font("Calibri", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDiscount.ForeColor = System.Drawing.Color.IndianRed;
-            this.txtDiscount.Location = new System.Drawing.Point(766, 466);
+            this.txtDiscount.Location = new System.Drawing.Point(700, 398);
             this.txtDiscount.MaxLength = 10;
             this.txtDiscount.Name = "txtDiscount";
-            this.txtDiscount.Size = new System.Drawing.Size(111, 30);
+            this.txtDiscount.Size = new System.Drawing.Size(160, 30);
             this.txtDiscount.TabIndex = 442;
             this.txtDiscount.Text = "0.00";
             this.txtDiscount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -998,23 +997,21 @@
             this.cashpl.Controls.Add(this.btnCloseDenominationPanel);
             this.cashpl.Controls.Add(this.panel15);
             this.cashpl.Controls.Add(this.label143);
-            this.cashpl.Location = new System.Drawing.Point(1, 1);
+            this.cashpl.Location = new System.Drawing.Point(16, 8);
             this.cashpl.Name = "cashpl";
-            this.cashpl.Size = new System.Drawing.Size(418, 442);
+            this.cashpl.Size = new System.Drawing.Size(520, 520);
             this.cashpl.TabIndex = 437;
             this.cashpl.Visible = false;
             // 
             // btnCloseDenominationPanel
             // 
-            this.btnCloseDenominationPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCloseDenominationPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCloseDenominationPanel.BackColor = System.Drawing.Color.Transparent;
             this.btnCloseDenominationPanel.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("btnCloseDenominationPanel.BackgroundImage")));
             this.btnCloseDenominationPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.btnCloseDenominationPanel.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnCloseDenominationPanel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCloseDenominationPanel.Location = new System.Drawing.Point(384, -2);
+            this.btnCloseDenominationPanel.Location = new System.Drawing.Point(486, 2);
             this.btnCloseDenominationPanel.Name = "btnCloseDenominationPanel";
             this.btnCloseDenominationPanel.Size = new System.Drawing.Size(29, 29);
             this.btnCloseDenominationPanel.TabIndex = 438;
@@ -1033,9 +1030,9 @@
             this.panel15.Controls.Add(this.txtTotal);
             this.panel15.Controls.Add(this.cashddl);
             this.panel15.Controls.Add(this.btncashpay);
-            this.panel15.Location = new System.Drawing.Point(-2, 25);
+            this.panel15.Location = new System.Drawing.Point(0, 30);
             this.panel15.Name = "panel15";
-            this.panel15.Size = new System.Drawing.Size(414, 415);
+            this.panel15.Size = new System.Drawing.Size(520, 488);
             this.panel15.TabIndex = 0;
             // 
             // btnPayReturnBalance
@@ -1044,9 +1041,9 @@
             this.btnPayReturnBalance.Enabled = false;
             this.btnPayReturnBalance.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPayReturnBalance.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPayReturnBalance.Location = new System.Drawing.Point(258, 379);
+            this.btnPayReturnBalance.Location = new System.Drawing.Point(310, 452);
             this.btnPayReturnBalance.Name = "btnPayReturnBalance";
-            this.btnPayReturnBalance.Size = new System.Drawing.Size(131, 31);
+            this.btnPayReturnBalance.Size = new System.Drawing.Size(150, 34);
             this.btnPayReturnBalance.TabIndex = 405;
             this.btnPayReturnBalance.Text = "Pay Balance";
             this.btnPayReturnBalance.UseVisualStyleBackColor = true;
@@ -1057,7 +1054,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
-            this.label4.Location = new System.Drawing.Point(104, 345);
+            this.label4.Location = new System.Drawing.Point(12, 416);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(146, 23);
             this.label4.TabIndex = 404;
@@ -1069,7 +1066,7 @@
             this.txtReturnBalAmount.BackColor = System.Drawing.Color.Gainsboro;
             this.txtReturnBalAmount.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtReturnBalAmount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
-            this.txtReturnBalAmount.Location = new System.Drawing.Point(256, 342);
+            this.txtReturnBalAmount.Location = new System.Drawing.Point(310, 412);
             this.txtReturnBalAmount.Name = "txtReturnBalAmount";
             this.txtReturnBalAmount.ReadOnly = true;
             this.txtReturnBalAmount.Size = new System.Drawing.Size(111, 31);
@@ -1083,7 +1080,7 @@
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label12.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.label12.Location = new System.Drawing.Point(9, 310);
+            this.label12.Location = new System.Drawing.Point(12, 376);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(241, 23);
             this.label12.TabIndex = 402;
@@ -1117,7 +1114,7 @@
             this.txtTotal.BackColor = System.Drawing.Color.Gainsboro;
             this.txtTotal.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotal.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.txtTotal.Location = new System.Drawing.Point(256, 307);
+            this.txtTotal.Location = new System.Drawing.Point(310, 372);
             this.txtTotal.Name = "txtTotal";
             this.txtTotal.ReadOnly = true;
             this.txtTotal.Size = new System.Drawing.Size(111, 31);
@@ -1134,10 +1131,10 @@
             this.cashddl.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.cashddl.BackgroundColor = System.Drawing.SystemColors.ControlLight;
             this.cashddl.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.cashddl.Location = new System.Drawing.Point(9, 51);
+            this.cashddl.Location = new System.Drawing.Point(12, 46);
             this.cashddl.Name = "cashddl";
             this.cashddl.RowHeadersVisible = false;
-            this.cashddl.Size = new System.Drawing.Size(400, 256);
+            this.cashddl.Size = new System.Drawing.Size(494, 320);
             this.cashddl.TabIndex = 10;
             this.cashddl.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.cashddl_CellEndEdit);
             this.cashddl.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.cashddl_EditingControlShowing);
@@ -1148,9 +1145,9 @@
             this.btncashpay.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btncashpay.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btncashpay.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btncashpay.Location = new System.Drawing.Point(369, 307);
+            this.btncashpay.Location = new System.Drawing.Point(440, 370);
             this.btncashpay.Name = "btncashpay";
-            this.btncashpay.Size = new System.Drawing.Size(45, 33);
+            this.btncashpay.Size = new System.Drawing.Size(64, 34);
             this.btncashpay.TabIndex = 8;
             this.btncashpay.Text = "Ok";
             this.btncashpay.UseVisualStyleBackColor = true;
@@ -1192,6 +1189,7 @@
             // 
             // button2
             // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button2.Location = new System.Drawing.Point(9, 519);
             this.button2.Name = "button2";
@@ -1284,6 +1282,16 @@
             this.panel13.Size = new System.Drawing.Size(930, 46);
             this.panel13.TabIndex = 405;
             // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label26.Location = new System.Drawing.Point(599, 15);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(53, 15);
+            this.label26.TabIndex = 406;
+            this.label26.Text = "To Date:";
+            // 
             // dateTimePicker2
             // 
             this.dateTimePicker2.Location = new System.Drawing.Point(662, 13);
@@ -1369,16 +1377,6 @@
             this.label21.TabIndex = 401;
             this.label21.Text = "Report";
             this.label21.TextAlign = System.Drawing.ContentAlignment.BottomRight;
-            // 
-            // label26
-            // 
-            this.label26.AutoSize = true;
-            this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label26.Location = new System.Drawing.Point(599, 15);
-            this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(53, 15);
-            this.label26.TabIndex = 406;
-            this.label26.Text = "To Date:";
             // 
             // AccountsReceivable
             // 

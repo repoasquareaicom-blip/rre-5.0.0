@@ -1171,7 +1171,7 @@ namespace Inventory
 
                      if (Convert.ToString(thisCbCell.Value) == "Pending")
                     {
-                        if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value)) || Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == "." || Convert.ToInt32(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == 0)
+                        if (string.IsNullOrEmpty(Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value)) || Convert.ToString(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == "." || Convert.ToDecimal(dgvOrder.Rows[k].Cells["Pending Quantity"].Value) == 0m)
                         {
                             i++;
                             message = message + "* Please Enter Pending Quantity." + "\n";

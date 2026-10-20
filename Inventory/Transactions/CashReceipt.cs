@@ -18,6 +18,27 @@ namespace Inventory.Transactions
     public partial class CashReceipt : Form
     {
         TransactionBAL ObjTransactionBAL = new TransactionBAL();
+        private RadioButton rbUpi;
+        private RadioButton rbCash;
+        private TextBox txtUpiReference;
+        private TextBox txtUpiAmount;
+        private ComboBox ddlMainHead;
+        private Label lblMainHead;
+        private Label lblReason;
+        private TextBox txtReason;
+        private Panel paymentModeHost;
+        private Label lblPaymentMode;
+        private Panel upiPanel;
+        private Label lblUpiAmountValue;
+        private Label lblUpiDateValue;
+        private Label lblCashReceivedTitle;
+        private Label lblBalanceGivenTitle;
+        private Label lblAmountToReceiveValue;
+        private Label lblCashReceivedValue;
+        private Label lblBalanceGivenValue;
+        private Label lblNetCashReceivedValue;
+        private Label lblReceiptDifferenceValue;
+        private bool arrangingLayout;
         string clickstatus = string.Empty;
         string AccountHeadID = string.Empty;
         string role = Program.Userrole;
@@ -72,6 +93,7 @@ namespace Inventory.Transactions
                 paymentdo.Rows.Add("2000", 0, 0.00);
                 paymentdo.Rows.Add("1000", 0, 0.00);
                 paymentdo.Rows.Add("500", 0, 0.00);
+                paymentdo.Rows.Add("200", 0, 0.00);
                 paymentdo.Rows.Add("100", 0, 0.00);
                 paymentdo.Rows.Add("50", 0, 0.00);
                 paymentdo.Rows.Add("20", 0, 0.00);
@@ -128,6 +150,7 @@ namespace Inventory.Transactions
                 returnpaymentdo.Rows.Add("2000", 0, 0.00);
                 returnpaymentdo.Rows.Add("1000", 0, 0.00);
                 returnpaymentdo.Rows.Add("500", 0, 0.00);
+                returnpaymentdo.Rows.Add("200", 0, 0.00);
                 returnpaymentdo.Rows.Add("100", 0, 0.00);
                 returnpaymentdo.Rows.Add("50", 0, 0.00);
                 returnpaymentdo.Rows.Add("20", 0, 0.00);
@@ -179,72 +202,81 @@ namespace Inventory.Transactions
 
         private bool Validation()
         {
-            bool status = true;
-            string message = "";
-            int i = 0;
-            if (string.IsNullOrEmpty(txtrptFrom.Text))
+            return ValidateReceipt();
+        }
+
+        private bool ValidateReceipt()
+        {
+            if (string.IsNullOrEmpty(txtrptFrom.Text.Trim()))
             {
-                i++;
-                message = message + "* Please Enter Receipt From" + "\n";
-                if (i == 1)
-                    //a1Panel2.Visible = false;
-
-
-                    this.ActiveControl = txtrptFrom;
-
+                MessageBox.Show("Enter Received From");
+                txtrptFrom.Focus();
+                return false;
             }
-
-            if (ddlAccountHead.SelectedIndex == 0)
+            if (ddlMainHead == null || ddlMainHead.SelectedIndex <= 0)
             {
-                i++;
-                message = message + "* Please Select Account Head" + "\n";
-                if (i == 1)
-                    this.ActiveControl = ddlAccountHead;
-            }
-
-            if (Convert.ToDecimal(txtamount.Text) <= 0)
-            {
-                i++;
-                message = message + "*Denomination Should Not Be Zero" + "\n";
-                if (i == 1)
-                    this.ActiveControl = txtamount;
-                txtamount.Text = "0.00";
-            }
-
-            if (pnreturn.Visible)
-            {
-                if (Convert.ToDecimal(lblreturn.Text) <= 0)
+                MessageBox.Show("Select Account Main Header");
+                if (ddlMainHead != null)
                 {
-                    i++;
-                    message = message + "*Return Denomination Should Not Be Zero" + "\n";
-                    if (i == 1)
-                        this.ActiveControl = lblreturn;
-                    lblreturn.Text = "0.00";
+                    ddlMainHead.Focus();
                 }
+                return false;
             }
-            if (!string.IsNullOrEmpty(message))
+            if (ddlAccountHead.SelectedIndex <= 0)
             {
-                MessageBox.Show(message);
-                status = false;
+                MessageBox.Show("Select Account Head");
+                ddlAccountHead.Focus();
+                return false;
             }
-            return status;
+            if (txtdate.Value.Year < 2000)
+            {
+                MessageBox.Show("Enter Date");
+                txtdate.Focus();
+                return false;
+            }
+            decimal receiptAmount;
+            if (decimal.TryParse(txtamount.Text.Trim(), out receiptAmount) == false || receiptAmount <= 0m)
+            {
+                MessageBox.Show("Enter Amount");
+                txtamount.Focus();
+                return false;
+            }
+            if (txtReason == null || string.IsNullOrEmpty(txtReason.Text.Trim()))
+            {
+                MessageBox.Show("Enter Reason");
+                if (txtReason != null)
+                {
+                    txtReason.Focus();
+                }
+                return false;
+            }
+            if (txtReason.Text.Trim().Length > NarrationMaxLength)
+            {
+                MessageBox.Show("Reason cannot exceed " + NarrationMaxLength.ToString() + " characters.");
+                txtReason.Focus();
+                return false;
+            }
+            if (rbCash == null || rbUpi == null || (rbCash.Checked == false && rbUpi.Checked == false))
+            {
+                MessageBox.Show("Select Payment Mode");
+                return false;
+            }
+            return true;
         }
 
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if ((keyData == Keys.Tab || keyData == (Keys.Tab | Keys.Shift)) && a1Panel2.Visible && a1Panel2.ContainsFocus)
+            {
+                MoveFocusWithin(a1Panel2, keyData == Keys.Tab);
+                return true;
+            }
             if (keyData == Keys.Escape)
             {
                 if (a1Panel2.Visible || pnreturn.Visible)
                 {
-                    a1Panel2.Visible = false;
-                    pnreturn.Visible = false;
-                    txtamount.Text = "0.00";
-                    Btnpay.Enabled = true;
-                    dgvreturn.DataSource = null;
-                    LoadreturnDenomination();
-                    lblreturn.Text = "0";
-                    lblTotalCash.Text = "0";
+                    CloseReceiptCashPopup();
                     return true;
                 }
                 else
@@ -397,26 +429,8 @@ namespace Inventory.Transactions
         }
         private void dgvDenomination_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-
-            decimal sum = 0.00M;
-            for (int i = 0; i < dgvDenomination.Rows.Count; i++)
-            {
-                if (string.IsNullOrEmpty(Convert.ToString(dgvDenomination.Rows[i].Cells[1].Value)))
-                {
-                    dgvDenomination.Rows[i].Cells[1].Value = 0;
-                }
-                try
-                {
-                    dgvDenomination.Rows[i].Cells[2].Value = Convert.ToDecimal(dgvDenomination.Rows[i].Cells[0].Value) * Convert.ToDecimal(dgvDenomination.Rows[i].Cells[1].Value);
-                    sum = sum + Convert.ToDecimal(dgvDenomination.Rows[i].Cells[2].Value);
-                    lblTotalCash.Text = Convert.ToString(sum);
-                    txtamount.Text = Convert.ToString(sum);
-                }
-                catch
-                {
-
-                }
-            }
+            UpdateGridAmounts(dgvDenomination);
+            RefreshReceiptSummary();
         }
 
         private void dgvDenomination_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -475,7 +489,7 @@ namespace Inventory.Transactions
         {
             if (e.KeyData == Keys.Enter)
             {
-                if (dgvDenomination.CurrentCell.RowIndex == 9)
+                if (dgvDenomination.CurrentCell.RowIndex == dgvDenomination.Rows.Count - 1)
                 {
                     dgvDenomination.Rows[9].Cells[1].Selected = false;
                     lblcutomerpay.Focus();
@@ -528,14 +542,17 @@ namespace Inventory.Transactions
 
         private void txtamount_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (char.IsDigit(e.KeyChar) || char.IsControl(e.KeyChar))
+            if (char.IsControl(e.KeyChar) || char.IsDigit(e.KeyChar))
             {
                 e.Handled = false;
+                return;
             }
-            else
+            if (e.KeyChar == '.' && txtamount.Text.IndexOf('.') < 0)
             {
-                e.Handled = true;
+                e.Handled = false;
+                return;
             }
+            e.Handled = true;
         }
 
         private void btnclear_Click(object sender, EventArgs e)
@@ -546,81 +563,52 @@ namespace Inventory.Transactions
         {
             txtamount.Text = "";
             txtrptFrom.Text = "";
-            txtdate.Text = "";
-            LoadDenomination();
+            txtdate.Value = DateTime.Today;
+            if (txtReason != null)
+            {
+                txtReason.Text = "";
+            }
+            if (txtUpiReference != null)
+            {
+                txtUpiReference.Text = "";
+            }
+            if (rbCash != null)
+            {
+                rbCash.Checked = false;
+            }
+            if (rbUpi != null)
+            {
+                rbUpi.Checked = false;
+            }
+            if (upiPanel != null)
+            {
+                upiPanel.Visible = false;
+            }
             rdtransfer.Checked = false;
-            a1Panel2.Visible = false;
-            ddlAccountHead.SelectedIndex = 0;
+            CloseReceiptCashPopup();
+            if (ddlMainHead != null && ddlMainHead.Items.Count > 0)
+            {
+                ddlMainHead.SelectedIndex = 0;
+            }
+            BindAccountHeadPlaceholder();
             Btnpay.Enabled = true;
-            dgvreturn.DataSource = null;
-            LoadreturnDenomination();
             lblreturn.Text = "0";
             lblTotalCash.Text = "0";
             pnreturn.Visible = false;
-            LoadreturnDenomination();
-
+            LayoutReceiptForm();
         }
 
         private void picClose_Click(object sender, EventArgs e)
         {
-            a1Panel2.Visible = false;
-            LoadDenomination();
-            lblTotalCash.Text = "0";
-            txtamount.Text = Convert.ToString(Convert.ToDouble(lblTotalCash.Text) - Convert.ToDouble(lblreturn.Text));
-            button2.PerformClick();
+            CloseReceiptCashPopup();
         }
 
         private void txtamount_Click(object sender, EventArgs e)
         {
-
-
-            LoadDenomination();
-            Rectangle resolution = Screen.PrimaryScreen.Bounds;
-            int w = resolution.Width;
-            int h = resolution.Height;
-
-            if (w == 1024 && h == 768)
-            {
-
-                dgvDenomination.ColumnHeadersDefaultCellStyle.Font = new Font("Tahoma", 11F, FontStyle.Bold);
-                dgvDenomination.DefaultCellStyle.Font = new Font("Tahoma", 13F, GraphicsUnit.Pixel);
-                dgvDenomination.DefaultCellStyle.BackColor = Color.Gainsboro;
-                dgvDenomination.DefaultCellStyle.ForeColor = Color.Black;
-                dgvDenomination.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
-            }
-
-            lblTotalCash.Text = "0";
-            txtamount.Text = "0";
-            a1Panel2.Visible = true;
-            dgvDenomination.Focus();
-            dgvDenomination.CurrentCell = dgvDenomination[1, 0];
-
-
-
         }
 
         private void txtamount_Enter(object sender, EventArgs e)
         {
-            LoadDenomination();
-            Rectangle resolution = Screen.PrimaryScreen.Bounds;
-            int w = resolution.Width;
-            int h = resolution.Height;
-
-            if (w == 1024 && h == 768)
-            {
-
-                dgvDenomination.ColumnHeadersDefaultCellStyle.Font = new Font("Tahoma", 11F, FontStyle.Bold);
-                dgvDenomination.DefaultCellStyle.Font = new Font("Tahoma", 13F, GraphicsUnit.Pixel);
-                dgvDenomination.DefaultCellStyle.BackColor = Color.Gainsboro;
-                dgvDenomination.DefaultCellStyle.ForeColor = Color.Black;
-                dgvDenomination.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
-            }
-
-            lblTotalCash.Text = "0";
-            txtamount.Text = "0";
-            a1Panel2.Visible = true;
-            dgvDenomination.Focus();
-            dgvDenomination.CurrentCell = dgvDenomination[1, 0];
         }
 
         private void btnadd_Click(object sender, EventArgs e)
@@ -706,81 +694,117 @@ namespace Inventory.Transactions
 
         private void Btnpay_Click(object sender, EventArgs e)
         {
-            if (Validation())
+            if (ValidateReceipt() == false)
             {
-                string res = savepayment();
-                lblreturn.Text = "0";
-                lblTotalCash.Text = "0";
-                if (!string.IsNullOrEmpty(res))
+                return;
+            }
+            if (rbCash.Checked)
+            {
+                if (a1Panel2.Visible == false)
                 {
-                    MessageBox.Show("Inserted Successfully");
-                    bindaccounthead();
-                    clear();
-                    bindcashreceipt();
-
+                    OpenReceiptCashPopup();
+                    return;
                 }
-                else
+                RefreshReceiptSummary();
+                if (IsReceiptReconciled() == false)
                 {
-                    MessageBox.Show("Insertion Failed");
-                    //clear();
+                    MessageBox.Show("Cash Received minus Balance Given must equal the Amount to Receive");
+                    return;
                 }
             }
+            else
+            {
+                string reference;
+                if (AccountsChannel.TryUpiReference(txtUpiReference.Text, out reference) == false)
+                {
+                    txtUpiReference.Focus();
+                    return;
+                }
+                txtUpiReference.Text = reference;
+                CloseReceiptCashPopup();
+            }
 
+            string res = savepayment();
+            if (!string.IsNullOrEmpty(res))
+            {
+                MessageBox.Show("Inserted Successfully");
+                clear();
+                bindcashreceipt();
+            }
+            else
+            {
+                MessageBox.Show("Insertion Failed");
+            }
         }
 
         public string savepayment()
         {
             string res = string.Empty;
-            if (Validation())
+            decimal receiptAmount;
+            if (decimal.TryParse(txtamount.Text.Trim(), out receiptAmount) == false || receiptAmount <= 0m)
             {
-                TransactionBAL objTransactionBAL = new TransactionBAL();
-                objTransactionBAL.RequestedBy = txtrptFrom.Text;
-                DateTime date = new DateTime(txtdate.Value.Year, txtdate.Value.Month, txtdate.Value.Day);
-                objTransactionBAL.CashRequestedDate = date;
-                objTransactionBAL.Amount = txtamount.Text;
-                objTransactionBAL.Updatedby = Program.userid;
-                objTransactionBAL.AccountHead = Convert.ToString(ddlAccountHead.Text);
-                //AccountHeadID = Convert.ToString(ddlAccountHead.SelectedValue);
-                //objTransactionBAL.SaveAccountHead(AccountHeadID, Convert.ToString(ddlAccountHead.Text));
-                string CashRptId = objTransactionBAL.SaveTransactionCashReceipt(objTransactionBAL);
-
-
-                if (!string.IsNullOrEmpty(CashRptId))
+                return res;
+            }
+            string net = receiptAmount.ToString("0.00");
+            TransactionBAL objTransactionBAL = new TransactionBAL();
+            objTransactionBAL.RequestedBy = txtrptFrom.Text.Trim();
+            objTransactionBAL.CashRequestedDate = txtdate.Value.Date;
+            objTransactionBAL.Amount = net;
+            objTransactionBAL.Updatedby = Program.userid;
+            objTransactionBAL.AccountHead = Convert.ToString(ddlAccountHead.Text);
+            string CashRptId = objTransactionBAL.SaveTransactionCashReceipt(objTransactionBAL);
+            if (string.IsNullOrEmpty(CashRptId))
+            {
+                return res;
+            }
+            AccountsChannel.SaveCashReceiptReason(CashRptId, txtReason.Text.Trim());
+            if (rbUpi != null && rbUpi.Checked)
+            {
+                string reference;
+                if (AccountsChannel.TryUpiReference(txtUpiReference.Text, out reference) == false)
                 {
-
-                    objTransactionBAL.CashRequestId = CashRptId;
-                    objTransactionBAL.Mode = "Cash";
-                    objTransactionBAL.Amount = lblTotalCash.Text;
-                    objTransactionBAL.oamount = txtamount.Text;
-                    objTransactionBAL.TwoThousand = Convert.ToString(dgvDenomination.Rows[0].Cells[1].Value.ToString());
-                    objTransactionBAL.Thousand = Convert.ToString(dgvDenomination.Rows[1].Cells[1].Value.ToString());
-                    objTransactionBAL.FiveHundred = Convert.ToString(dgvDenomination.Rows[2].Cells[1].Value.ToString());
-                    objTransactionBAL.Hundred = Convert.ToString(dgvDenomination.Rows[3].Cells[1].Value.ToString());
-                    objTransactionBAL.Fifty = Convert.ToString(dgvDenomination.Rows[4].Cells[1].Value.ToString());
-                    objTransactionBAL.Twenty = Convert.ToString(dgvDenomination.Rows[5].Cells[1].Value.ToString());
-                    objTransactionBAL.Ten = Convert.ToString(dgvDenomination.Rows[6].Cells[1].Value.ToString());
-                    objTransactionBAL.Five = Convert.ToString(dgvDenomination.Rows[7].Cells[1].Value.ToString());
-                    objTransactionBAL.Coin = Convert.ToString(dgvDenomination.Rows[8].Cells[1].Value.ToString());
-                    objTransactionBAL.One = Convert.ToString(dgvDenomination.Rows[9].Cells[1].Value.ToString());
-                    res = objTransactionBAL.SaveTransactionCashReceiptPayment(objTransactionBAL);
-
-
+                    return res;
                 }
+                res = AccountsChannel.SaveCashReceiptUpi(CashRptId, receiptAmount, reference);
+            }
+            else
+            {
+                objTransactionBAL.CashRequestId = CashRptId;
+                objTransactionBAL.Mode = "Cash";
+                objTransactionBAL.Amount = net;
+                objTransactionBAL.oamount = net;
+                objTransactionBAL.TwoThousand = SignedReceiptCount(2000);
+                objTransactionBAL.Thousand = SignedReceiptCount(1000);
+                objTransactionBAL.FiveHundred = SignedReceiptCount(500);
+                objTransactionBAL.Hundred = SignedReceiptCount(100);
+                objTransactionBAL.Fifty = SignedReceiptCount(50);
+                objTransactionBAL.Twenty = SignedReceiptCount(20);
+                objTransactionBAL.Ten = SignedReceiptCount(10);
+                objTransactionBAL.Five = SignedReceiptCount(5);
+                objTransactionBAL.Coin = SignedReceiptCount(2);
+                objTransactionBAL.One = SignedReceiptCount(1);
+                res = objTransactionBAL.SaveTransactionCashReceiptPayment(objTransactionBAL);
+                if (string.IsNullOrEmpty(res) == false)
+                {
+                    AccountsChannel.SaveTwoHundred(res, SignedReceiptCount(200), null);
+                }
+            }
+            if (string.IsNullOrEmpty(res) == false)
+            {
                 GetReport(CashRptId);
-               // search("ReceiptFrom", "", "EnteredOn", "Today", role, UserId);
-
             }
             return res;
         }
 
         private void bnpaybalance_Click(object sender, EventArgs e)
         {
+            return;
             if (Convert.ToDouble(lblTotalCash.Text) > Convert.ToDouble(lblreturn.Text))
             {
                 if (Validation())
                 {
                     string res = savepayment();
-                    if (!string.IsNullOrEmpty(res))
+                    if (!string.IsNullOrEmpty(res) && (rbUpi == null || !rbUpi.Checked))
                     {
                         SavepaymentDenomination(res);
                     }
@@ -807,112 +831,116 @@ namespace Inventory.Transactions
 
             // Pnloading4.Visible = true;
             objQuotationbal.recivetransid = s;
-            if (Convert.ToString(dgvreturn.Rows[0].Cells[1].Value) != "0")
+            if (AccountsChannel.NoteCount(dgvreturn, 2000) != "0")
             {
-                objQuotationbal.recivetwothousand = "-" + Convert.ToString(dgvreturn.Rows[0].Cells[1].Value);
+                objQuotationbal.recivetwothousand = "-" + AccountsChannel.NoteCount(dgvreturn, 2000);
 
             }
             else
             {
-                objQuotationbal.recivetwothousand = Convert.ToString(dgvreturn.Rows[0].Cells[1].Value);
+                objQuotationbal.recivetwothousand = AccountsChannel.NoteCount(dgvreturn, 2000);
             }
-            if (Convert.ToString(dgvreturn.Rows[1].Cells[1].Value) != "0")
+            if (AccountsChannel.NoteCount(dgvreturn, 1000) != "0")
             {
-                objQuotationbal.recivethousand = "-" + Convert.ToString(dgvreturn.Rows[1].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivethousand = Convert.ToString(dgvreturn.Rows[1].Cells[1].Value);
-            }
-            if (Convert.ToString(dgvreturn.Rows[2].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivefivehundred = "-" + Convert.ToString(dgvreturn.Rows[2].Cells[1].Value);
+                objQuotationbal.recivethousand = "-" + AccountsChannel.NoteCount(dgvreturn, 1000);
 
             }
             else
             {
-                objQuotationbal.recivefivehundred = Convert.ToString(dgvreturn.Rows[2].Cells[1].Value);
+                objQuotationbal.recivethousand = AccountsChannel.NoteCount(dgvreturn, 1000);
             }
-
-
-
-            if (Convert.ToString(dgvreturn.Rows[3].Cells[1].Value) != "0")
+            if (AccountsChannel.NoteCount(dgvreturn, 500) != "0")
             {
-                objQuotationbal.recivehundred = "-" + Convert.ToString(dgvreturn.Rows[3].Cells[1].Value);
+                objQuotationbal.recivefivehundred = "-" + AccountsChannel.NoteCount(dgvreturn, 500);
 
             }
             else
             {
-                objQuotationbal.recivehundred = Convert.ToString(dgvreturn.Rows[3].Cells[1].Value);
+                objQuotationbal.recivefivehundred = AccountsChannel.NoteCount(dgvreturn, 500);
             }
 
 
-            if (Convert.ToString(dgvreturn.Rows[4].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivefifty = "-" + Convert.ToString(dgvreturn.Rows[4].Cells[1].Value);
 
-            }
-            else
+            if (AccountsChannel.NoteCount(dgvreturn, 100) != "0")
             {
-                objQuotationbal.recivefifty = Convert.ToString(dgvreturn.Rows[4].Cells[1].Value);
-            }
-
-
-            if (Convert.ToString(dgvreturn.Rows[5].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivetwenty = "-" + Convert.ToString(dgvreturn.Rows[5].Cells[1].Value);
+                objQuotationbal.recivehundred = "-" + AccountsChannel.NoteCount(dgvreturn, 100);
 
             }
             else
             {
-                objQuotationbal.recivetwenty = Convert.ToString(dgvreturn.Rows[5].Cells[1].Value);
-            }
-
-            if (Convert.ToString(dgvreturn.Rows[6].Cells[1].Value) != "0")
-            {
-                objQuotationbal.reciveten = "-" + Convert.ToString(dgvreturn.Rows[6].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.reciveten = Convert.ToString(dgvreturn.Rows[6].Cells[1].Value);
+                objQuotationbal.recivehundred = AccountsChannel.NoteCount(dgvreturn, 100);
             }
 
 
-            if (Convert.ToString(dgvreturn.Rows[7].Cells[1].Value) != "0")
+            if (AccountsChannel.NoteCount(dgvreturn, 50) != "0")
             {
-                objQuotationbal.recivefive = "-" + Convert.ToString(dgvreturn.Rows[7].Cells[1].Value);
+                objQuotationbal.recivefifty = "-" + AccountsChannel.NoteCount(dgvreturn, 50);
 
             }
             else
             {
-                objQuotationbal.recivefive = Convert.ToString(dgvreturn.Rows[7].Cells[1].Value);
+                objQuotationbal.recivefifty = AccountsChannel.NoteCount(dgvreturn, 50);
             }
 
-            if (Convert.ToString(dgvreturn.Rows[8].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivecoin = "-" + Convert.ToString(dgvreturn.Rows[8].Cells[1].Value);
 
-            }
-            else
+            if (AccountsChannel.NoteCount(dgvreturn, 20) != "0")
             {
-                objQuotationbal.recivecoin = Convert.ToString(dgvreturn.Rows[8].Cells[1].Value);
-            }
-
-            if (Convert.ToString(dgvreturn.Rows[9].Cells[1].Value) != "0")
-            {
-                objQuotationbal.ReceiveOne = "-" + Convert.ToString(dgvreturn.Rows[9].Cells[1].Value);
+                objQuotationbal.recivetwenty = "-" + AccountsChannel.NoteCount(dgvreturn, 20);
 
             }
             else
             {
-                objQuotationbal.ReceiveOne = Convert.ToString(dgvreturn.Rows[9].Cells[1].Value);
+                objQuotationbal.recivetwenty = AccountsChannel.NoteCount(dgvreturn, 20);
+            }
+
+            if (AccountsChannel.NoteCount(dgvreturn, 10) != "0")
+            {
+                objQuotationbal.reciveten = "-" + AccountsChannel.NoteCount(dgvreturn, 10);
+
+            }
+            else
+            {
+                objQuotationbal.reciveten = AccountsChannel.NoteCount(dgvreturn, 10);
+            }
+
+
+            if (AccountsChannel.NoteCount(dgvreturn, 5) != "0")
+            {
+                objQuotationbal.recivefive = "-" + AccountsChannel.NoteCount(dgvreturn, 5);
+
+            }
+            else
+            {
+                objQuotationbal.recivefive = AccountsChannel.NoteCount(dgvreturn, 5);
+            }
+
+            if (AccountsChannel.NoteCount(dgvreturn, 2) != "0")
+            {
+                objQuotationbal.recivecoin = "-" + AccountsChannel.NoteCount(dgvreturn, 2);
+
+            }
+            else
+            {
+                objQuotationbal.recivecoin = AccountsChannel.NoteCount(dgvreturn, 2);
+            }
+
+            if (AccountsChannel.NoteCount(dgvreturn, 1) != "0")
+            {
+                objQuotationbal.ReceiveOne = "-" + AccountsChannel.NoteCount(dgvreturn, 1);
+
+            }
+            else
+            {
+                objQuotationbal.ReceiveOne = AccountsChannel.NoteCount(dgvreturn, 1);
             }
 
             objQuotationbal.OAmount = "-" + lblreturn.Text;
 
             string output = objQuotationbal.SavepaymentDenomination(objQuotationbal);
+            if (output == "1")
+            {
+                AccountsChannel.SaveTwoHundred(s, null, AccountsChannel.SignedChangeCount(dgvreturn, 200));
+            }
 
             if (output == "1")
             {
@@ -936,7 +964,7 @@ namespace Inventory.Transactions
         {
             if (e.KeyData == Keys.Enter)
             {
-                if (dgvreturn.CurrentCell.RowIndex == 9)
+                if (dgvreturn.CurrentCell.RowIndex == dgvreturn.Rows.Count - 1)
                 {
                     dgvreturn.Rows[9].Cells[1].Selected = false;
                     bnpaybalance.Focus();
@@ -946,51 +974,8 @@ namespace Inventory.Transactions
 
         private void dgvreturn_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-
-            decimal sum = 0.00M;
-            for (int i = 0; i < dgvreturn.Rows.Count; i++)
-            {
-                if (string.IsNullOrEmpty(Convert.ToString(dgvreturn.Rows[i].Cells[1].Value)))
-                {
-                    dgvreturn.Rows[i].Cells[1].Value = 0;
-                }
-
-                try
-                {
-                    dgvreturn.Rows[i].Cells[2].Value = Convert.ToDecimal(dgvreturn.Rows[i].Cells[0].Value) * Convert.ToDecimal(dgvreturn.Rows[i].Cells[1].Value);
-                    sum = sum + Convert.ToDecimal(dgvreturn.Rows[i].Cells[2].Value);
-                    //lblTotalCash.Text = Convert.ToString(sum);
-                    lblreturn.Text = Convert.ToString(sum);
-                }
-                catch
-                {
-
-                }
-
-                txtamount.Text = Convert.ToString(Convert.ToDouble(lblTotalCash.Text) - Convert.ToDouble(lblreturn.Text));
-            }
-
-
-
-            //decimal retunval = Convert.ToDecimal(txtamount.Text);
-            ////for (int i = 0; i < dgvreturn.Rows.Count; i++)
-            ////{
-            ////    try
-            ////    {
-            //dgvreturn.Rows[e.RowIndex].Cells[2].Value = Convert.ToDecimal(dgvreturn.Rows[e.RowIndex].Cells[0].Value) * Convert.ToDecimal(dgvreturn.Rows[e.RowIndex].Cells[1].Value);
-            //sum = sum + Convert.ToDecimal(dgvreturn.Rows[e.RowIndex].Cells[2].Value);
-
-            //retunval = Convert.ToDecimal(lblTotalCash.Text) - sum;
-            ////    }
-            ////    catch
-            ////    {
-
-            ////    }
-            ////}
-            //lblreturn.Text = Convert.ToString(sum);
-
-            ////lblTotalCash.Text = Convert.ToString(retunval);
-            //txtamount.Text = Convert.ToString(retunval);
+            UpdateGridAmounts(dgvreturn);
+            RefreshReceiptSummary();
         }
 
 
@@ -1252,7 +1237,634 @@ namespace Inventory.Transactions
 
         private void CashReceipt_Load(object sender, EventArgs e)
         {
+            ArrangeCashReceiptScreen();
+        }
 
+        private void rbUpi_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbUpi.Checked == false)
+            {
+                return;
+            }
+            CloseReceiptCashPopup();
+            if (upiPanel != null)
+            {
+                upiPanel.Visible = true;
+            }
+            ShowUpiDetails();
+            LayoutReceiptForm();
+        }
+
+        private void ArrangeCashReceiptScreen()
+        {
+            Font labelFont = new Font("Calibri", 11F, FontStyle.Bold);
+            Font inputFont = new Font("Calibri", 11F);
+            label2.Text = "CASH RECEIPT";
+            label2.RightToLeft = RightToLeft.No;
+            label2.TextAlign = ContentAlignment.MiddleLeft;
+            label2.Font = new Font("Calibri", 16F, FontStyle.Bold);
+            label2.ForeColor = Color.SteelBlue;
+            label6.Text = "Received From";
+            label12.Text = "Account Head";
+            label7.Text = "Date";
+            label9.Text = "Amount";
+            label6.Font = labelFont;
+            label12.Font = labelFont;
+            label7.Font = labelFont;
+            label9.Font = labelFont;
+            label11.Visible = false;
+            label4.Visible = false;
+            label8.Visible = false;
+            txtamount.ReadOnly = false;
+            txtamount.Text = "";
+            txtamount.Font = inputFont;
+            txtrptFrom.Font = inputFont;
+            txtdate.Font = inputFont;
+            ddlAccountHead.Font = inputFont;
+            rdtransfer.Visible = false;
+            lblcutomerpay.Visible = false;
+            bnpaybalance.Visible = false;
+            pnreturn.Visible = false;
+            if (txtUpiAmount != null)
+            {
+                txtUpiAmount.Visible = false;
+            }
+
+            lblMainHead = new Label();
+            lblMainHead.Text = "Account Main Header";
+            lblMainHead.Font = labelFont;
+            lblMainHead.AutoSize = false;
+            panel2.Controls.Add(lblMainHead);
+
+            ddlMainHead = new ComboBox();
+            ddlMainHead.Name = "ddlMainHead";
+            ddlMainHead.DropDownStyle = ComboBoxStyle.DropDownList;
+            ddlMainHead.Font = inputFont;
+            ddlMainHead.FlatStyle = FlatStyle.Popup;
+            ddlMainHead.SelectedIndexChanged += new EventHandler(ddlMainHead_SelectedIndexChanged);
+            panel2.Controls.Add(ddlMainHead);
+
+            lblReason = new Label();
+            lblReason.Text = "Reason / Narration";
+            lblReason.Font = labelFont;
+            lblReason.AutoSize = false;
+            panel2.Controls.Add(lblReason);
+
+            txtReason = new TextBox();
+            txtReason.Name = "txtReason";
+            txtReason.Font = inputFont;
+            txtReason.Multiline = true;
+            txtReason.MaxLength = NarrationMaxLength;
+            txtReason.AcceptsTab = false;
+            txtReason.ScrollBars = ScrollBars.Vertical;
+            panel2.Controls.Add(txtReason);
+
+            lblPaymentMode = new Label();
+            lblPaymentMode.Text = "Payment Mode";
+            lblPaymentMode.Font = labelFont;
+            lblPaymentMode.AutoSize = false;
+            panel2.Controls.Add(lblPaymentMode);
+
+            paymentModeHost = new Panel();
+            paymentModeHost.Name = "paymentModeHost";
+            panel2.Controls.Add(paymentModeHost);
+
+            rbCash = new RadioButton();
+            rbCash.Name = "rbCash";
+            rbCash.Text = "Cash";
+            rbCash.Font = labelFont;
+            rbCash.AutoSize = true;
+            rbCash.Location = new Point(8, 4);
+            rbCash.CheckedChanged += new EventHandler(rbCash_CheckedChanged);
+            paymentModeHost.Controls.Add(rbCash);
+
+            rbUpi = new RadioButton();
+            rbUpi.Name = "rbUpi";
+            rbUpi.Text = "UPI";
+            rbUpi.Font = labelFont;
+            rbUpi.AutoSize = true;
+            rbUpi.Location = new Point(110, 4);
+            rbUpi.CheckedChanged += new EventHandler(rbUpi_CheckedChanged);
+            paymentModeHost.Controls.Add(rbUpi);
+
+            upiPanel = new Panel();
+            upiPanel.Name = "upiPanel";
+            upiPanel.Visible = false;
+            panel2.Controls.Add(upiPanel);
+
+            Label amountCaption = new Label();
+            amountCaption.Text = "Amount to Receive";
+            amountCaption.Font = labelFont;
+            amountCaption.AutoSize = true;
+            amountCaption.Location = new Point(4, 8);
+            upiPanel.Controls.Add(amountCaption);
+
+            lblUpiAmountValue = new Label();
+            lblUpiAmountValue.Font = labelFont;
+            lblUpiAmountValue.AutoSize = true;
+            lblUpiAmountValue.Location = new Point(180, 8);
+            upiPanel.Controls.Add(lblUpiAmountValue);
+
+            Label referenceCaption = new Label();
+            referenceCaption.Text = "UPI Reference";
+            referenceCaption.Font = labelFont;
+            referenceCaption.AutoSize = true;
+            referenceCaption.Location = new Point(4, 40);
+            upiPanel.Controls.Add(referenceCaption);
+
+            txtUpiReference = new TextBox();
+            txtUpiReference.Font = inputFont;
+            txtUpiReference.MaxLength = 30;
+            txtUpiReference.Location = new Point(180, 36);
+            txtUpiReference.Width = 220;
+            upiPanel.Controls.Add(txtUpiReference);
+
+            Label dateCaption = new Label();
+            dateCaption.Text = "Transaction Date";
+            dateCaption.Font = labelFont;
+            dateCaption.AutoSize = true;
+            dateCaption.Location = new Point(4, 74);
+            upiPanel.Controls.Add(dateCaption);
+
+            lblUpiDateValue = new Label();
+            lblUpiDateValue.Font = labelFont;
+            lblUpiDateValue.AutoSize = true;
+            lblUpiDateValue.Location = new Point(180, 74);
+            upiPanel.Controls.Add(lblUpiDateValue);
+
+            Btnpay.Text = "Save Receipt";
+            Btnpay.Font = new Font("Calibri", 12F, FontStyle.Bold);
+            Btnpay.Size = new Size(160, 34);
+            Btnpay.Parent = panel2;
+            btnclear.Text = "Clear";
+            btnclear.Font = new Font("Calibri", 12F, FontStyle.Bold);
+            btnclear.Size = new Size(110, 34);
+            btnclear.Parent = panel2;
+            btnclear.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+
+            BindMainHead();
+            BindAccountHeadPlaceholder();
+            txtdate.ValueChanged += new EventHandler(txtdate_ValueChanged);
+            panel2.Resize += new EventHandler(panel2_Resize);
+            ApplyReceiptTabOrder();
+            LayoutReceiptForm();
+        }
+
+        private const int NarrationMaxLength = 250;
+
+        private void ApplyReceiptTabOrder()
+        {
+            txtrptFrom.TabIndex = 0;
+            ddlMainHead.TabIndex = 1;
+            ddlAccountHead.TabIndex = 2;
+            txtdate.TabIndex = 3;
+            txtamount.TabIndex = 4;
+            txtReason.TabIndex = 5;
+            paymentModeHost.TabIndex = 6;
+            rbCash.TabIndex = 0;
+            rbUpi.TabIndex = 1;
+            upiPanel.TabIndex = 7;
+            txtUpiReference.TabIndex = 0;
+            Btnpay.TabIndex = 8;
+            btnclear.TabIndex = 9;
+
+            btnadd.TabStop = false;
+            rdtransfer.TabStop = false;
+            dgvCashRequest.TabStop = false;
+
+            panel15.TabIndex = 0;
+            dgvDenomination.TabIndex = 0;
+            dgvDenomination.StandardTab = true;
+            dgvreturn.TabIndex = 1;
+            dgvreturn.StandardTab = true;
+        }
+
+        private void EnsurePaymentModeTabStops()
+        {
+            if (rbCash == null || rbUpi == null || rbCash.Checked || rbUpi.Checked)
+            {
+                return;
+            }
+            rbCash.TabStop = true;
+            rbUpi.TabStop = true;
+        }
+
+        private void MoveFocusWithin(Control container, bool forward)
+        {
+            Control current = ActiveControl;
+            while (current is ContainerControl && ((ContainerControl)current).ActiveControl != null)
+            {
+                current = ((ContainerControl)current).ActiveControl;
+            }
+            if (current != null && current.Parent is DataGridView)
+            {
+                current = current.Parent;
+            }
+            container.SelectNextControl(current, forward, true, true, true);
+        }
+
+        private void rbCash_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbCash.Checked == false)
+            {
+                return;
+            }
+            if (txtUpiReference != null)
+            {
+                txtUpiReference.Text = "";
+            }
+            if (upiPanel != null)
+            {
+                upiPanel.Visible = false;
+            }
+            LayoutReceiptForm();
+        }
+
+        private void txtdate_ValueChanged(object sender, EventArgs e)
+        {
+            ShowUpiDetails();
+        }
+
+        private void ShowUpiDetails()
+        {
+            decimal receiptAmount;
+            decimal.TryParse(txtamount.Text.Trim(), out receiptAmount);
+            if (lblUpiAmountValue != null)
+            {
+                lblUpiAmountValue.Text = receiptAmount.ToString("0.00");
+            }
+            if (lblUpiDateValue != null)
+            {
+                lblUpiDateValue.Text = txtdate.Value.ToString("dd-MM-yyyy");
+            }
+        }
+
+        private void panel2_Resize(object sender, EventArgs e)
+        {
+            if (arrangingLayout)
+            {
+                return;
+            }
+            LayoutReceiptForm();
+            if (a1Panel2.Visible)
+            {
+                LayoutReceiptCashPopup();
+            }
+        }
+
+        private void LayoutReceiptForm()
+        {
+            if (lblMainHead == null)
+            {
+                return;
+            }
+            arrangingLayout = true;
+            int labelX = 16;
+            int labelW = 180;
+            int boxX = 206;
+            int boxW = 360;
+            if (panel2.ClientSize.Width - boxX - 48 < boxW)
+            {
+                boxW = panel2.ClientSize.Width - boxX - 48;
+            }
+            if (boxW < 220)
+            {
+                boxW = 220;
+            }
+            int y = 8;
+            label2.SetBounds(labelX, y, 280, 30);
+            y = 46;
+            PlaceField(label6, txtrptFrom, labelX, labelW, boxX, boxW, y, 28);
+            y = y + 40;
+            PlaceField(lblMainHead, ddlMainHead, labelX, labelW, boxX, boxW, y, 28);
+            y = y + 40;
+            PlaceField(label12, ddlAccountHead, labelX, labelW, boxX, boxW - 36, y, 28);
+            btnadd.SetBounds(boxX + boxW - 28, y, 28, 28);
+            btnadd.BringToFront();
+            y = y + 40;
+            PlaceField(label7, txtdate, labelX, labelW, boxX, 180, y, 28);
+            y = y + 40;
+            PlaceField(label9, txtamount, labelX, labelW, boxX, 180, y, 28);
+            y = y + 40;
+            lblReason.SetBounds(labelX, y, labelW, 24);
+            txtReason.SetBounds(boxX, y, boxW, 58);
+            y = y + 70;
+            lblPaymentMode.SetBounds(labelX, y, labelW, 28);
+            paymentModeHost.SetBounds(boxX, y, 260, 32);
+            y = y + 40;
+            bool showUpi = rbUpi != null && rbUpi.Checked;
+            upiPanel.Visible = showUpi;
+            if (showUpi)
+            {
+                upiPanel.SetBounds(boxX, y, boxW, 108);
+                ShowUpiDetails();
+                y = y + 116;
+            }
+            if (Btnpay.Parent == panel2)
+            {
+                Btnpay.SetBounds(boxX, y, 160, 34);
+                btnclear.SetBounds(boxX + 172, y, 110, 34);
+                Btnpay.BringToFront();
+                btnclear.BringToFront();
+            }
+            else
+            {
+                btnclear.SetBounds(boxX, y, 110, 34);
+            }
+            y = y + 46;
+            dgvCashRequest.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            int gridHeight = panel2.ClientSize.Height - y - 8;
+            if (gridHeight < 120)
+            {
+                gridHeight = 120;
+            }
+            dgvCashRequest.SetBounds(12, y, panel2.ClientSize.Width - 24, gridHeight);
+            EnsurePaymentModeTabStops();
+            arrangingLayout = false;
+        }
+
+        private void PlaceField(Label label, Control box, int labelX, int labelW, int boxX, int boxW, int y, int height)
+        {
+            label.AutoSize = false;
+            label.TextAlign = ContentAlignment.MiddleLeft;
+            label.SetBounds(labelX, y, labelW, height);
+            box.SetBounds(boxX, y, boxW, height);
+        }
+
+        private void BindMainHead()
+        {
+            TransactionBAL headBal = new TransactionBAL();
+            DataTable dh = headBal.GetAccountMainHead();
+            DataRow row = dh.NewRow();
+            row["MeanHeadName"] = "-select-";
+            dh.Rows.InsertAt(row, 0);
+            ddlMainHead.DataSource = dh;
+            ddlMainHead.DisplayMember = "MeanHeadName";
+            ddlMainHead.ValueMember = "MainHeadId";
+        }
+
+        private void BindAccountHeadPlaceholder()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("Id", typeof(int));
+            dt.Columns.Add("AccountHead", typeof(string));
+            DataRow row = dt.NewRow();
+            row["Id"] = 0;
+            row["AccountHead"] = "-select-";
+            dt.Rows.Add(row);
+            ddlAccountHead.DataSource = dt;
+            ddlAccountHead.DisplayMember = "AccountHead";
+            ddlAccountHead.ValueMember = "Id";
+        }
+
+        private void ddlMainHead_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (arrangingLayout)
+            {
+                return;
+            }
+            if (ddlMainHead.SelectedIndex > 0)
+            {
+                DataTable dt = PurchaseReturnBAL.GetSuppliersDetails(Convert.ToInt32(ddlMainHead.SelectedValue));
+                DataRow row = dt.NewRow();
+                row["AccountHead"] = "-select-";
+                dt.Rows.InsertAt(row, 0);
+                ddlAccountHead.DataSource = dt;
+                ddlAccountHead.DisplayMember = "AccountHead";
+                ddlAccountHead.ValueMember = "Id";
+            }
+            else
+            {
+                BindAccountHeadPlaceholder();
+            }
+        }
+
+        private void OpenReceiptCashPopup()
+        {
+            EnsureReceiptCashPopup();
+            LoadDenomination();
+            LoadreturnDenomination();
+            if (dgvreturn.Parent != panel15)
+            {
+                panel15.Controls.Add(dgvreturn);
+            }
+            pnreturn.Visible = false;
+            a1Panel2.Visible = true;
+            a1Panel2.BringToFront();
+            LayoutReceiptCashPopup();
+            RefreshReceiptSummary();
+            dgvDenomination.Focus();
+            if (dgvDenomination.Rows.Count > 0)
+            {
+                dgvDenomination.CurrentCell = dgvDenomination[1, 0];
+            }
+        }
+
+        private void CloseReceiptCashPopup()
+        {
+            a1Panel2.Visible = false;
+            pnreturn.Visible = false;
+            if (Btnpay.Parent != panel2)
+            {
+                Btnpay.Parent = panel2;
+            }
+            LayoutReceiptForm();
+        }
+
+        private void EnsureReceiptCashPopup()
+        {
+            if (lblAmountToReceiveValue != null)
+            {
+                return;
+            }
+            label143.Text = "Cash Denomination";
+            lblCashReceivedTitle = new Label();
+            lblCashReceivedTitle.Text = "CASH RECEIVED";
+            lblCashReceivedTitle.Font = new Font("Calibri", 12F, FontStyle.Bold);
+            lblCashReceivedTitle.AutoSize = true;
+            panel15.Controls.Add(lblCashReceivedTitle);
+
+            lblBalanceGivenTitle = new Label();
+            lblBalanceGivenTitle.Text = "BALANCE GIVEN";
+            lblBalanceGivenTitle.Font = new Font("Calibri", 12F, FontStyle.Bold);
+            lblBalanceGivenTitle.AutoSize = true;
+            panel15.Controls.Add(lblBalanceGivenTitle);
+
+            lblAmountToReceiveValue = AddReceiptSummary("Amount to Receive : 0.00");
+            lblCashReceivedValue = AddReceiptSummary("Cash Received : 0.00");
+            lblBalanceGivenValue = AddReceiptSummary("Balance Given : 0.00");
+            lblNetCashReceivedValue = AddReceiptSummary("Net Cash Received : 0.00");
+            lblReceiptDifferenceValue = AddReceiptSummary("Difference : 0.00");
+            lblTotalCash.Visible = false;
+            label3.Visible = false;
+            lblcutomerpay.Visible = false;
+        }
+
+        private Label AddReceiptSummary(string text)
+        {
+            Label label = new Label();
+            label.AutoSize = true;
+            label.Font = new Font("Calibri", 13F, FontStyle.Bold);
+            label.Text = text;
+            panel15.Controls.Add(label);
+            return label;
+        }
+
+        private void LayoutReceiptCashPopup()
+        {
+            if (lblAmountToReceiveValue == null)
+            {
+                return;
+            }
+            arrangingLayout = true;
+            int width = panel2.ClientSize.Width - 16;
+            int height = panel2.ClientSize.Height - 16;
+            if (width < 760)
+            {
+                width = 760;
+            }
+            if (height < 480)
+            {
+                height = 480;
+            }
+            a1Panel2.SetBounds(8, 8, width, height);
+            a1Panel2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            panel15.SetBounds(4, 32, a1Panel2.Width - 12, a1Panel2.Height - 84);
+            panel15.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            int half = (panel15.ClientSize.Width - 24) / 2;
+            if (half < 240)
+            {
+                half = 240;
+            }
+            int gridHeight = panel15.ClientSize.Height - 150;
+            if (gridHeight < 220)
+            {
+                gridHeight = 220;
+            }
+            lblCashReceivedTitle.Location = new Point(8, 4);
+            lblBalanceGivenTitle.Location = new Point(half + 16, 4);
+            dgvDenomination.SetBounds(8, 28, half, gridHeight);
+            dgvreturn.SetBounds(half + 16, 28, half, gridHeight);
+            dgvDenomination.ScrollBars = ScrollBars.Both;
+            dgvreturn.ScrollBars = ScrollBars.Both;
+            int summaryTop = dgvDenomination.Bottom + 8;
+            lblAmountToReceiveValue.Location = new Point(8, summaryTop);
+            lblCashReceivedValue.Location = new Point(8, summaryTop + 26);
+            lblBalanceGivenValue.Location = new Point(half + 16, summaryTop);
+            lblNetCashReceivedValue.Location = new Point(half + 16, summaryTop + 26);
+            lblReceiptDifferenceValue.Location = new Point(8, summaryTop + 52);
+            picClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            picClose.Location = new Point(a1Panel2.Width - 36, 2);
+            Btnpay.Parent = a1Panel2;
+            Btnpay.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            Btnpay.Size = new Size(160, 34);
+            Btnpay.Location = new Point(a1Panel2.Width - 180, a1Panel2.Height - 46);
+            Btnpay.Visible = true;
+            Btnpay.BringToFront();
+            arrangingLayout = false;
+        }
+
+        private void UpdateGridAmounts(DataGridView grid)
+        {
+            if (grid == null)
+            {
+                return;
+            }
+            for (int i = 0; i < grid.Rows.Count; i++)
+            {
+                if (string.IsNullOrEmpty(Convert.ToString(grid.Rows[i].Cells[1].Value)))
+                {
+                    grid.Rows[i].Cells[1].Value = 0;
+                }
+                decimal face;
+                decimal count;
+                decimal.TryParse(Convert.ToString(grid.Rows[i].Cells[0].Value), out face);
+                decimal.TryParse(Convert.ToString(grid.Rows[i].Cells[1].Value), out count);
+                if (count < 0m)
+                {
+                    count = 0m;
+                    grid.Rows[i].Cells[1].Value = 0;
+                }
+                grid.Rows[i].Cells[2].Value = face * count;
+            }
+        }
+
+        private decimal SumReceiptNotes(DataGridView grid)
+        {
+            decimal sum = 0m;
+            if (grid == null)
+            {
+                return sum;
+            }
+            for (int i = 0; i < grid.Rows.Count; i++)
+            {
+                decimal face;
+                decimal count;
+                decimal.TryParse(Convert.ToString(grid.Rows[i].Cells[0].Value), out face);
+                decimal.TryParse(Convert.ToString(grid.Rows[i].Cells[1].Value), out count);
+                if (count < 0m)
+                {
+                    count = 0m;
+                }
+                sum = sum + (face * count);
+            }
+            return sum;
+        }
+
+        private decimal ReceiptAmount()
+        {
+            decimal receiptAmount;
+            decimal.TryParse(txtamount.Text.Trim(), out receiptAmount);
+            return receiptAmount;
+        }
+
+        private void RefreshReceiptSummary()
+        {
+            if (lblAmountToReceiveValue == null)
+            {
+                return;
+            }
+            decimal receiptAmount = ReceiptAmount();
+            decimal received = SumReceiptNotes(dgvDenomination);
+            decimal given = SumReceiptNotes(dgvreturn);
+            decimal net = received - given;
+            decimal difference = net - receiptAmount;
+            lblAmountToReceiveValue.Text = "Amount to Receive : " + receiptAmount.ToString("0.00");
+            lblCashReceivedValue.Text = "Cash Received : " + received.ToString("0.00");
+            lblBalanceGivenValue.Text = "Balance Given : " + given.ToString("0.00");
+            lblNetCashReceivedValue.Text = "Net Cash Received : " + net.ToString("0.00");
+            lblReceiptDifferenceValue.Text = "Difference : " + difference.ToString("0.00");
+            lblTotalCash.Text = received.ToString("0.00");
+            lblreturn.Text = given.ToString("0.00");
+        }
+
+        private bool IsReceiptReconciled()
+        {
+            decimal receiptAmount = ReceiptAmount();
+            if (receiptAmount <= 0m)
+            {
+                return false;
+            }
+            decimal net = SumReceiptNotes(dgvDenomination) - SumReceiptNotes(dgvreturn);
+            return net == receiptAmount;
+        }
+
+        private int ReceiptNoteQuantity(DataGridView grid, int face)
+        {
+            int count;
+            int.TryParse(AccountsChannel.NoteCount(grid, face), out count);
+            if (count < 0)
+            {
+                count = 0;
+            }
+            return count;
+        }
+
+        private string SignedReceiptCount(int face)
+        {
+            int received = ReceiptNoteQuantity(dgvDenomination, face);
+            int given = ReceiptNoteQuantity(dgvreturn, face);
+            return (received - given).ToString();
         }
 
 

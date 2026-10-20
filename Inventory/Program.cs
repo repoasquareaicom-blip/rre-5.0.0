@@ -63,6 +63,7 @@ namespace Inventory
         public static UOM objUOM;
         public static Brand objBrand;
         public static LocationRackMaster objLocationRackMaster;
+        public static ProductRackAllocation objProductRackAllocation;
 
         public static CustomerAccount CustAccount;
 

@@ -15,6 +15,7 @@ namespace Inventory.Sales
     public class QuotationGSTReport : Form
     {
         private readonly string quotationId;
+        private readonly bool includeTax;
         private readonly CrystalReportViewer reportViewer;
 
         private static string Conn
@@ -23,9 +24,15 @@ namespace Inventory.Sales
         }
 
         public QuotationGSTReport(string quotationId)
+            : this(quotationId, true)
+        {
+        }
+
+        public QuotationGSTReport(string quotationId, bool includeTax)
         {
             this.quotationId = quotationId;
-            Text = "Quotation GST Report";
+            this.includeTax = includeTax;
+            Text = includeTax ? "Quotation GST Report" : "Quotation Without Tax Report";
             WindowState = FormWindowState.Maximized;
 
             reportViewer = new CrystalReportViewer();
@@ -43,6 +50,10 @@ namespace Inventory.Sales
                 DataSet ds = BuildReportDataSet();
                 ReportDocument rd = LoadInvoiceReport();
                 SetBillTypeParameter();
+                if (!includeTax)
+                {
+                    ApplyWithoutTax(ds, rd);
+                }
                 rd.SetDataSource(ds);
                 reportViewer.ReportSource = rd;
             }
@@ -85,6 +96,270 @@ namespace Inventory.Sales
             }
 
             return ds;
+        }
+
+        private void ApplyWithoutTax(DataSet ds, ReportDocument rd)
+        {
+            DataTable header = ds.Tables["BillHeader"];
+            DataTable details = ds.Tables["BillDetails"];
+
+            decimal totalTaxable = 0m;
+            if (details != null)
+            {
+                foreach (DataRow row in details.Rows)
+                {
+                    decimal taxable = GetWithoutTaxLineAmount(row);
+
+                    totalTaxable += taxable;
+                    string quantity = GetValue(row, "Quantity");
+                    string uom = FirstValue(row, null, "UOM", "Unit", "UnitName");
+                    if (!string.IsNullOrEmpty(quantity) && !string.IsNullOrEmpty(uom) && quantity.IndexOf(uom, StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        Set(row, "Quantity", quantity + " " + uom);
+                    }
+
+                    Set(row, "TAXABLEVALUE", FormatAmount(taxable));
+                    Set(row, "Amount", FormatAmount(taxable));
+                    Set(row, "TAX", "");
+                    Set(row, "VAT", "");
+                    Set(row, "GST", "");
+                    Set(row, "T5", "");
+                    Set(row, "T12", "");
+                    Set(row, "T18", "");
+                    Set(row, "T28", "");
+                    Set(row, "CGST", "");
+                    Set(row, "SGST", "");
+                    Set(row, "IGST", "");
+                }
+            }
+
+            if (header != null && header.Rows.Count > 0)
+            {
+                foreach (DataRow row in header.Rows)
+                {
+                    decimal taxable = totalTaxable;
+                    if (taxable == 0m)
+                    {
+                        taxable = FirstExistingDecimal(row, "TOTALTAXABLE", "TOTALAMOUNT", "NETAMOUNT");
+                    }
+
+                    Set(row, "TOTALTAXABLE", FormatAmount(taxable));
+                    Set(row, "TOTALAMOUNT", FormatAmount(taxable));
+                    Set(row, "NETAMOUNT", FormatAmount(taxable));
+                    Set(row, "TOTALGST", "0.00");
+                    Set(row, "CGST", "0.00");
+                    Set(row, "SGST", "0.00");
+                    Set(row, "IGST", "0.00");
+                    Set(row, "GST", "");
+                    Set(row, "TOTAL5", "0.00");
+                    Set(row, "TOTAL12", "0.00");
+                    Set(row, "TOTAL18", "0.00");
+                    Set(row, "TOTAL28", "0.00");
+                    Set(row, "CGST5", "0.00");
+                    Set(row, "SGSTT5", "0.00");
+                    Set(row, "CGST12", "0.00");
+                    Set(row, "SGSTT12", "0.00");
+                    Set(row, "CGST18", "0.00");
+                    Set(row, "SGSTT18", "0.00");
+                    Set(row, "CGST28", "0.00");
+                    Set(row, "SGSTT28", "0.00");
+                    Set(row, "IGST5", "0.00");
+                    Set(row, "IGST12", "0.00");
+                    Set(row, "IGST18", "0.00");
+                    Set(row, "IGST28", "0.00");
+                }
+            }
+
+            SimplifyWithoutTaxReport(rd);
+        }
+
+        private decimal GetWithoutTaxLineAmount(DataRow row)
+        {
+            decimal taxable = FirstExistingDecimal(row, "TAXABLEVALUE", "BasicAmount", "NetAmount", "Amount");
+            if (taxable != 0m)
+            {
+                return taxable;
+            }
+
+            decimal qty = ToDecimal(GetValue(row, "Quantity"));
+            decimal rate = FirstExistingDecimal(row, "Rate", "TRate");
+            decimal gross = qty * rate;
+            decimal discount = FirstExistingDecimal(row, "DiscountAmount", "DiscAmount", "Discount");
+            if (discount == 0m)
+            {
+                decimal discountPer = FirstExistingDecimal(row, "DiscountPer", "DiscPer");
+                if (discountPer != 0m)
+                {
+                    discount = Decimal.Round(gross * discountPer / 100m, 2);
+                }
+            }
+
+            return gross - discount;
+        }
+
+        private void SimplifyWithoutTaxReport(ReportDocument rd)
+        {
+            foreach (Section section in rd.ReportDefinition.Sections)
+            {
+                foreach (ReportObject reportObject in section.ReportObjects)
+                {
+                    if (IsWithoutTaxSuppressedObject(reportObject))
+                    {
+                        reportObject.ObjectFormat.EnableSuppress = true;
+                        continue;
+                    }
+
+                    RelabelWithoutTaxObject(reportObject);
+
+                    if (IsItemObject(reportObject))
+                    {
+                        TrySetReportObjectWidth(reportObject, reportObject.Width + 1200);
+                    }
+                    else if (IsAmountObject(reportObject))
+                    {
+                        TrySetReportObjectWidth(reportObject, Math.Max(reportObject.Width, 1100));
+                    }
+                }
+            }
+        }
+
+        private bool IsWithoutTaxSuppressedObject(ReportObject reportObject)
+        {
+            string text = GetReportObjectSearchText(reportObject);
+            if (ContainsAny(text, "BANK", "ACNO", "A/C", "ACCOUNT", "IFSC", "BRANCH", "PAN"))
+            {
+                return true;
+            }
+
+            if (ContainsAny(text, "GST", "CGST", "SGST", "IGST", "VAT", "TAX SUMMARY", "GST SUMMARY"))
+            {
+                return true;
+            }
+
+            string dataSource = GetReportObjectDataSourceText(reportObject);
+            if (ContainsAny(text, "TOTALGST", "TOTAL5", "TOTAL12", "TOTAL18", "TOTAL28",
+                "CGST5", "CGST12", "CGST18", "CGST28",
+                "SGSTT5", "SGSTT12", "SGSTT18", "SGSTT28",
+                "IGST5", "IGST12", "IGST18", "IGST28"))
+            {
+                return true;
+            }
+
+            if (IsTaxRateAmountField(dataSource))
+            {
+                return true;
+            }
+
+            TextObject textObject = reportObject as TextObject;
+            if (textObject != null)
+            {
+                string label = (textObject.Text ?? "").Trim().ToUpperInvariant();
+                if (label == "5.00" || label == "12.00" || label == "18.00" || label == "28.00"
+                    || label == "5%" || label == "12%" || label == "18%" || label == "28%")
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void RelabelWithoutTaxObject(ReportObject reportObject)
+        {
+            TextObject textObject = reportObject as TextObject;
+            if (textObject == null || string.IsNullOrEmpty(textObject.Text))
+            {
+                return;
+            }
+
+            string label = textObject.Text.Trim();
+            if (label.IndexOf("TAXABLE", StringComparison.OrdinalIgnoreCase) >= 0
+                || label.Equals("Tax", StringComparison.OrdinalIgnoreCase)
+                || label.Equals("Taxable Value", StringComparison.OrdinalIgnoreCase))
+            {
+                textObject.Text = "Amount";
+            }
+        }
+
+        private bool IsItemObject(ReportObject reportObject)
+        {
+            string text = GetReportObjectSearchText(reportObject);
+            return ContainsAny(text, "ITEMNAME", "ITEM NAME", "ITEMS", "DESCRIPTION");
+        }
+
+        private bool IsAmountObject(ReportObject reportObject)
+        {
+            string text = GetReportObjectSearchText(reportObject);
+            return ContainsAny(text, "TAXABLEVALUE", "AMOUNT", "TOTALAMOUNT", "NETAMOUNT");
+        }
+
+        private void TrySetReportObjectWidth(ReportObject reportObject, int width)
+        {
+            try
+            {
+                reportObject.Width = width;
+            }
+            catch
+            {
+            }
+        }
+
+        private string GetReportObjectSearchText(ReportObject reportObject)
+        {
+            string text = reportObject.Name;
+            TextObject textObject = reportObject as TextObject;
+            if (textObject != null)
+            {
+                text += " " + textObject.Text;
+            }
+
+            FieldObject fieldObject = reportObject as FieldObject;
+            if (fieldObject != null && fieldObject.DataSource != null)
+            {
+                text += " " + fieldObject.DataSource.ToString();
+            }
+
+            return (text ?? "").ToUpperInvariant();
+        }
+
+        private string GetReportObjectDataSourceText(ReportObject reportObject)
+        {
+            FieldObject fieldObject = reportObject as FieldObject;
+            if (fieldObject != null && fieldObject.DataSource != null)
+            {
+                return fieldObject.DataSource.ToString().ToUpperInvariant();
+            }
+
+            return "";
+        }
+
+        private bool IsTaxRateAmountField(string dataSource)
+        {
+            return dataSource.EndsWith(".T5", StringComparison.OrdinalIgnoreCase)
+                || dataSource.EndsWith(".T12", StringComparison.OrdinalIgnoreCase)
+                || dataSource.EndsWith(".T18", StringComparison.OrdinalIgnoreCase)
+                || dataSource.EndsWith(".T28", StringComparison.OrdinalIgnoreCase)
+                || dataSource.IndexOf("{T5}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf("{T12}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf("{T18}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf("{T28}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf(".T5}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf(".T12}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf(".T18}", StringComparison.OrdinalIgnoreCase) >= 0
+                || dataSource.IndexOf(".T28}", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private bool ContainsAny(string text, params string[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (text.IndexOf(values[i], StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private DataTable GetHeader()
@@ -379,6 +654,20 @@ ORDER BY qd.sino";
             return 0;
         }
 
+        private static decimal FirstExistingDecimal(DataRow row, params string[] columns)
+        {
+            for (int i = 0; i < columns.Length; i++)
+            {
+                decimal value = ToDecimal(GetValue(row, columns[i]));
+                if (value != 0m)
+                {
+                    return value;
+                }
+            }
+
+            return 0m;
+        }
+
         private static string FormatAmount(decimal value)
         {
             return value.ToString("0.00", CultureInfo.InvariantCulture);
@@ -399,7 +688,20 @@ ORDER BY qd.sino";
         {
             if (row.Table.Columns.Contains(column))
             {
-                row[column] = value ?? "";
+                Type columnType = row.Table.Columns[column].DataType;
+                if (columnType == typeof(decimal) || columnType == typeof(double) || columnType == typeof(float))
+                {
+                    row[column] = ToDecimal(value);
+                }
+                else if (columnType == typeof(int) || columnType == typeof(long) || columnType == typeof(short))
+                {
+                    decimal decimalValue = ToDecimal(value);
+                    row[column] = Convert.ToInt32(decimalValue);
+                }
+                else
+                {
+                    row[column] = value ?? "";
+                }
             }
         }
 

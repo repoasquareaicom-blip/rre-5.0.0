@@ -62,6 +62,7 @@
             this.label17 = new System.Windows.Forms.Label();
             this.btnPrint = new System.Windows.Forms.Button();
             this.btnPrintWithTax = new System.Windows.Forms.Button();
+            this.btnPrintWithoutTax = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -448,6 +449,7 @@
             this.panel1.Controls.Add(this.label17);
             this.panel1.Controls.Add(this.btnPrint);
             this.panel1.Controls.Add(this.btnPrintWithTax);
+            this.panel1.Controls.Add(this.btnPrintWithoutTax);
             this.panel1.Controls.Add(this.btnClear);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
@@ -480,7 +482,7 @@
             this.button1.FlatAppearance.BorderSize = 0;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button1.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.button1.Location = new System.Drawing.Point(319, 3);
+            this.button1.Location = new System.Drawing.Point(263, 3);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(92, 25);
             this.button1.TabIndex = 363;
@@ -505,7 +507,7 @@
             this.btnPrint.FlatAppearance.BorderSize = 0;
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPrint.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnPrint.Location = new System.Drawing.Point(436, 3);
+            this.btnPrint.Location = new System.Drawing.Point(356, 3);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(75, 25);
             this.btnPrint.TabIndex = 4;
@@ -521,7 +523,7 @@
             this.btnPrintWithTax.FlatAppearance.BorderSize = 0;
             this.btnPrintWithTax.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnPrintWithTax.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnPrintWithTax.Location = new System.Drawing.Point(512, 3);
+            this.btnPrintWithTax.Location = new System.Drawing.Point(432, 3);
             this.btnPrintWithTax.Name = "btnPrintWithTax";
             this.btnPrintWithTax.Size = new System.Drawing.Size(98, 25);
             this.btnPrintWithTax.TabIndex = 364;
@@ -530,6 +532,22 @@
             this.btnPrintWithTax.Visible = false;
             this.btnPrintWithTax.Click += new System.EventHandler(this.btnPrintWithTax_Click);
             // 
+            // btnPrintWithoutTax
+            // 
+            this.btnPrintWithoutTax.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnPrintWithoutTax.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnPrintWithoutTax.FlatAppearance.BorderSize = 0;
+            this.btnPrintWithoutTax.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnPrintWithoutTax.Font = new System.Drawing.Font("Calibri", 9.75F);
+            this.btnPrintWithoutTax.Location = new System.Drawing.Point(532, 3);
+            this.btnPrintWithoutTax.Name = "btnPrintWithoutTax";
+            this.btnPrintWithoutTax.Size = new System.Drawing.Size(114, 25);
+            this.btnPrintWithoutTax.TabIndex = 365;
+            this.btnPrintWithoutTax.Text = "Print Without Tax";
+            this.btnPrintWithoutTax.UseVisualStyleBackColor = true;
+            this.btnPrintWithoutTax.Visible = false;
+            this.btnPrintWithoutTax.Click += new System.EventHandler(this.btnPrintWithoutTax_Click);
+            // 
             // btnClear
             // 
             this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -537,9 +555,9 @@
             this.btnClear.FlatAppearance.BorderSize = 0;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnClear.Font = new System.Drawing.Font("Calibri", 9.75F);
-            this.btnClear.Location = new System.Drawing.Point(632, 3);
+            this.btnClear.Location = new System.Drawing.Point(648, 3);
             this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(75, 25);
+            this.btnClear.Size = new System.Drawing.Size(60, 25);
             this.btnClear.TabIndex = 2;
             this.btnClear.Text = "Clear";
             this.btnClear.UseVisualStyleBackColor = true;
@@ -1248,6 +1266,7 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnPrint;
         private System.Windows.Forms.Button btnPrintWithTax;
+        private System.Windows.Forms.Button btnPrintWithoutTax;
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label12;

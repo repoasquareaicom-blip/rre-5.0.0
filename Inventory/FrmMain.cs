@@ -36,6 +36,9 @@ namespace Inventory
         private ToolStripMenuItem receiptNoteToolStripMenuItem;
         private ToolStripMenuItem receiptNoteApprovalToolStripMenuItem;
         private ToolStripMenuItem branchStockStatusToolStripMenuItem;
+        private ToolStripMenuItem dayCloseV2ToolStripMenuItem;
+        private ToolStripMenuItem rackWiseStockUploadToolStripMenuItem;
+        private ToolStripMenuItem rackWiseProductStockReportMenuItem;
         private ToolStripMenuItem productUpdatedToolStripMenuItem;
         private Timer productUpdatedPollTimer;
         private Timer productUpdatedBlinkTimer;
@@ -51,6 +54,9 @@ namespace Inventory
             AddProductSyncQueueMenuItem();
             AddRemembranceReportMenuItem();
             AddMaterialTransactionReportMenuItem();
+            AddDayCloseV2MenuItem();
+            AddRackWiseStockUploadMenuItem();
+            AddRackWiseProductStockReportMenuItem();
             AddBranchStockStatusMenuItem();
             ApplyCloudEyeDelightMainTheme();
             HideStockAndRackUploadMenus();
@@ -458,6 +464,51 @@ namespace Inventory
             report.Show();
         }
 
+        private void AddDayCloseV2MenuItem()
+        {
+            if (toolsToolStripMenuItem == null)
+                return;
+
+            dayCloseV2ToolStripMenuItem = new ToolStripMenuItem();
+            dayCloseV2ToolStripMenuItem.Name = "dayCloseV2ToolStripMenuItem";
+            dayCloseV2ToolStripMenuItem.Size = new Size(206, 22);
+            dayCloseV2ToolStripMenuItem.Text = "Day Close V2";
+            dayCloseV2ToolStripMenuItem.Click += new EventHandler(dayCloseV2ToolStripMenuItem_Click);
+            toolsToolStripMenuItem.DropDownItems.Insert(1, dayCloseV2ToolStripMenuItem);
+        }
+
+        private void dayCloseV2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DayCloseV2 close = new DayCloseV2();
+            close.MdiParent = this;
+            close.Show();
+        }
+
+        private void AddRackWiseStockUploadMenuItem()
+        {
+            if (toolsToolStripMenuItem == null)
+                return;
+
+            rackWiseStockUploadToolStripMenuItem = new ToolStripMenuItem();
+            rackWiseStockUploadToolStripMenuItem.Name = "rackWiseStockUploadToolStripMenuItem";
+            rackWiseStockUploadToolStripMenuItem.Size = new Size(206, 22);
+            rackWiseStockUploadToolStripMenuItem.Text = "Rack Wise Stock Upload";
+            rackWiseStockUploadToolStripMenuItem.Click += new EventHandler(rackWiseStockUploadToolStripMenuItem_Click);
+            toolsToolStripMenuItem.DropDownItems.Add(rackWiseStockUploadToolStripMenuItem);
+        }
+
+        private void rackWiseStockUploadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!RackWiseStockUpload.HasPermission())
+            {
+                MessageBox.Show("You do not have permission to use Rack Wise Stock Upload.", "Rack Wise Stock Upload", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            RackWiseStockUpload upload = new RackWiseStockUpload();
+            upload.MdiParent = this;
+            upload.Show();
+        }
+
         private void ApplyCloudEyeDelightMainTheme()
         {
             string versionNo = GetApplicationVersion();
@@ -696,6 +747,25 @@ namespace Inventory
             Program.objPurchaseReceipt.MdiParent = this;
             Program.objPurchaseReceipt.Show();
 
+        }
+
+        private void AddRackWiseProductStockReportMenuItem()
+        {
+            rackWiseProductStockReportMenuItem = new ToolStripMenuItem("Rack Wise Product Stock Report");
+            rackWiseProductStockReportMenuItem.Name = "rackWiseProductStockReportMenuItem";
+            rackWiseProductStockReportMenuItem.Image = stockReportToolStripMenuItem.Image;
+            rackWiseProductStockReportMenuItem.Click += delegate
+            {
+                foreach (Form child in MdiChildren)
+                {
+                    if (child is RackWiseProductStockReport) { child.Activate(); return; }
+                }
+                var report = new RackWiseProductStockReport();
+                report.MdiParent = this;
+                report.WindowState = FormWindowState.Maximized;
+                report.Show();
+            };
+            reportsToolStripMenuItem.DropDownItems.Insert(1, rackWiseProductStockReportMenuItem);
         }
 
         private void HideStockAndRackUploadMenus()
@@ -1384,6 +1454,7 @@ namespace Inventory
 
         public void invisibleall()
         {
+            if (rackWiseProductStockReportMenuItem != null) rackWiseProductStockReportMenuItem.Visible = false;
             //Purchase
             inventoryToolStripMenuItem.Visible = false;
             purchaseOrderToolStripMenuItem.Visible = false;
@@ -1421,6 +1492,7 @@ namespace Inventory
             categoryToolStripMenuItem.Visible = false;
             locationToolStripMenuItem.Visible = false;
             locationRackMasterToolStripMenuItem.Visible = false;
+            productRackAllocationToolStripMenuItem.Visible = false;
             userCreationToolStripMenuItem.Visible = false;
             rolesToolStripMenuItem.Visible = false;
             employeeToolStripMenuItem.Visible = false;
@@ -1470,6 +1542,10 @@ namespace Inventory
             //Tool
             toolsToolStripMenuItem.Visible = false;
             cashEndCloseToolStripMenuItem.Visible = false;
+            if (dayCloseV2ToolStripMenuItem != null)
+                dayCloseV2ToolStripMenuItem.Visible = false;
+            if (rackWiseStockUploadToolStripMenuItem != null)
+                rackWiseStockUploadToolStripMenuItem.Visible = false;
             cashEndVerificationToolStripMenuItem.Visible = false;
 
 
@@ -1516,6 +1592,7 @@ namespace Inventory
 
         public void visibleall()
         {
+            if (rackWiseProductStockReportMenuItem != null) rackWiseProductStockReportMenuItem.Visible = true;
             //Purchase
             inventoryToolStripMenuItem.Visible = true;
             purchaseOrderToolStripMenuItem.Visible = true;
@@ -1551,6 +1628,7 @@ namespace Inventory
             categoryToolStripMenuItem.Visible = true;
             locationToolStripMenuItem.Visible = true;
             locationRackMasterToolStripMenuItem.Visible = true;
+            productRackAllocationToolStripMenuItem.Visible = true;
             userCreationToolStripMenuItem.Visible = true;
             rolesToolStripMenuItem.Visible = true;
             employeeToolStripMenuItem.Visible = true;
@@ -1602,6 +1680,10 @@ namespace Inventory
             //Tool
             toolsToolStripMenuItem.Visible = true;
             cashEndCloseToolStripMenuItem.Visible = true;
+            if (dayCloseV2ToolStripMenuItem != null)
+                dayCloseV2ToolStripMenuItem.Visible = true;
+            if (rackWiseStockUploadToolStripMenuItem != null)
+                rackWiseStockUploadToolStripMenuItem.Visible = true;
             cashEndVerificationToolStripMenuItem.Visible = true;
 
 
@@ -1877,6 +1959,7 @@ namespace Inventory
                 else if (menu == "StockReport")
                 {
                     stockReportToolStripMenuItem.Visible = true;
+                    rackWiseProductStockReportMenuItem.Visible = true;
                 }
 
                 else if (menu == "CashTransactionReport")
@@ -1959,10 +2042,17 @@ namespace Inventory
                 else if (menu == "CashEndClose")
                 {
                     cashEndCloseToolStripMenuItem.Visible = true;
+                    if (dayCloseV2ToolStripMenuItem != null)
+                        dayCloseV2ToolStripMenuItem.Visible = true;
                 }
                 else if (menu == "CashEndVerification")
                 {
                     cashEndVerificationToolStripMenuItem.Visible = true;
+                }
+                else if (menu == RackWiseStockUpload.MenuKey)
+                {
+                    if (rackWiseStockUploadToolStripMenuItem != null)
+                        rackWiseStockUploadToolStripMenuItem.Visible = true;
                 }
 
 
@@ -3154,6 +3244,34 @@ namespace Inventory
         }
 
         private void locationRackMasterToolStripMenuItem_MouseLeave(object sender, EventArgs e)
+        {
+            mastersToolStripMenuItem.ForeColor = Color.White;
+        }
+
+        private void productRackAllocationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Program.objProductRackAllocation == null)
+            {
+                ProductRackAllocation objProductRackAllocation = new ProductRackAllocation();
+                Program.objProductRackAllocation = objProductRackAllocation;
+            }
+            else
+            {
+                Program.objProductRackAllocation.Dispose();
+                ProductRackAllocation objProductRackAllocation = new ProductRackAllocation();
+                Program.objProductRackAllocation = objProductRackAllocation;
+            }
+
+            Program.objProductRackAllocation.MdiParent = this;
+            Program.objProductRackAllocation.Show();
+        }
+
+        private void productRackAllocationToolStripMenuItem_MouseEnter(object sender, EventArgs e)
+        {
+            mastersToolStripMenuItem.ForeColor = Color.Black;
+        }
+
+        private void productRackAllocationToolStripMenuItem_MouseLeave(object sender, EventArgs e)
         {
             mastersToolStripMenuItem.ForeColor = Color.White;
         }

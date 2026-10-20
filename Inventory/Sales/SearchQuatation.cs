@@ -684,6 +684,7 @@ namespace Inventory
             //btnSave.Enabled = true;
             btnPrint.Enabled = true;
             btnPrintWithTax.Enabled = true;
+            btnPrintWithoutTax.Enabled = true;
             cmbcustomername.Text = "--Select--";
             cmdcity.Text = string.Empty;
             cmbassistby.SelectedIndex = 0;
@@ -744,6 +745,11 @@ namespace Inventory
             PrintWithTax();
         }
 
+        private void btnPrintWithoutTax_Click(object sender, EventArgs e)
+        {
+            PrintWithoutTax();
+        }
+
         private void PrintWithTax()
         {
             string quotationId = txtorder.Text.Trim();
@@ -759,6 +765,24 @@ namespace Inventory
             }
 
             QuotationGSTReport report = new QuotationGSTReport(quotationId);
+            report.ShowDialog();
+        }
+
+        private void PrintWithoutTax()
+        {
+            string quotationId = txtorder.Text.Trim();
+            if (string.IsNullOrEmpty(quotationId) && dgvSearch.CurrentRow != null)
+            {
+                quotationId = Convert.ToString(dgvSearch.CurrentRow.Cells[0].Value);
+            }
+
+            if (string.IsNullOrEmpty(quotationId))
+            {
+                MessageBox.Show("Please select a quotation before printing.", "Print Without Tax", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            QuotationWithoutTaxReport report = new QuotationWithoutTaxReport(quotationId);
             report.ShowDialog();
         }
 
@@ -1320,6 +1344,7 @@ namespace Inventory
                     // btnSave.Enabled = false;
                     btnPrint.Visible = true;
                     btnPrintWithTax.Visible = true;
+                    btnPrintWithoutTax.Visible = true;
 
 
                 }
@@ -1695,6 +1720,7 @@ namespace Inventory
                             // btnSave.Enabled = false;
                             btnPrint.Visible = true;
                             btnPrintWithTax.Visible = true;
+                            btnPrintWithoutTax.Visible = true;
 
 
                         }
@@ -1718,6 +1744,7 @@ namespace Inventory
                             // btnSave.Enabled = false;
                             btnPrint.Visible = true;
                             btnPrintWithTax.Visible = true;
+                            btnPrintWithoutTax.Visible = true;
 
 
                         }

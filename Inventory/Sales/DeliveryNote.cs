@@ -65,6 +65,8 @@ namespace Inventory
         private TextBox txtMotorVehicleNo;
         private TextBox txtTermsOfDelivery;
         private TableLayoutPanel tblDeliveryDetails;
+        private const string RackColumn = "RackAllocation";
+        private readonly NoteRackRepository noteRackRepository = new NoteRackRepository();
         public DeliveryNote()
             : this(false, false)
         {
@@ -97,6 +99,9 @@ namespace Inventory
             userid = Convert.ToInt32(Program.userid);
             //this.WindowState = FormWindowState.Maximized;
             LoadPorts();
+            dgvOrder.CellValueChanged += new DataGridViewCellEventHandler(dgvOrder_RackCellValueChanged);
+            dgvOrder.CellEndEdit += new DataGridViewCellEventHandler(dgvOrder_RackCellEndEdit);
+            dgvOrder.CellDoubleClick += new DataGridViewCellEventHandler(dgvOrder_RackCellDoubleClick);
             SearchCreteria1();
             SearchCreteria2();
             SearchCreteria3();
@@ -391,14 +396,16 @@ namespace Inventory
             return receiptMode ? "RN" : "DN";
         }
 
-        private string MaterialTransactionType()
+        private string RackAllocationTable()
         {
-            return receiptMode ? "RECEIPT NOTE" : "DELIVERY NOTE";
+            return receiptMode ? "ReceiptNoteRackAllocation" : "DeliveryNoteRackAllocation";
         }
 
-        private string MaterialInOutType()
+        private string NoRackMessage()
         {
-            return receiptMode ? "IN" : "OUT";
+            return receiptMode
+                ? "No rack is allocated for this rack-wise product.\nPlease allocate a rack first and then continue the Receipt Note."
+                : "No rack is allocated for this rack-wise product.\nPlease allocate a rack first.";
         }
 
         private object GetReferenceValue()
@@ -636,44 +643,110 @@ END");
                 SqlTransaction tran = con.BeginTransaction();
                 try
                 {
-                    string noteNo = GenerateDeliveryNoteNo(con, tran, date.Value);
-                    int noteId;
-                    using (SqlCommand cmd = new SqlCommand(@"
-INSERT INTO dbo." + HeaderTable() + @" (" + NoteNoColumn() + @", " + NoteDateColumn() + @", FromBranchId, ToBranchId, ReferenceNo, EWayBillNo, ModeTermsOfPayment, OtherReferences, BuyerOrderNo, BuyerBillNo, DestinationStateName, BuyerOrderDate, DispatchDocNo, DispatchedThrough, BillOfLadingNo, MotorVehicleNo, TermsOfDelivery, Status, EnteredBy, EnteredOn, IsDeleted)
-VALUES (@No, @Date, @FromBranchId, @ToBranchId, @ReferenceNo, @EWayBillNo, @ModeTermsOfPayment, @OtherReferences, @BuyerOrderNo, @BuyerBillNo, @DestinationStateName, @BuyerOrderDate, @DispatchDocNo, @DispatchedThrough, @BillOfLadingNo, @MotorVehicleNo, @TermsOfDelivery, 'PENDING', @User, GETDATE(), 0);
-SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
-                    {
-                        cmd.Parameters.AddWithValue("@No", noteNo);
-                        cmd.Parameters.AddWithValue("@Date", date.Value.Date);
-                        cmd.Parameters.AddWithValue("@FromBranchId", Convert.ToInt32(cmbcustomername.SelectedValue));
-                        cmd.Parameters.AddWithValue("@ToBranchId", Convert.ToInt32(cmbToLocation.SelectedValue));
-                        cmd.Parameters.AddWithValue("@ReferenceNo", GetReferenceValue());
-                        cmd.Parameters.AddWithValue("@EWayBillNo", DeliveryTextValue(txtEWayBillNo));
-                        cmd.Parameters.AddWithValue("@ModeTermsOfPayment", DeliveryTextValue(txtModeTermsOfPayment));
-                        cmd.Parameters.AddWithValue("@OtherReferences", DeliveryTextValue(txtOtherReferences));
-                        cmd.Parameters.AddWithValue("@BuyerOrderNo", DeliveryTextValue(txtBuyerOrderNo));
-                        cmd.Parameters.AddWithValue("@BuyerBillNo", DeliveryTextValue(txtBuyerBillNo));
-                        cmd.Parameters.AddWithValue("@DestinationStateName", DeliveryTextValue(txtDestinationStateName));
-                        cmd.Parameters.AddWithValue("@BuyerOrderDate", DeliveryDateValue(dtBuyerOrderDate));
-                        cmd.Parameters.AddWithValue("@DispatchDocNo", DeliveryTextValue(txtDispatchDocNo));
-                        cmd.Parameters.AddWithValue("@DispatchedThrough", DeliveryTextValue(txtDispatchedThrough));
-                        cmd.Parameters.AddWithValue("@BillOfLadingNo", DeliveryTextValue(txtBillOfLadingNo));
-                        cmd.Parameters.AddWithValue("@MotorVehicleNo", DeliveryTextValue(txtMotorVehicleNo));
-                        cmd.Parameters.AddWithValue("@TermsOfDelivery", DeliveryTextValue(txtTermsOfDelivery));
-                        cmd.Parameters.AddWithValue("@User", CurrentUser());
-                        noteId = Convert.ToInt32(cmd.ExecuteScalar());
-                    }
+                    string noteNo;
+                    int noteId = currentDeliveryNoteId;
+                    if (noteId > 0)
+                        noteNo = UpdatePendingNoteHeader(con, tran, noteId);
+                    else
+                        noteId = InsertNoteHeader(con, tran, out noteNo);
 
                     InsertDeliveryNoteDetailRows(con, tran, noteId);
+                    ValidateRackAllocation(con, tran, noteId);
                     tran.Commit();
                     currentDeliveryNoteId = noteId;
                     return noteNo;
                 }
                 catch
                 {
-                    tran.Rollback();
+                    SafeRollback(tran);
                     throw;
                 }
+            }
+        }
+
+        private int InsertNoteHeader(SqlConnection con, SqlTransaction tran, out string noteNo)
+        {
+            noteNo = GenerateDeliveryNoteNo(con, tran, date.Value);
+            using (SqlCommand cmd = new SqlCommand(@"
+INSERT INTO dbo." + HeaderTable() + @" (" + NoteNoColumn() + @", " + NoteDateColumn() + @", FromBranchId, ToBranchId, ReferenceNo, EWayBillNo, ModeTermsOfPayment, OtherReferences, BuyerOrderNo, BuyerBillNo, DestinationStateName, BuyerOrderDate, DispatchDocNo, DispatchedThrough, BillOfLadingNo, MotorVehicleNo, TermsOfDelivery, Status, EnteredBy, EnteredOn, IsDeleted)
+VALUES (@No, @Date, @FromBranchId, @ToBranchId, @ReferenceNo, @EWayBillNo, @ModeTermsOfPayment, @OtherReferences, @BuyerOrderNo, @BuyerBillNo, @DestinationStateName, @BuyerOrderDate, @DispatchDocNo, @DispatchedThrough, @BillOfLadingNo, @MotorVehicleNo, @TermsOfDelivery, 'PENDING', @User, GETDATE(), 0);
+SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
+            {
+                cmd.Parameters.AddWithValue("@No", noteNo);
+                AddNoteHeaderParameters(cmd);
+                cmd.Parameters.AddWithValue("@User", CurrentUser());
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        private void AddNoteHeaderParameters(SqlCommand cmd)
+        {
+            cmd.Parameters.AddWithValue("@Date", date.Value.Date);
+            cmd.Parameters.AddWithValue("@FromBranchId", Convert.ToInt32(cmbcustomername.SelectedValue));
+            cmd.Parameters.AddWithValue("@ToBranchId", Convert.ToInt32(cmbToLocation.SelectedValue));
+            cmd.Parameters.AddWithValue("@ReferenceNo", GetReferenceValue());
+            cmd.Parameters.AddWithValue("@EWayBillNo", DeliveryTextValue(txtEWayBillNo));
+            cmd.Parameters.AddWithValue("@ModeTermsOfPayment", DeliveryTextValue(txtModeTermsOfPayment));
+            cmd.Parameters.AddWithValue("@OtherReferences", DeliveryTextValue(txtOtherReferences));
+            cmd.Parameters.AddWithValue("@BuyerOrderNo", DeliveryTextValue(txtBuyerOrderNo));
+            cmd.Parameters.AddWithValue("@BuyerBillNo", DeliveryTextValue(txtBuyerBillNo));
+            cmd.Parameters.AddWithValue("@DestinationStateName", DeliveryTextValue(txtDestinationStateName));
+            cmd.Parameters.AddWithValue("@BuyerOrderDate", DeliveryDateValue(dtBuyerOrderDate));
+            cmd.Parameters.AddWithValue("@DispatchDocNo", DeliveryTextValue(txtDispatchDocNo));
+            cmd.Parameters.AddWithValue("@DispatchedThrough", DeliveryTextValue(txtDispatchedThrough));
+            cmd.Parameters.AddWithValue("@BillOfLadingNo", DeliveryTextValue(txtBillOfLadingNo));
+            cmd.Parameters.AddWithValue("@MotorVehicleNo", DeliveryTextValue(txtMotorVehicleNo));
+            cmd.Parameters.AddWithValue("@TermsOfDelivery", DeliveryTextValue(txtTermsOfDelivery));
+        }
+
+        private string UpdatePendingNoteHeader(SqlConnection con, SqlTransaction tran, int noteId)
+        {
+            string status = Convert.ToString(ExecuteDeliveryScalar(con, tran,
+                "SELECT Status FROM dbo." + HeaderTable() + " WITH (UPDLOCK, HOLDLOCK) WHERE " + HeaderIdColumn() + " = @Id",
+                new SqlParameter("@Id", noteId)));
+            if (status.ToUpper() != "PENDING")
+                throw new ApplicationException("This " + NoteTitle().ToLower() + " is " + (status.Length == 0 ? "not available" : status.ToLower()) + " and cannot be changed.");
+
+            using (SqlCommand cmd = new SqlCommand("UPDATE dbo." + HeaderTable() + " SET " + NoteDateColumn() + @" = @Date, FromBranchId = @FromBranchId, ToBranchId = @ToBranchId,
+    ReferenceNo = @ReferenceNo, EWayBillNo = @EWayBillNo, ModeTermsOfPayment = @ModeTermsOfPayment, OtherReferences = @OtherReferences,
+    BuyerOrderNo = @BuyerOrderNo, BuyerBillNo = @BuyerBillNo, DestinationStateName = @DestinationStateName, BuyerOrderDate = @BuyerOrderDate,
+    DispatchDocNo = @DispatchDocNo, DispatchedThrough = @DispatchedThrough, BillOfLadingNo = @BillOfLadingNo, MotorVehicleNo = @MotorVehicleNo,
+    TermsOfDelivery = @TermsOfDelivery
+WHERE " + HeaderIdColumn() + " = @Id AND Status = 'PENDING'", con, tran))
+            {
+                AddNoteHeaderParameters(cmd);
+                cmd.Parameters.AddWithValue("@Id", noteId);
+                cmd.ExecuteNonQuery();
+            }
+
+            ExecuteDeliveryNonQuery(con, tran, "DELETE FROM dbo." + RackAllocationTable() + " WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", noteId));
+            ExecuteDeliveryNonQuery(con, tran, "DELETE FROM dbo." + DetailTable() + " WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", noteId));
+            return Convert.ToString(ExecuteDeliveryScalar(con, tran,
+                "SELECT " + NoteNoColumn() + " FROM dbo." + HeaderTable() + " WHERE " + HeaderIdColumn() + " = @Id",
+                new SqlParameter("@Id", noteId)));
+        }
+
+        private void ValidateRackAllocation(SqlConnection con, SqlTransaction tran, int noteId)
+        {
+            using (SqlCommand cmd = new SqlCommand(receiptMode ? "dbo.Proc_ReceiptNote_ValidateRackAllocation" : "dbo.Proc_DeliveryNote_ValidateRackAllocation", con, tran))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@" + HeaderIdColumn(), noteId);
+                if (!receiptMode)
+                    cmd.Parameters.AddWithValue("@ForApproval", false);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private static void SafeRollback(SqlTransaction tran)
+        {
+            try
+            {
+                if (tran.Connection != null)
+                    tran.Rollback();
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 
@@ -683,45 +756,15 @@ SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                 throw new ApplicationException("Please select a delivery note for approval.");
 
             using (SqlConnection con = new SqlConnection(Conn))
+            using (SqlCommand cmd = new SqlCommand(receiptMode ? "dbo.Proc_ReceiptNote_Approve" : "dbo.Proc_DeliveryNote_Approve", con))
             {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandTimeout = 120;
+                cmd.Parameters.AddWithValue("@" + HeaderIdColumn(), currentDeliveryNoteId);
+                cmd.Parameters.AddWithValue("@ApprovedBy", CurrentUser());
+                cmd.Parameters.AddWithValue("@UserId", Convert.ToInt32(Program.userid));
                 con.Open();
-                SqlTransaction tran = con.BeginTransaction(IsolationLevel.Serializable);
-                try
-                {
-                    string status = Convert.ToString(ExecuteDeliveryScalar(con, tran, "SELECT Status FROM dbo." + HeaderTable() + " WITH (UPDLOCK, HOLDLOCK) WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", currentDeliveryNoteId)));
-                    if (status.ToUpper() != "PENDING")
-                        throw new ApplicationException("This delivery note is already " + status + ".");
-
-                    ExecuteDeliveryNonQuery(con, tran, "DELETE FROM dbo." + DetailTable() + " WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", currentDeliveryNoteId));
-                    InsertDeliveryNoteDetailRows(con, tran, currentDeliveryNoteId);
-                    string deliveryNoteNo = Convert.ToString(ExecuteDeliveryScalar(con, tran, "SELECT " + NoteNoColumn() + " FROM dbo." + HeaderTable() + " WHERE " + HeaderIdColumn() + " = @Id", new SqlParameter("@Id", currentDeliveryNoteId)));
-                    DeleteMaterialTransactionRows(con, tran, deliveryNoteNo);
-                    InsertMaterialTransactionRows(con, tran, currentDeliveryNoteId, deliveryNoteNo);
-                    ExecuteDeliveryNonQuery(con, tran, "UPDATE dbo." + HeaderTable() + " SET FromBranchId = @FromBranchId, ToBranchId = @ToBranchId, ReferenceNo = @ReferenceNo, EWayBillNo = @EWayBillNo, ModeTermsOfPayment = @ModeTermsOfPayment, OtherReferences = @OtherReferences, BuyerOrderNo = @BuyerOrderNo, BuyerBillNo = @BuyerBillNo, DestinationStateName = @DestinationStateName, BuyerOrderDate = @BuyerOrderDate, DispatchDocNo = @DispatchDocNo, DispatchedThrough = @DispatchedThrough, BillOfLadingNo = @BillOfLadingNo, MotorVehicleNo = @MotorVehicleNo, TermsOfDelivery = @TermsOfDelivery, Status = 'APPROVED', ApprovedBy = @User, ApprovedOn = GETDATE() WHERE " + HeaderIdColumn() + " = @Id",
-                        new SqlParameter("@FromBranchId", Convert.ToInt32(cmbcustomername.SelectedValue)),
-                        new SqlParameter("@ToBranchId", Convert.ToInt32(cmbToLocation.SelectedValue)),
-                        new SqlParameter("@ReferenceNo", GetReferenceValue()),
-                        new SqlParameter("@EWayBillNo", DeliveryTextValue(txtEWayBillNo)),
-                        new SqlParameter("@ModeTermsOfPayment", DeliveryTextValue(txtModeTermsOfPayment)),
-                        new SqlParameter("@OtherReferences", DeliveryTextValue(txtOtherReferences)),
-                        new SqlParameter("@BuyerOrderNo", DeliveryTextValue(txtBuyerOrderNo)),
-                        new SqlParameter("@BuyerBillNo", DeliveryTextValue(txtBuyerBillNo)),
-                        new SqlParameter("@DestinationStateName", DeliveryTextValue(txtDestinationStateName)),
-                        new SqlParameter("@BuyerOrderDate", DeliveryDateValue(dtBuyerOrderDate)),
-                        new SqlParameter("@DispatchDocNo", DeliveryTextValue(txtDispatchDocNo)),
-                        new SqlParameter("@DispatchedThrough", DeliveryTextValue(txtDispatchedThrough)),
-                        new SqlParameter("@BillOfLadingNo", DeliveryTextValue(txtBillOfLadingNo)),
-                        new SqlParameter("@MotorVehicleNo", DeliveryTextValue(txtMotorVehicleNo)),
-                        new SqlParameter("@TermsOfDelivery", DeliveryTextValue(txtTermsOfDelivery)),
-                        new SqlParameter("@User", CurrentUser()),
-                        new SqlParameter("@Id", currentDeliveryNoteId));
-                    tran.Commit();
-                }
-                catch
-                {
-                    tran.Rollback();
-                    throw;
-                }
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -736,62 +779,36 @@ SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                 if (string.IsNullOrEmpty(productText) || string.IsNullOrEmpty(qtyText))
                     continue;
 
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO dbo." + DetailTable() + " (" + HeaderIdColumn() + ", MaterialId, Quantity, Remarks) VALUES (@Id, @MaterialId, @Quantity, NULL)", con, tran))
+                int productId = Convert.ToInt32(productText);
+                int detailId;
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO dbo." + DetailTable() + " (" + HeaderIdColumn() + ", MaterialId, Quantity, Remarks) VALUES (@Id, @MaterialId, @Quantity, NULL); SELECT CAST(SCOPE_IDENTITY() AS int);", con, tran))
                 {
                     cmd.Parameters.AddWithValue("@Id", noteId);
-                    cmd.Parameters.AddWithValue("@MaterialId", Convert.ToInt32(productText));
+                    cmd.Parameters.AddWithValue("@MaterialId", productId);
                     cmd.Parameters.AddWithValue("@Quantity", Convert.ToDecimal(qtyText));
-                    cmd.ExecuteNonQuery();
+                    detailId = Convert.ToInt32(cmd.ExecuteScalar());
                 }
-            }
-        }
 
-        private void InsertMaterialTransactionRows(SqlConnection con, SqlTransaction tran, int noteId, string deliveryNoteNo)
-        {
-            string transactionTypeColumn = GetFirstColumn("MaterialTranscation", new string[] { "TransactionType", "TranscationType" });
-            string transactionDateColumn = GetFirstColumn("MaterialTranscation", new string[] { "TransactionDate", "TranscationDate" });
-            string materialIdColumn = GetFirstColumn("MaterialTranscation", new string[] { "MaterialId", "MaterailId" });
-
-            if (string.IsNullOrEmpty(transactionTypeColumn) || string.IsNullOrEmpty(transactionDateColumn) || string.IsNullOrEmpty(materialIdColumn))
-                throw new ApplicationException("MaterialTranscation table does not have the expected transaction/product columns.");
-
-            foreach (DataGridViewRow row in dgvOrder.Rows)
-            {
-                if (row.IsNewRow)
-                    continue;
-                string productText = Convert.ToString(row.Cells["productid"].Value);
-                string qtyText = Convert.ToString(row.Cells["Quantity"].Value);
-                if (string.IsNullOrEmpty(productText) || string.IsNullOrEmpty(qtyText))
+                NoteRackAllocation allocation = row.Tag as NoteRackAllocation;
+                if (allocation == null || allocation.ProductId != productId || !noteRackRepository.IsRackWise(productId))
                     continue;
 
-                string sql = @"INSERT INTO dbo.MaterialTranscation
-(TransId, " + SqlName(transactionTypeColumn) + @", " + SqlName(transactionDateColumn) + @", " + SqlName(materialIdColumn) + @", Quantity, LocationId, Type, Updatedby)
-VALUES (@TransId, @TransactionType, @Date, @MaterialId, @Quantity, @LocationId, @Type, @User)";
-                using (SqlCommand cmd = new SqlCommand(sql, con, tran))
+                foreach (KeyValuePair<int, decimal> item in allocation.Quantities)
                 {
-                    cmd.Parameters.AddWithValue("@TransId", deliveryNoteNo);
-                    cmd.Parameters.AddWithValue("@TransactionType", MaterialTransactionType());
-                    cmd.Parameters.AddWithValue("@Date", date.Value.Date);
-                    cmd.Parameters.AddWithValue("@MaterialId", Convert.ToInt32(productText));
-                    cmd.Parameters.AddWithValue("@Quantity", Convert.ToDecimal(qtyText));
-                    cmd.Parameters.AddWithValue("@LocationId", 6);
-                    cmd.Parameters.AddWithValue("@Type", MaterialInOutType());
-                    cmd.Parameters.AddWithValue("@User", Convert.ToInt32(Program.userid));
-                    cmd.ExecuteNonQuery();
+                    if (item.Value <= 0)
+                        continue;
+                    using (SqlCommand cmd = new SqlCommand("INSERT INTO dbo." + RackAllocationTable() + " (" + HeaderIdColumn() + ", " + DetailIdColumn() + ", ProductId, RackId, Quantity, CreatedBy) VALUES (@Id, @DetailId, @ProductId, @RackId, @Quantity, @User)", con, tran))
+                    {
+                        cmd.Parameters.AddWithValue("@Id", noteId);
+                        cmd.Parameters.AddWithValue("@DetailId", detailId);
+                        cmd.Parameters.AddWithValue("@ProductId", productId);
+                        cmd.Parameters.AddWithValue("@RackId", item.Key);
+                        cmd.Parameters.AddWithValue("@Quantity", item.Value);
+                        cmd.Parameters.AddWithValue("@User", CurrentUser());
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
-        }
-
-        private void DeleteMaterialTransactionRows(SqlConnection con, SqlTransaction tran, string noteNo)
-        {
-            string transactionTypeColumn = GetFirstColumn("MaterialTranscation", new string[] { "TransactionType", "TranscationType" });
-            if (string.IsNullOrEmpty(transactionTypeColumn))
-                throw new ApplicationException("MaterialTranscation table does not have a transaction type column.");
-
-            string sql = "DELETE FROM dbo.MaterialTranscation WHERE " + SqlName(transactionTypeColumn) + " = @TransactionType AND TransId = @TransId";
-            ExecuteDeliveryNonQuery(con, tran, sql,
-                new SqlParameter("@TransactionType", MaterialTransactionType()),
-                new SqlParameter("@TransId", noteNo));
         }
 
         private string GenerateDeliveryNoteNo(SqlConnection con, SqlTransaction tran, DateTime noteDate)
@@ -862,15 +879,21 @@ ORDER BY dn." + NoteDateColumn() + @" DESC, dn." + HeaderIdColumn() + @" DESC";
             LoadDeliveryHeaderFields(header.Rows[0]);
 
             DataTable details = ExecuteDeliveryTable(@"
-SELECT d.MaterialId, ISNULL(NULLIF(p.DisplayName, ''), p.ItemName) AS DisplayName, ISNULL(p.UOM, '') AS UOM, d.Quantity
+SELECT d." + DetailIdColumn() + @" AS DetailId, d.MaterialId, ISNULL(NULLIF(p.DisplayName, ''), p.ItemName) AS DisplayName, ISNULL(u.UOM, ISNULL(p.UOM, '')) AS UOM, d.Quantity
 FROM dbo." + DetailTable() + @" d
 INNER JOIN dbo.ProductMaster p ON p.id = d.MaterialId
+LEFT JOIN dbo.UOM u ON CONVERT(varchar(50), u.Uomid) = LTRIM(RTRIM(p.UOM))
 WHERE d." + HeaderIdColumn() + @" = @Id
 ORDER BY d." + DetailIdColumn(), new SqlParameter("@Id", noteId));
+            Dictionary<int, NoteRackAllocation> allocations = LoadNoteAllocations(noteId);
+            noteRackRepository.ClearCache();
             dgvOrder.Rows.Clear();
             for (int i = 0; i < details.Rows.Count; i++)
             {
                 dgvOrder.Rows.Add();
+                NoteRackAllocation allocation;
+                if (allocations.TryGetValue(Convert.ToInt32(details.Rows[i]["DetailId"]), out allocation))
+                    dgvOrder.Rows[i].Tag = allocation;
                 dgvOrder.Rows[i].Cells["S.NO"].Value = i + 1;
                 dgvOrder.Rows[i].Cells["Items"].Value = Convert.ToString(details.Rows[i]["DisplayName"]);
                 dgvOrder.Rows[i].Cells["UOM"].Value = Convert.ToString(details.Rows[i]["UOM"]);
@@ -879,28 +902,30 @@ ORDER BY d." + DetailIdColumn(), new SqlParameter("@Id", noteId));
                 dgvOrder.Rows[i].Cells["Rate"].Value = "0";
                 dgvOrder.Rows[i].Cells["Amount"].Value = "0";
                 dgvOrder.Rows[i].Cells["Types"].Value = "No";
+                UpdateRackCell(dgvOrder.Rows[i]);
             }
 
-            if (!approvalMode)
+            bool pending = Convert.ToString(header.Rows[0]["Status"]).Trim().ToUpper() == "PENDING";
+            if (approvalMode)
             {
                 pnenablefalse();
-                btnSave.Enabled = false;
+                SetHeaderEditable(false);
+                btnSave.Text = pending ? "Approve" : "Approved";
+                btnSave.Enabled = pending;
+            }
+            else if (pending)
+            {
+                pnenabletrue();
+                SetHeaderEditable(true);
+                btnSave.Text = "Update";
+                btnSave.Enabled = true;
             }
             else
             {
-                string status = Convert.ToString(header.Rows[0]["Status"]).ToUpper();
-                if (status == "APPROVED")
-                {
-                    pnenablefalse();
-                    btnSave.Text = "Approved";
-                    btnSave.Enabled = false;
-                }
-                else
-                {
-                    pnenabletrue();
-                    btnSave.Text = "Approve";
-                    btnSave.Enabled = true;
-                }
+                pnenablefalse();
+                SetHeaderEditable(false);
+                btnSave.Text = "Approved";
+                btnSave.Enabled = false;
             }
             if (!receiptMode)
             {
@@ -1463,7 +1488,13 @@ END", con))
 
             this.dgvOrder.Columns["Amount"].ReadOnly = true;
 
-
+            DataGridViewTextBoxColumn rackColumn = new DataGridViewTextBoxColumn();
+            rackColumn.Name = RackColumn;
+            rackColumn.HeaderText = "Rack Allocation (F4)";
+            rackColumn.ReadOnly = true;
+            rackColumn.SortMode = DataGridViewColumnSortMode.NotSortable;
+            rackColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dgvOrder.Columns.Add(rackColumn);
 
 
             Rectangle resolution = Screen.PrimaryScreen.Bounds;
@@ -1478,6 +1509,7 @@ END", con))
                 this.dgvOrder.Columns[4].Width = 15;
                 this.dgvOrder.Columns[5].Width = 20;
                 this.dgvOrder.Columns[6].Width = 100;
+                this.dgvOrder.Columns[RackColumn].Width = 90;
               
                
 
@@ -1490,8 +1522,26 @@ END", con))
                 this.dgvOrder.Columns[4].Width = 15;
                 this.dgvOrder.Columns[5].Width = 15;
                 this.dgvOrder.Columns[6].Width = 100;
+                this.dgvOrder.Columns[RackColumn].Width = 90;
                
 
+            }
+
+            if (approvalMode)
+            {
+                dgvOrder.Columns["Rate"].Visible = false;
+                dgvOrder.Columns["Amount"].Visible = false;
+                dgvOrder.Columns["S.NO"].FillWeight = 8;
+                dgvOrder.Columns["Items"].FillWeight = 110;
+                dgvOrder.Columns["UOM"].FillWeight = 15;
+                dgvOrder.Columns["Quantity"].FillWeight = 20;
+                dgvOrder.Columns[RackColumn].FillWeight = 110;
+
+                lbltotalamount.Visible = false;
+                lbltotalquantity.Width = lbltotalamount.Right - lbltotalquantity.Left;
+                lblTotal.Width = 200;
+                lblTotal.Left = lbltotalquantity.Left - lblTotal.Width - 6;
+                lblTotal.Text = "Total Quantity :";
             }
 
             dgvOrder.ColumnHeadersDefaultCellStyle.Font = new Font("Arial", 9.1F, FontStyle.Bold);
@@ -1568,6 +1618,16 @@ END", con))
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
+            if (keyData == Keys.F4 && dgvOrder.ContainsFocus && dgvOrder.CurrentCell != null)
+            {
+                dgvOrder.EndEdit();
+                OpenRackAllocation(dgvOrder.CurrentCell.RowIndex);
+                return true;
+            }
+
+            if (dgvOrder.ReadOnly && (keyData == (Keys.Alt | Keys.Insert) || keyData == (Keys.Alt | Keys.Delete)))
+                return true;
+
             //if (dgvOrder.Focused)
             {
                 try
@@ -2184,6 +2244,7 @@ END", con))
             bool sas = false;
             bool LightProduct = false;
             bool NormalProduct = false;
+            StringBuilder rackMessage = new StringBuilder();
             for (int k = 0; k < dgvOrder.RowCount; k++)
             {
                 string Items = Convert.ToString(dgvOrder.Rows[k].Cells["Quantity"].Value);
@@ -2214,17 +2275,23 @@ END", con))
                     sas = true;
                     break;
                 }
-                else
+                else if (!string.IsNullOrEmpty(Received))
                 {
-                    if (!receiptMode && !string.IsNullOrEmpty(Received))
+                    int productId = 0;
+                    if (!int.TryParse(productText, out productId) || productId <= 0)
                     {
-                        int productId = 0;
-                        if (!int.TryParse(productText, out productId) || productId <= 0)
-                        {
-                            sas = true;
-                            break;
-                        }
+                        sas = true;
+                        break;
+                    }
 
+                    if (noteRackRepository.IsRackWise(productId))
+                    {
+                        string rackProblem = RackAllocationProblem(dgvOrder.Rows[k], productId, Received);
+                        if (!string.IsNullOrEmpty(rackProblem))
+                            rackMessage.Append(rackProblem);
+                    }
+                    else if (!receiptMode)
+                    {
                         decimal requestedQty = Convert.ToDecimal(Items);
                         decimal availableStock = GetAvailableStockByProductId(productId);
 
@@ -2250,6 +2317,14 @@ END", con))
             {
                 i++;
                 message = message + "* Product or Rate or Quantity should not be empty." + "\n";
+                if (i == 1)
+                    this.ActiveControl = dgvOrder;
+            }
+
+            if (rackMessage.Length > 0)
+            {
+                i++;
+                message = message + rackMessage.ToString();
                 if (i == 1)
                     this.ActiveControl = dgvOrder;
             }
@@ -2339,7 +2414,19 @@ END", con))
             cmbcustomername.Focus();
             SafeResetCombo(cmbloaction);
             cmbstatus.Text = "Open";
-            pnenabletrue();
+            noteRackRepository.ClearCache();
+            btnSave.Text = approvalMode ? "Approve" : "Save";
+            if (approvalMode)
+            {
+                pnenablefalse();
+                SetHeaderEditable(false);
+                btnSave.Enabled = false;
+            }
+            else
+            {
+                pnenabletrue();
+                SetHeaderEditable(true);
+            }
             var cntls = GetAll(this, typeof(RadioButton));
             foreach (Control cntrl in cntls)
             {
@@ -2358,6 +2445,267 @@ END", con))
             }
             this.dgvOrder.Columns["Rate"].ReadOnly = true;
             btnSearch.PerformClick();
+        }
+
+        private void SetHeaderEditable(bool editable)
+        {
+            if (tblDeliveryDetails != null)
+            {
+                foreach (Control control in tblDeliveryDetails.Controls)
+                {
+                    if (control is TextBox)
+                        ((TextBox)control).ReadOnly = !editable;
+                    else if (control is DateTimePicker)
+                        control.Enabled = editable;
+                }
+            }
+            if (txtReference != null)
+                txtReference.ReadOnly = !editable;
+        }
+
+        private static int RowProductId(DataGridViewRow row)
+        {
+            int productId;
+            if (row == null || !int.TryParse(Convert.ToString(row.Cells["productid"].Value), out productId))
+                return 0;
+            return productId;
+        }
+
+        private static decimal RowQuantity(DataGridViewRow row)
+        {
+            decimal quantity;
+            if (row == null || !decimal.TryParse(Convert.ToString(row.Cells["Quantity"].Value), out quantity))
+                return 0;
+            return quantity;
+        }
+
+        private static NoteRackAllocation RowAllocation(DataGridViewRow row, int productId)
+        {
+            NoteRackAllocation allocation = row.Tag as NoteRackAllocation;
+            if (allocation == null || allocation.ProductId != productId)
+                return null;
+            return allocation;
+        }
+
+        private static string RackQty(decimal quantity)
+        {
+            return quantity.ToString("0.000");
+        }
+
+        private Dictionary<int, NoteRackAllocation> LoadNoteAllocations(int noteId)
+        {
+            Dictionary<int, NoteRackAllocation> result = new Dictionary<int, NoteRackAllocation>();
+            DataTable table = noteRackRepository.GetAllocations(receiptMode, noteId);
+            foreach (DataRow dr in table.Rows)
+            {
+                int detailId = Convert.ToInt32(dr["DetailId"]);
+                int rackId = Convert.ToInt32(dr["RackId"]);
+                NoteRackAllocation allocation;
+                if (!result.TryGetValue(detailId, out allocation))
+                {
+                    allocation = new NoteRackAllocation();
+                    allocation.ProductId = Convert.ToInt32(dr["ProductId"]);
+                    result[detailId] = allocation;
+                }
+                allocation.Quantities[rackId] = Convert.ToDecimal(dr["Quantity"]);
+                allocation.Captions[rackId] = Convert.ToString(dr["RackCaption"]);
+                allocation.Locations[rackId] = Convert.ToString(dr["LocationName"]);
+            }
+            return result;
+        }
+
+        private void UpdateRackCell(DataGridViewRow row)
+        {
+            if (row == null || row.IsNewRow || !dgvOrder.Columns.Contains(RackColumn))
+                return;
+
+            DataGridViewCell cell = row.Cells[RackColumn];
+            cell.Style.ForeColor = Color.Empty;
+            cell.Style.BackColor = Color.Empty;
+            cell.ToolTipText = string.Empty;
+
+            int productId = RowProductId(row);
+            if (productId <= 0)
+            {
+                cell.Value = string.Empty;
+                return;
+            }
+            if (!noteRackRepository.IsRackWise(productId))
+            {
+                cell.Value = "Not rack-wise";
+                cell.Style.ForeColor = Color.Gray;
+                return;
+            }
+
+            decimal quantity = RowQuantity(row);
+            NoteRackAllocation allocation = RowAllocation(row, productId);
+            decimal allocated = allocation == null ? 0 : allocation.Total;
+            if (allocated > 0 && allocated == quantity)
+            {
+                List<string> parts = new List<string>();
+                foreach (KeyValuePair<int, decimal> item in allocation.Quantities)
+                    parts.Add(allocation.Captions[item.Key] + " - " + RackQty(item.Value));
+                cell.Value = string.Join(", ", parts.ToArray());
+                cell.Style.ForeColor = Color.DarkGreen;
+                cell.Style.BackColor = Color.Honeydew;
+            }
+            else
+            {
+                if (allocated <= 0)
+                    cell.Value = "Allocate racks (F4)";
+                else if (allocated < quantity)
+                    cell.Value = "Allocated " + RackQty(allocated) + " / " + RackQty(quantity) + ", remaining " + RackQty(quantity - allocated) + " (F4)";
+                else
+                    cell.Value = "Allocated " + RackQty(allocated) + " / " + RackQty(quantity) + ", reduce " + RackQty(allocated - quantity) + " (F4)";
+                cell.Style.ForeColor = Color.DarkRed;
+                cell.Style.BackColor = Color.MistyRose;
+            }
+            cell.ToolTipText = RackAllocationText(allocation);
+        }
+
+        private static string RackAllocationText(NoteRackAllocation allocation)
+        {
+            if (allocation == null || allocation.Quantities.Count == 0)
+                return string.Empty;
+            StringBuilder text = new StringBuilder();
+            foreach (KeyValuePair<int, decimal> item in allocation.Quantities)
+            {
+                text.Append(allocation.Locations[item.Key]);
+                text.Append(" / ");
+                text.Append(allocation.Captions[item.Key]);
+                text.Append(" : ");
+                text.Append(RackQty(item.Value));
+                text.Append("\n");
+            }
+            return text.ToString().TrimEnd('\n');
+        }
+
+        private string RackAllocationProblem(DataGridViewRow row, int productId, string productName)
+        {
+            NoteRackAllocation allocation = RowAllocation(row, productId);
+            if (allocation == null || allocation.Quantities.Count == 0)
+            {
+                if (noteRackRepository.GetRacksForProduct(productId).Rows.Count == 0)
+                    return NoRackMessage() + "\nProduct: " + productName + "\n";
+                return "* Please allocate racks for " + productName + " (F4).\n";
+            }
+            decimal quantity = RowQuantity(row);
+            if (allocation.Total != quantity)
+                return "* Rack allocation for " + productName + " is " + RackQty(allocation.Total) + " but quantity is " + RackQty(quantity) + ".\n";
+            return null;
+        }
+
+        private void dgvOrder_RackCellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+            string columnName = dgvOrder.Columns[e.ColumnIndex].Name;
+            if (columnName != "productid" && columnName != "Quantity")
+                return;
+
+            DataGridViewRow row = dgvOrder.Rows[e.RowIndex];
+            if (columnName == "productid" && row.Tag is NoteRackAllocation && RowAllocation(row, RowProductId(row)) == null)
+                row.Tag = null;
+            UpdateRackCell(row);
+        }
+
+        private void dgvOrder_RackCellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || dgvOrder.ReadOnly || dgvOrder.Columns[e.ColumnIndex].Name != "Quantity")
+                return;
+
+            DataGridViewRow row = dgvOrder.Rows[e.RowIndex];
+            int productId = RowProductId(row);
+            decimal quantity = RowQuantity(row);
+            if (productId <= 0 || quantity <= 0 || !noteRackRepository.IsRackWise(productId))
+                return;
+            NoteRackAllocation allocation = RowAllocation(row, productId);
+            if (allocation != null && allocation.Total == quantity)
+                return;
+
+            int rowIndex = e.RowIndex;
+            BeginInvoke(new MethodInvoker(delegate { OpenRackAllocation(rowIndex); }));
+        }
+
+        private void dgvOrder_RackCellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvOrder.Columns[e.ColumnIndex].Name == RackColumn)
+                OpenRackAllocation(e.RowIndex);
+        }
+
+        private void OpenRackAllocation(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvOrder.Rows.Count)
+                return;
+            DataGridViewRow row = dgvOrder.Rows[rowIndex];
+            int productId = RowProductId(row);
+            if (row.IsNewRow || productId <= 0)
+                return;
+
+            string productName = Convert.ToString(row.Cells["Items"].Value);
+            if (!noteRackRepository.IsRackWise(productId))
+            {
+                MessageBox.Show(productName + " is not a rack-wise product. Rack allocation is not required.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            if (dgvOrder.ReadOnly)
+            {
+                NoteRackAllocation current = RowAllocation(row, productId);
+                string text = RackAllocationText(current);
+                MessageBox.Show(string.IsNullOrEmpty(text) ? "No racks allocated for " + productName + "." : productName + "\n\n" + text, "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            decimal quantity = RowQuantity(row);
+            if (quantity <= 0)
+            {
+                MessageBox.Show("Please enter the quantity for " + productName + " before allocating racks.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DataTable racks = noteRackRepository.GetRacksForProduct(productId);
+            if (racks.Rows.Count == 0)
+            {
+                MessageBox.Show(NoRackMessage() + "\n\nProduct: " + productName, "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (!receiptMode)
+            {
+                decimal available = 0;
+                foreach (DataRow rack in racks.Rows)
+                    available += Convert.ToDecimal(rack["AvailableQty"]);
+                if (available <= 0)
+                {
+                    MessageBox.Show("Available rack stock is 0 for " + productName + ".", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            NoteRackAllocation existing = RowAllocation(row, productId);
+            Dictionary<int, decimal> existingQuantities = existing == null ? null : existing.Quantities;
+            using (PdiRackAllocationDialog dialog = receiptMode
+                ? new PdiRackAllocationDialog(productName, quantity, racks, existingQuantities, true, "Receipt Note Rack - ", "Received Qty: ", "receipt note")
+                : new PdiRackAllocationDialog(productName, quantity, racks, existingQuantities, false, "Delivery Note Rack - ", "Delivery Qty: ", "delivery note"))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Allocations == null)
+                    return;
+
+                NoteRackAllocation allocation = new NoteRackAllocation();
+                allocation.ProductId = productId;
+                foreach (DataRow rack in racks.Rows)
+                {
+                    int rackId = Convert.ToInt32(rack["RackId"]);
+                    decimal picked;
+                    if (dialog.Allocations.TryGetValue(rackId, out picked) && picked > 0)
+                    {
+                        allocation.Quantities[rackId] = picked;
+                        allocation.Captions[rackId] = Convert.ToString(rack["RackCaption"]);
+                        allocation.Locations[rackId] = Convert.ToString(rack["LocationName"]);
+                    }
+                }
+                row.Tag = allocation.Quantities.Count > 0 ? allocation : null;
+                UpdateRackCell(row);
+            }
         }
 
 
@@ -3599,6 +3947,8 @@ END", con))
             followupdate.Enabled = true;
             txtFollowupPhone.Enabled = true;
             dgvOrder.ReadOnly = false;
+            if (dgvOrder.Columns.Contains(RackColumn))
+                dgvOrder.Columns[RackColumn].ReadOnly = true;
         }
         public void pnenablefalse()
         {
@@ -3666,7 +4016,7 @@ END", con))
                 }
 
 
-                lbltotalquantity.Text = Convert.ToString(totalquantity);
+                lbltotalquantity.Text = approvalMode ? totalquantity.ToString("0.000") : Convert.ToString(totalquantity);
                 lbltotalamount.Text = String.Format("{0:0,0.00}", totalamount);
             }
             catch

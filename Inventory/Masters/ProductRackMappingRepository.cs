@@ -1,9 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
 namespace Inventory.Masters
 {
+    public class ProductRackBulkAllocationResult
+    {
+        public int SelectedProductCount { get; set; }
+        public int RackCount { get; set; }
+        public int InsertedCount { get; set; }
+        public int SkippedCount { get; set; }
+    }
+
     public class ProductRackMappingRepository
     {
         private readonly string connectionString = Program.connection;
@@ -34,6 +43,85 @@ namespace Inventory.Masters
                 con.Open();
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        public ProductRackBulkAllocationResult BulkAddMappings(IList<int> productIds, string rackCaptions, int updatedBy)
+        {
+            if (productIds == null || productIds.Count == 0)
+            {
+                throw new ArgumentException("Select one or more products.");
+            }
+
+            string productIdCsv = BuildProductIdCsv(productIds);
+
+            using (SqlConnection con = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand("sp_ProductRackAllocation_BulkAddRacks", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandTimeout = 120;
+
+                cmd.Parameters.Add("@ProductIds", SqlDbType.NVarChar, -1).Value = productIdCsv;
+                cmd.Parameters.Add("@RackCaptions", SqlDbType.NVarChar, -1).Value = rackCaptions;
+                cmd.Parameters.Add("@UpdatedBy", SqlDbType.Int).Value = updatedBy;
+
+                SqlParameter selectedProductCount = cmd.Parameters.Add("@SelectedProductCount", SqlDbType.Int);
+                selectedProductCount.Direction = ParameterDirection.Output;
+
+                SqlParameter rackCount = cmd.Parameters.Add("@RackCount", SqlDbType.Int);
+                rackCount.Direction = ParameterDirection.Output;
+
+                SqlParameter insertedCount = cmd.Parameters.Add("@InsertedCount", SqlDbType.Int);
+                insertedCount.Direction = ParameterDirection.Output;
+
+                SqlParameter skippedCount = cmd.Parameters.Add("@SkippedCount", SqlDbType.Int);
+                skippedCount.Direction = ParameterDirection.Output;
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+
+                return new ProductRackBulkAllocationResult
+                {
+                    SelectedProductCount = OutputInt(selectedProductCount),
+                    RackCount = OutputInt(rackCount),
+                    InsertedCount = OutputInt(insertedCount),
+                    SkippedCount = OutputInt(skippedCount)
+                };
+            }
+        }
+
+        private static string BuildProductIdCsv(IList<int> productIds)
+        {
+            List<int> distinctProductIds = new List<int>();
+
+            foreach (int productId in productIds)
+            {
+                if (productId <= 0 || distinctProductIds.Contains(productId))
+                {
+                    continue;
+                }
+
+                distinctProductIds.Add(productId);
+            }
+
+            if (distinctProductIds.Count == 0)
+            {
+                throw new ArgumentException("Selected products are invalid.");
+            }
+
+            return string.Join(",", distinctProductIds.ConvertAll(delegate(int productId)
+            {
+                return productId.ToString();
+            }).ToArray());
+        }
+
+        private static int OutputInt(SqlParameter parameter)
+        {
+            if (parameter == null || parameter.Value == null || parameter.Value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            return Convert.ToInt32(parameter.Value);
         }
 
         public decimal GetRackBalance(int productId, int rackId)

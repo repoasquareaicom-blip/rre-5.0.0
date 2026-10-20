@@ -12,6 +12,9 @@ namespace Inventory.Sales
         private readonly decimal requestedQty;
         private readonly string productName;
         private readonly bool receivingStock;
+        private readonly string titlePrefix;
+        private readonly string quantityCaption;
+        private readonly string documentName;
 
         public Dictionary<int, decimal> Allocations;
         public decimal TotalSelected;
@@ -22,12 +25,24 @@ namespace Inventory.Sales
         }
 
         public PdiRackAllocationDialog(string productName, decimal requestedQty, DataTable racks, Dictionary<int, decimal> existingAllocations, bool receivingStock)
+            : this(productName, requestedQty, racks, existingAllocations, receivingStock,
+                receivingStock ? "Sales Return Rack - " : "Rack Allocation - ",
+                receivingStock ? "Return Qty: " : "Requested Qty: ",
+                "sales return")
+        {
+        }
+
+        public PdiRackAllocationDialog(string productName, decimal requestedQty, DataTable racks, Dictionary<int, decimal> existingAllocations,
+            bool receivingStock, string titlePrefix, string quantityCaption, string documentName)
         {
             InitializeComponent();
             this.productName = productName;
             this.requestedQty = requestedQty;
             this.racks = racks;
             this.receivingStock = receivingStock;
+            this.titlePrefix = titlePrefix;
+            this.quantityCaption = quantityCaption;
+            this.documentName = documentName;
             Allocations = new Dictionary<int, decimal>();
             if (existingAllocations != null)
             {
@@ -40,9 +55,9 @@ namespace Inventory.Sales
 
         private void PdiRackAllocationDialog_Load(object sender, EventArgs e)
         {
-            Text = (receivingStock ? "Sales Return Rack - " : "Rack Allocation - ") + productName;
+            Text = titlePrefix + productName;
             lblProduct.Text = productName;
-            lblRequested.Text = (receivingStock ? "Return Qty: " : "Requested Qty: ") + requestedQty.ToString("0.###");
+            lblRequested.Text = quantityCaption + requestedQty.ToString("0.###");
             LoadRackGrid();
             RecalculateTotal();
         }
@@ -264,7 +279,7 @@ namespace Inventory.Sales
 
             if (receivingStock && total != requestedQty)
             {
-                MessageBox.Show("Selected quantity must be " + requestedQty.ToString("0.###") + " for this sales return.", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selected quantity must be " + requestedQty.ToString("0.###") + " for this " + documentName + ".", "Rack Allocation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 FocusFirstPickCell();
                 return false;
             }

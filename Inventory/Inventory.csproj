@@ -217,6 +217,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="WindowsBase" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Services" />
@@ -291,6 +292,7 @@
     <Compile Include="Accounts\AccountPayable.Designer.cs">
       <DependentUpon>AccountPayable.cs</DependentUpon>
     </Compile>
+    <Compile Include="Transactions\AccountsChannel.cs" />
     <Compile Include="Accounts\AccountsReceivable.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -442,6 +444,9 @@
       <DependentUpon>RackProductList.cs</DependentUpon>
     </Compile>
     <Compile Include="Masters\ProductRackMappingRepository.cs" />
+    <Compile Include="Masters\ProductRackAllocation.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Masters\ProductRackWiseStockMovementRepository.cs" />
     <Compile Include="Masters\ProductLocationRackAssignmentControl.cs">
       <SubType>UserControl</SubType>
@@ -606,6 +611,7 @@
       <DependentUpon>PurchaseReceiptRackAllocation.cs</DependentUpon>
     </Compile>
     <Compile Include="Sales\PdiRackRepository.cs" />
+    <Compile Include="Sales\NoteRackRepository.cs" />
     <Compile Include="Sales\PdiReverseRepository.cs" />
     <Compile Include="Sales\PdiRackAllocationDialog.cs">
       <SubType>Form</SubType>
@@ -791,6 +797,13 @@
     <Compile Include="Report\SALES_TRANSACTION_REPORT.Designer.cs">
       <DependentUpon>SALES_TRANSACTION_REPORT.cs</DependentUpon>
     </Compile>
+    <Compile Include="Report\RackWiseProductStockReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Report\RackWiseProductStockReport.Designer.cs">
+      <DependentUpon>RackWiseProductStockReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Report\RackStockOutput.cs" />
     <Compile Include="Report\Stockreport.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -866,6 +879,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Sales\QuotationGSTReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Sales\QuotationWithoutTaxReport.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Sales\Quotationreport.designer.cs">
@@ -1009,6 +1025,20 @@
     <Compile Include="Tool\CashEndClose.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Tool\DayCloseV2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tool\DayCloseV2Pdf.cs" />
+    <Compile Include="Tool\DayCloseV2History.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tool\RackWiseStockUpload.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tool\RackWiseStockTemplate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tool\SimplePdf.cs" />
     <Compile Include="Tool\CashEndClose.Designer.cs">
       <DependentUpon>CashEndClose.cs</DependentUpon>
     </Compile>
@@ -1071,6 +1101,10 @@
     </Compile>
     <Compile Include="Transactions\Cashreceiptlist.Designer.cs">
       <DependentUpon>Cashreceiptlist.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Transactions\CashRequest.Layout.cs">
+      <DependentUpon>CashRequest.cs</DependentUpon>
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Transactions\CashRequest.cs">
       <SubType>Form</SubType>
@@ -1600,6 +1634,7 @@
       <DependentUpon>EstimationDS.xsd</DependentUpon>
     </None>
     <None Include="Sales\Quotation.rpt" />
+    <None Include="Sales\QuotationWithoutTax.rpt" />
     <None Include="Sales\Quotationdataset.xsc">
       <DependentUpon>Quotationdataset.xsd</DependentUpon>
     </None>

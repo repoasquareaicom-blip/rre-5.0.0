@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -197,6 +198,7 @@ namespace Inventory.Tool
             paymentdo.Rows.Add("2000", 0, 0.0);
             paymentdo.Rows.Add("1000", 0, 0.0);
             paymentdo.Rows.Add("500", 0, 0.0);
+            paymentdo.Rows.Add("200", 0, 0.0);
             paymentdo.Rows.Add("100", 0, 0.0);
             paymentdo.Rows.Add("50", 0, 0.0);
             paymentdo.Rows.Add("20", 0, 0.0);
@@ -296,6 +298,55 @@ namespace Inventory.Tool
           
         }
 
+        private long DenominationCount(DataTable dt, string column)
+        {
+            if (dt == null || !dt.Columns.Contains(column) || dt.Rows.Count == 0 || dt.Rows[0][column] == DBNull.Value)
+            {
+                return 0;
+            }
+            return Convert.ToInt64(Convert.ToDecimal(dt.Rows[0][column]));
+        }
+
+        private void SaveClosingTwoHundred(int dayEndId)
+        {
+            int amount = 0;
+            int count = 0;
+            for (int i = 0; i < cashddl.Rows.Count; i++)
+            {
+                if (cashddl.Rows[i].IsNewRow || cashddl.Rows[i].Cells[0].Value == null)
+                {
+                    continue;
+                }
+                if (Convert.ToInt32(cashddl.Rows[i].Cells[0].Value) == 200)
+                {
+                    amount = Convert.ToInt32(cashddl.Rows[i].Cells[2].Value);
+                    count = Convert.ToInt32(cashddl.Rows[i].Cells[1].Value);
+                }
+            }
+            try
+            {
+                using (SqlConnection con = new SqlConnection(Program.connection))
+                {
+                    con.Open();
+                    using (SqlCommand dayEnd = new SqlCommand("UPDATE DayEndClose SET TwoHundred = @Amount WHERE Id = @Id", con))
+                    {
+                        dayEnd.Parameters.AddWithValue("@Amount", amount);
+                        dayEnd.Parameters.AddWithValue("@Id", dayEndId);
+                        dayEnd.ExecuteNonQuery();
+                    }
+                    using (SqlCommand notes = new SqlCommand("UPDATE CashTransactionDenomination SET TwoHundred = @Count WHERE Id = (SELECT TOP 1 Id FROM CashTransactionDenomination WHERE TwoHundred IS NULL)", con))
+                    {
+                        notes.Parameters.AddWithValue("@Count", Convert.ToString(count));
+                        notes.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Day close was saved, but the Rs. 200 count could not be stored. " + ex.Message);
+            }
+        }
+
         public void GetSystemDenomination()
         {
             try
@@ -316,6 +367,7 @@ namespace Inventory.Tool
                     paymentdo.Rows.Add("2000", Convert.ToInt64(dt.Rows[0]["TwoThousand"]), 2000 * Convert.ToDecimal(dt.Rows[0]["TwoThousand"]));
                     paymentdo.Rows.Add("1000", Convert.ToInt64(dt.Rows[0]["Thousand"]), 1000 * Convert.ToDecimal(dt.Rows[0]["Thousand"]));
                     paymentdo.Rows.Add("500", Convert.ToInt64(dt.Rows[0]["FiveHundred"]), 500 * Convert.ToDecimal(dt.Rows[0]["FiveHundred"]));
+                    paymentdo.Rows.Add("200", DenominationCount(dt, "TwoHundred"), 200 * DenominationCount(dt, "TwoHundred"));
                     paymentdo.Rows.Add("100", Convert.ToInt64(dt.Rows[0]["Hundred"]), 100 * Convert.ToDecimal(dt.Rows[0]["Hundred"]));
                     paymentdo.Rows.Add("50", Convert.ToInt64(dt.Rows[0]["Fifty"]), 50 * Convert.ToDecimal(dt.Rows[0]["Fifty"]));
                     paymentdo.Rows.Add("20", Convert.ToInt64(dt.Rows[0]["Twenty"]), 20 * Convert.ToDecimal(dt.Rows[0]["Twenty"]));
@@ -583,6 +635,7 @@ namespace Inventory.Tool
 
                             if (Status[0] == 1)
                             {
+                                SaveClosingTwoHundred(Status[1]);
                                 MessageBox.Show("Saved Successfully");
                                 Clear();
                                 GetSystemDenomination();

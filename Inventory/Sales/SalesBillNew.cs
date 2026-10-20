@@ -38,11 +38,15 @@ namespace Inventory.Sales
         PurchaseReceiptBAL ObjPurchaseReceiptBAL = new PurchaseReceiptBAL();
 
         QuotationBal objQuotationbal = new QuotationBal();
+        bool cashPaymentSaved;
+        bool refundSelectionLock;
         RadioButton rbUpi;
         RadioButton rbUpiCash;
         RadioButton rbUpiCard;
         Label lblUpiReference;
         TextBox txtUpiReference;
+        Label lblUpiAmount;
+        TextBox txtUpiSplitAmount;
         private readonly PdiReverseRepository pdiReverseRepository = new PdiReverseRepository();
         private TabPage TabReversePdi;
         private DataGridView dgvReversePdi;
@@ -1517,6 +1521,248 @@ namespace Inventory.Sales
         }
 
 
+        private bool IsCashRefund()
+        {
+            return ParsePayAmount(lblpatroundoff.Text) < 0m;
+        }
+
+        private bool IsSplitCashPayment()
+        {
+            return Rdcashcard.Checked || (rbUpiCash != null && rbUpiCash.Checked);
+        }
+
+        private string NoteCount(DataGridView grid, int note)
+        {
+            if (grid == null)
+            {
+                return "0";
+            }
+            for (int i = 0; i < grid.Rows.Count; i++)
+            {
+                if (grid.Rows[i].IsNewRow || grid.Rows[i].Cells[0].Value == null)
+                {
+                    continue;
+                }
+                decimal face;
+                if (!decimal.TryParse(Convert.ToString(grid.Rows[i].Cells[0].Value), out face))
+                {
+                    continue;
+                }
+                if (face == note)
+                {
+                    string count = Convert.ToString(grid.Rows[i].Cells[1].Value);
+                    if (string.IsNullOrEmpty(count))
+                    {
+                        return "0";
+                    }
+                    return count;
+                }
+            }
+            return "0";
+        }
+
+        private string ChangeNoteCount(int note)
+        {
+            string count = NoteCount(dgvCustomerpaid, note);
+            if (count != "0")
+            {
+                return "-" + count.TrimStart('-');
+            }
+            return count;
+        }
+
+        private void AssignReceivedDenominations()
+        {
+            objQuotationbal.paidtwothousand = NoteCount(cashddl, 2000);
+            objQuotationbal.paidthousand = NoteCount(cashddl, 1000);
+            objQuotationbal.paidfivehundred = NoteCount(cashddl, 500);
+            objQuotationbal.paidhundred = NoteCount(cashddl, 100);
+            objQuotationbal.paidfifty = NoteCount(cashddl, 50);
+            objQuotationbal.paidtwenty = NoteCount(cashddl, 20);
+            objQuotationbal.paidten = NoteCount(cashddl, 10);
+            objQuotationbal.paidfive = NoteCount(cashddl, 5);
+            objQuotationbal.paidcoin = NoteCount(cashddl, 2);
+            objQuotationbal.PaidOne = NoteCount(cashddl, 1);
+        }
+
+        private void SaveTwoHundredCount(string transId, string count)
+        {
+            if (string.IsNullOrEmpty(transId))
+            {
+                return;
+            }
+            try
+            {
+                using (SqlConnection con = new SqlConnection(Program.connection))
+                using (SqlCommand cmd = new SqlCommand("UPDATE CashTransactionDenomination SET TwoHundred = @Count WHERE Id = (SELECT TOP 1 Id FROM CashTransactionDenomination WHERE TransId = @TransId AND TwoHundred IS NULL)", con))
+                {
+                    cmd.Parameters.AddWithValue("@Count", string.IsNullOrEmpty(count) ? "0" : count);
+                    cmd.Parameters.AddWithValue("@TransId", transId);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cash was saved, but the Rs. 200 denomination could not be stored. " + ex.Message);
+            }
+        }
+
+        private bool TryValidateCashDenomination(out string message)
+        {
+            message = "";
+            decimal payable = ParsePayAmount(lblpaymentamount.Text);
+            if (payable == 0m)
+            {
+                payable = ParsePayAmount(lblpatroundoff.Text);
+            }
+            decimal denom = ParsePayAmount(lblpaymenttotal.Text);
+            decimal change = 0m;
+            if (panelCustomerpaid.Visible)
+            {
+                change = ParsePayAmount(lblpaidbalance.Text);
+            }
+
+            if (payable < 0m)
+            {
+                decimal refund = Math.Abs(payable);
+                if (Math.Abs(denom - refund) > 0.009m)
+                {
+                    message = "Refund amount is ₹" + refund.ToString("N2") + ". Please enter denominations totaling ₹" + refund.ToString("N2") + ".";
+                    return false;
+                }
+                return true;
+            }
+
+            if (!rbpaymentCash.Checked && !IsSplitCashPayment())
+            {
+                return true;
+            }
+
+            if (IsSplitCashPayment())
+            {
+                decimal cashComponent = denom - change;
+                if (cashComponent <= 0m || Math.Abs(denom - cashComponent - change) > 0.009m)
+                {
+                    message = "Cash amount is ₹" + cashComponent.ToString("N2") + " but denomination total is ₹" + denom.ToString("N2") + ".";
+                    return false;
+                }
+                return true;
+            }
+
+            if (lblpaymentmode.Text == "Partial Credit Bill")
+            {
+                if (denom <= 0m || denom - payable > 0.009m)
+                {
+                    message = "Cash amount is ₹" + payable.ToString("N2") + " but denomination total is ₹" + denom.ToString("N2") + ".";
+                    return false;
+                }
+                return true;
+            }
+
+            decimal changeDue = ParsePayAmount(lblpaymentbalance.Text);
+            decimal net = denom - (change > 0m ? change : (changeDue > 0m ? changeDue : 0m));
+            if (Math.Abs(net - payable) > 0.009m)
+            {
+                message = "Cash amount is ₹" + payable.ToString("N2") + " but denomination total is ₹" + denom.ToString("N2") + ".";
+                return false;
+            }
+            return true;
+        }
+
+        private void ApplyRefundCashOnly()
+        {
+            if (!IsCashRefund() || refundSelectionLock)
+            {
+                if (!IsCashRefund())
+                {
+                    btnreceiveBalance.Enabled = true;
+                    radioButton4.Enabled = true;
+                    radioButton5.Enabled = true;
+                    radioButton6.Enabled = true;
+                }
+                return;
+            }
+            refundSelectionLock = true;
+            RbPaymentCard.Enabled = false;
+            Rdcashcard.Enabled = false;
+            RbPaymentCard.Checked = false;
+            Rdcashcard.Checked = false;
+            if (rbUpi != null)
+            {
+                rbUpi.Enabled = true;
+                rbUpiCash.Enabled = false;
+                rbUpiCard.Enabled = false;
+                rbUpiCash.Checked = false;
+                rbUpiCard.Checked = false;
+            }
+            radioButton4.Enabled = false;
+            radioButton6.Enabled = false;
+            radioButton5.Enabled = true;
+            radioButton5.Checked = true;
+            rbpaymentCash.Enabled = true;
+            if (rbUpi == null || !rbUpi.Checked)
+            {
+                rbpaymentCash.Checked = true;
+                panelTransaction.Visible = false;
+                pntransction.Visible = false;
+            }
+            panelCustomerpaid.Visible = false;
+            btnreceiveBalance.Enabled = false;
+            refundSelectionLock = false;
+        }
+
+        private bool RejectNonCashRefund()
+        {
+            if (!IsCashRefund() || refundSelectionLock)
+            {
+                return false;
+            }
+            if (rbUpi != null && rbUpi.Checked)
+            {
+                return false;
+            }
+            refundSelectionLock = true;
+            MessageBox.Show("A refund can be paid only in cash or UPI.");
+            RbPaymentCard.Checked = false;
+            Rdcashcard.Checked = false;
+            ClearUpiModes();
+            RbPaymentCard.Enabled = false;
+            Rdcashcard.Enabled = false;
+            if (rbUpi != null)
+            {
+                rbUpiCash.Enabled = false;
+                rbUpiCard.Enabled = false;
+                rbUpi.Enabled = true;
+            }
+            rbpaymentCash.Enabled = true;
+            rbpaymentCash.Checked = true;
+            panelTransaction.Visible = false;
+            pntransction.Visible = false;
+            panelCustomerpaid.Visible = false;
+            cashpl.Visible = true;
+            btnreceiveBalance.Enabled = false;
+            refundSelectionLock = false;
+            return true;
+        }
+
+        private void ResetDenominationGrid(DataGridView grid)
+        {
+            if (grid == null)
+            {
+                return;
+            }
+            for (int i = 0; i < grid.Rows.Count; i++)
+            {
+                if (grid.Rows[i].IsNewRow)
+                {
+                    continue;
+                }
+                grid.Rows[i].Cells[1].Value = 0;
+                grid.Rows[i].Cells[2].Value = 0;
+            }
+        }
+
         public void paymentdenobind()
         {
             cashddl.Rows.Clear();
@@ -1589,6 +1835,7 @@ namespace Inventory.Sales
             paymentdo.Rows.Add("2000", 0, 0.00);
             paymentdo.Rows.Add("1000", 0, 0.00);
             paymentdo.Rows.Add("500", 0, 0.00);
+            paymentdo.Rows.Add("200", 0, 0.00);
             paymentdo.Rows.Add("100", 0, 0.00);
             paymentdo.Rows.Add("50", 0, 0.00);
             paymentdo.Rows.Add("20", 0, 0.00);
@@ -1694,6 +1941,7 @@ namespace Inventory.Sales
             paymentdo.Rows.Add("2000", 0, 0.00);
             paymentdo.Rows.Add("1000", 0, 0.00);
             paymentdo.Rows.Add("500", 0, 0.00);
+            paymentdo.Rows.Add("200", 0, 0.00);
             paymentdo.Rows.Add("100", 0, 0.00);
             paymentdo.Rows.Add("50", 0, 0.00);
             paymentdo.Rows.Add("20", 0, 0.00);
@@ -2801,12 +3049,12 @@ namespace Inventory.Sales
 
             }
 
-            if (string.IsNullOrEmpty(txtcardno.Text))
+            if (txtcardno.Text == null || txtcardno.Text.Trim().Length == 0)
             {
                 i++;
                 msg = msg + "*Enter Card No" + "\n";
                 if (i == 1)
-                    this.ActiveControl = txttransactionid;
+                    this.ActiveControl = txtcardno;
 
             }
 
@@ -2922,6 +3170,24 @@ namespace Inventory.Sales
 
                     if (validaes == "0")
                     {
+                        if (IsCashRefund())
+                        {
+                            if (rbUpi != null && rbUpi.Checked)
+                            {
+                                if (ValidateUpiOnly())
+                                {
+                                    string upiRefundResult = SaveUpiRefund(txtpayorderno.Text, lblcardammount.Text, txtUpiReference.Text);
+                                    if (upiRefundResult == "1")
+                                    {
+                                        FinishCardStylePayment();
+                                    }
+                                }
+                                return;
+                            }
+                            ApplyRefundCashOnly();
+                            ShowCashDenomination();
+                            return;
+                        }
                         if (rbUpi != null && rbUpi.Checked)
                         {
                             if (ValidateUpiOnly())
@@ -2965,6 +3231,10 @@ namespace Inventory.Sales
                                     if (valis)
                                     {
                                         savepayment();
+                                        if (!cashPaymentSaved)
+                                        {
+                                            return;
+                                        }
                                         if (Convert.ToDouble(lblpaidbalance.Text) > 0)
                                         {
                                             SavepaymentDenomination();
@@ -3015,6 +3285,10 @@ namespace Inventory.Sales
                                 if (valis)
                                 {
                                     savepayment();
+                                    if (!cashPaymentSaved)
+                                    {
+                                        return;
+                                    }
                                     if (Convert.ToDouble(lblpaidbalance.Text) > 0)
                                     {
                                         SavepaymentDenomination();
@@ -3742,7 +4016,22 @@ namespace Inventory.Sales
 
                     if (SavePayemntvalid == "0")
                     {
-                        if (radioButton6.Checked)
+                        if (IsCashRefund())
+                        {
+                            ApplyRefundCashOnly();
+                            UpdateFunction();
+                            if (rbUpi != null && rbUpi.Checked)
+                            {
+                                panelTransaction.Visible = true;
+                                pntransction.Visible = true;
+                                ShowUpiReference(true);
+                            }
+                            else
+                            {
+                                ShowCashDenomination();
+                            }
+                        }
+                        else if (radioButton6.Checked)
                         {
                             UpdateFunction();
                             searchpay("Estimationid", "", "Updatedon", "Today", "customername", "", role1, Program.userid);
@@ -4553,6 +4842,7 @@ namespace Inventory.Sales
             pntransction.Visible = false;
             this.ActiveControl = cashddl;
             Application.Idle += new EventHandler(Application_Idle);
+            ApplyRefundCashOnly();
         }
 
         private bool Validationcheckout()
@@ -4814,52 +5104,14 @@ namespace Inventory.Sales
                 comboBox1.Text = "--Select--";
                 SetPaymentCustomerReadOnly();
                 //cashpl.Visible = false;
-                cashddl.Rows[0].Cells[1].Value = 0;
-                cashddl.Rows[1].Cells[1].Value = 0;
-                cashddl.Rows[2].Cells[1].Value = 0;
-                cashddl.Rows[3].Cells[1].Value = 0;
-                cashddl.Rows[4].Cells[1].Value = 0;
-                cashddl.Rows[5].Cells[1].Value = 0;
-                cashddl.Rows[6].Cells[1].Value = 0;
-                cashddl.Rows[7].Cells[1].Value = 0;
-                cashddl.Rows[8].Cells[1].Value = 0;
-
-                cashddl.Rows[0].Cells[2].Value = 0;
-                cashddl.Rows[1].Cells[2].Value = 0;
-                cashddl.Rows[2].Cells[2].Value = 0;
-                cashddl.Rows[3].Cells[2].Value = 0;
-                cashddl.Rows[4].Cells[2].Value = 0;
-                cashddl.Rows[5].Cells[2].Value = 0;
-                cashddl.Rows[6].Cells[2].Value = 0;
-                cashddl.Rows[7].Cells[2].Value = 0;
-                cashddl.Rows[8].Cells[2].Value = 0;
+                ResetDenominationGrid(cashddl);
 
                 lblpaymenttotal.Text = "0.00";
                 lblpaymentamount.Text = "0.00";
                 lblpaymentbalance.Text = "0.00";
 
 
-                dgvCustomerpaid.Rows[0].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[1].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[2].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[3].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[4].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[5].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[6].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[7].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[8].Cells[1].Value = 0;
-                dgvCustomerpaid.Rows[9].Cells[1].Value = 0;
-
-                dgvCustomerpaid.Rows[0].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[1].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[2].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[3].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[4].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[5].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[6].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[7].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[8].Cells[2].Value = 0;
-                dgvCustomerpaid.Rows[9].Cells[2].Value = 0;
+                ResetDenominationGrid(dgvCustomerpaid);
 
                 lblpaidbalance.Text = "0.00";
                 btncashpay.Enabled = true;
@@ -5479,6 +5731,109 @@ namespace Inventory.Sales
             return dt;
         }
 
+        private string[] SaveEstimationDirect(QuotationBal objbal, DataTable quotationDetails)
+        {
+            DataTable issued = GetIssuedByQuotationId(objbal.Quotationid);
+            DataTable quotationDetailPdi = BuildIssuedAdjustedEstimationDetails(quotationDetails, issued);
+
+            using (SqlConnection con = new SqlConnection(Program.connection))
+            using (SqlCommand cmd = new SqlCommand("SaveEstimation_Direct3", con))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.Add("@isnew", SqlDbType.Int).Value = objbal.isnew;
+                cmd.Parameters.Add("@Estimationid", SqlDbType.VarChar, 50).Value = DbValue(objbal.Estinationid);
+                cmd.Parameters.Add("@Quotationid", SqlDbType.VarChar, 50).Value = DbValue(objbal.Quotationid);
+                cmd.Parameters.Add("@Customerid", SqlDbType.VarChar, 10).Value = DbValue(objbal.Customerid);
+                cmd.Parameters.Add("@Phoneno", SqlDbType.VarChar, 12).Value = DbValue(objbal.phoneno);
+                cmd.Parameters.Add("@Customername", SqlDbType.VarChar, 500).Value = DbValue(objbal.Customername);
+                cmd.Parameters.Add("@City", SqlDbType.VarChar, 500).Value = DbValue(objbal.City);
+                cmd.Parameters.Add("@date", SqlDbType.DateTime).Value = objbal.date;
+                cmd.Parameters.Add("@AssistName", SqlDbType.VarChar, 500).Value = DbValue(objbal.Assistnames);
+                cmd.Parameters.Add("@Referenceid", SqlDbType.VarChar, 10).Value = DbValue(objbal.Referenceid);
+                cmd.Parameters.Add("@Assist", SqlDbType.VarChar, 100).Value = DbValue(objbal.Assist);
+                cmd.Parameters.Add("@status", SqlDbType.VarChar, 50).Value = DbValue(objbal.status);
+                cmd.Parameters.Add("@Updatedby", SqlDbType.VarChar, 10).Value = DbValue(objbal.Updatedby);
+
+                SqlParameter detailsParameter = cmd.Parameters.Add("@QuotationDetails", SqlDbType.Structured);
+                detailsParameter.TypeName = "dbo.QuotationDetailstype_sno";
+                detailsParameter.Value = quotationDetails;
+
+                SqlParameter pdiParameter = cmd.Parameters.Add("@QuotationDetailPdi", SqlDbType.Structured);
+                pdiParameter.TypeName = "dbo.QuotationDetailstypePDIdiff_sno";
+                pdiParameter.Value = quotationDetailPdi;
+
+                cmd.Parameters.Add("@Remarks", SqlDbType.VarChar, -1).Value = DbValue(objbal.Remarks);
+                cmd.Parameters.Add("@paymentmode", SqlDbType.VarChar, 50).Value = DbValue(objbal.Paymentmode);
+                cmd.Parameters.Add("@Total", SqlDbType.VarChar, 50).Value = DbValue(objbal.Total);
+                cmd.Parameters.Add("@Lessamount", SqlDbType.VarChar, 50).Value = DbValue(objbal.Lessamount);
+                cmd.Parameters.Add("@Grandtotal", SqlDbType.VarChar, 50).Value = DbValue(objbal.Grandtotal);
+                cmd.Parameters.Add("@others", SqlDbType.VarChar, 50).Value = DbValue(objbal.others);
+                cmd.Parameters.Add("@returns", SqlDbType.VarChar, 50).Value = string.IsNullOrEmpty(objbal.returns) ? (object)DBNull.Value : objbal.returns;
+
+                SqlParameter outputParameter = cmd.Parameters.Add("@output", SqlDbType.Int);
+                outputParameter.Direction = ParameterDirection.Output;
+                cmd.Parameters.Add("@cusbool", SqlDbType.Int).Value = objbal.cusbool;
+                SqlParameter resultParameter = cmd.Parameters.Add("@result", SqlDbType.VarChar, 100);
+                resultParameter.Direction = ParameterDirection.Output;
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+
+                return new string[]
+                {
+                    Convert.ToString(resultParameter.Value),
+                    Convert.ToString(outputParameter.Value)
+                };
+            }
+        }
+
+        private DataTable GetIssuedByQuotationId(string quotationId)
+        {
+            DataTable issued = new DataTable();
+
+            using (SqlConnection con = new SqlConnection(Program.connection))
+            using (SqlCommand cmd = new SqlCommand("getissuedbyquatationid", con))
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Quotationid", quotationId);
+                adapter.Fill(issued);
+            }
+
+            return issued;
+        }
+
+        private DataTable BuildIssuedAdjustedEstimationDetails(DataTable quotationDetails, DataTable issued)
+        {
+            DataTable adjusted = quotationDetails.Clone();
+
+            foreach (DataRow row in quotationDetails.Rows)
+            {
+                adjusted.ImportRow(row);
+            }
+
+            for (int i = 0; i < adjusted.Rows.Count; i++)
+            {
+                for (int j = 0; j < issued.Rows.Count; j++)
+                {
+                    if (Convert.ToString(adjusted.Rows[i]["productid"]) == Convert.ToString(issued.Rows[j]["Productid"]))
+                    {
+                        decimal quantity = Convert.ToDecimal(adjusted.Rows[i]["Quantity"]);
+                        decimal receivedQuantity = Convert.ToDecimal(issued.Rows[j]["Receiveqty"]);
+                        adjusted.Rows[i]["Quantity"] = (quantity - receivedQuantity).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                }
+            }
+
+            return adjusted;
+        }
+
+        private static object DbValue(string value)
+        {
+            return value == null ? (object)DBNull.Value : value;
+        }
+
         public void RemoveNullColumnFromDataTable1(DataTable dt)
         {
             for (int i = dt.Rows.Count - 1; i >= 0; i--)
@@ -5638,7 +5993,7 @@ namespace Inventory.Sales
             objQuotationbal.Updatedby = Program.userid;
             dt = DataGridView2DataTable(dgvNew);
         
-            string[] output = objQuotationbal.SaveEstimation(objQuotationbal, dt);
+            string[] output = SaveEstimationDirect(objQuotationbal, dt);
 
 
             if (output[1] == "3")
@@ -6614,6 +6969,7 @@ namespace Inventory.Sales
 
                 double value = Math.Round(Convert.ToDouble(lblpaynet.Text));
                 lblpatroundoff.Text = Convert.ToString(value);
+                ApplyRefundCashOnly();
               //  panel2.Enabled = false;
             }
             else
@@ -6662,6 +7018,7 @@ namespace Inventory.Sales
               //  panel2.Enabled = true;
             }
 
+            ApplyRefundCashOnly();
         }
 
 
@@ -7593,9 +7950,10 @@ namespace Inventory.Sales
                     cashddl.Rows[e.RowIndex].Cells[2].Value = s2;
                     totalval();
                 }
-                if (e.RowIndex == 8)
+                decimal editedNote;
+                if (decimal.TryParse(Convert.ToString(cashddl.Rows[e.RowIndex].Cells[0].Value), out editedNote) && editedNote == 2m)
                 {
-                    cashddl.Rows[8].Cells[1].Selected = false;
+                    cashddl.Rows[e.RowIndex].Cells[1].Selected = false;
                     lblcutomerpay.Focus();
                 }
             }
@@ -7627,7 +7985,9 @@ namespace Inventory.Sales
 
             lblpaymenttotal.Text = String.Format("{0:00.00}", totalamount);
 
-            double val = Convert.ToDouble(lblpaymenttotal.Text) - Convert.ToDouble(lblpaymentamount.Text);
+            double payable = Convert.ToDouble(lblpaymentamount.Text);
+            double target = payable < 0 ? Math.Abs(payable) : payable;
+            double val = Convert.ToDouble(lblpaymenttotal.Text) - target;
             lblpaymentbalance.Text = String.Format("{0:00.00}", val);
         }
 
@@ -7657,9 +8017,10 @@ namespace Inventory.Sales
                     dgvCustomerpaid.Rows[e.RowIndex].Cells[2].Value = s2;
                     totalvalbalance();
                 }
-                if (e.RowIndex == 8)
+                decimal editedChangeNote;
+                if (decimal.TryParse(Convert.ToString(dgvCustomerpaid.Rows[e.RowIndex].Cells[0].Value), out editedChangeNote) && editedChangeNote == 2m)
                 {
-                    dgvCustomerpaid.Rows[8].Cells[1].Selected = false;
+                    dgvCustomerpaid.Rows[e.RowIndex].Cells[1].Selected = false;
                     lblcutomerpay.Focus();
                 }
             }
@@ -7721,6 +8082,10 @@ namespace Inventory.Sales
                     {
                         btncashpay.Enabled = true;
                         savepayment();
+                        if (!cashPaymentSaved)
+                        {
+                            return;
+                        }
                         //if(checkval=="0")
                         //{
                         //    clear();
@@ -7757,9 +8122,10 @@ namespace Inventory.Sales
         {
             if (e.KeyData == Keys.Enter)
             {
-                if (cashddl.CurrentCell.RowIndex == 9)
+                int lastCashRow = cashddl.Rows.Count - 1;
+                if (cashddl.CurrentCell.RowIndex == lastCashRow)
                 {
-                    cashddl.Rows[9].Cells[1].Selected = false;
+                    cashddl.Rows[lastCashRow].Cells[1].Selected = false;
                     btnreceiveBalance.Focus();
                 }
             }
@@ -7769,9 +8135,10 @@ namespace Inventory.Sales
         {
             if (e.KeyData == Keys.Enter)
             {
-                if (dgvCustomerpaid.CurrentCell.RowIndex == 9)
+                int lastChangeRow = dgvCustomerpaid.Rows.Count - 1;
+                if (dgvCustomerpaid.CurrentCell.RowIndex == lastChangeRow)
                 {
-                    dgvCustomerpaid.Rows[9].Cells[1].Selected = false;
+                    dgvCustomerpaid.Rows[lastChangeRow].Cells[1].Selected = false;
                     lblcutomerpay.Focus();
                 }
             }
@@ -7869,6 +8236,15 @@ namespace Inventory.Sales
             bool valis = Validation1();
             if (valis)
             {
+                if (IsCashRefund())
+                {
+                    string refundMessage;
+                    if (!TryValidateCashDenomination(out refundMessage))
+                    {
+                        MessageBox.Show(refundMessage);
+                        return;
+                    }
+                }
 
                 if (Convert.ToDouble(lblpaymentbalance.Text) > Convert.ToDouble(lblpaidbalance.Text))
                 {
@@ -7953,19 +8329,17 @@ namespace Inventory.Sales
                                 //if (result == DialogResult.Yes)
                                 //{
 
+                                string partialDenominationMessage;
+                                if (!TryValidateCashDenomination(out partialDenominationMessage))
+                                {
+                                    MessageBox.Show(partialDenominationMessage);
+                                    return;
+                                }
                                 double total = Convert.ToDouble(lblpaymenttotal.Text);
                                 // Pnloading4.Visible = true;
                                 objQuotationbal.transid = txtpayorderno.Text;
                                 ReceiptId = txtpayorderno.Text;
-                                objQuotationbal.paidtwothousand = Convert.ToString(cashddl.Rows[0].Cells[1].Value);
-                                objQuotationbal.paidthousand = Convert.ToString(cashddl.Rows[1].Cells[1].Value);
-                                objQuotationbal.paidfivehundred = Convert.ToString(cashddl.Rows[2].Cells[1].Value);
-                                objQuotationbal.paidhundred = Convert.ToString(cashddl.Rows[3].Cells[1].Value);
-                                objQuotationbal.paidfifty = Convert.ToString(cashddl.Rows[4].Cells[1].Value);
-                                objQuotationbal.paidtwenty = Convert.ToString(cashddl.Rows[5].Cells[1].Value);
-                                objQuotationbal.paidten = Convert.ToString(cashddl.Rows[6].Cells[1].Value);
-                                objQuotationbal.paidfive = Convert.ToString(cashddl.Rows[7].Cells[1].Value);
-                                objQuotationbal.paidcoin = Convert.ToString(cashddl.Rows[8].Cells[1].Value);
+                                AssignReceivedDenominations();
                                 objQuotationbal.OAmount = Convert.ToString(total);
 
 
@@ -7988,6 +8362,7 @@ namespace Inventory.Sales
                                 }
 
                                 string a = objQuotationbal.Savepayment(objQuotationbal, lblpaymenttotal.Text);
+                                SaveTwoHundredCount(a, NoteCount(cashddl, 200));
                                 if (!string.IsNullOrEmpty(a))
                                 {
 
@@ -8018,7 +8393,9 @@ namespace Inventory.Sales
                             //}
                             else
                             {
-                                MessageBox.Show("Please Pay Full Amount ");
+                                decimal shortPayable = ParsePayAmount(lblpaymentamount.Text);
+                                decimal shortDenomination = ParsePayAmount(lblpaymenttotal.Text);
+                                MessageBox.Show("Cash amount is ₹" + shortPayable.ToString("N2") + " but denomination total is ₹" + shortDenomination.ToString("N2") + ".");
                             }
 
 
@@ -8031,6 +8408,10 @@ namespace Inventory.Sales
                             if (vali)
                             {
                                 savepayment();
+                                if (!cashPaymentSaved)
+                                {
+                                    return;
+                                }
                                 //if(checkval =="0")
                                 //{
                                 //    clear();
@@ -8071,28 +8452,41 @@ namespace Inventory.Sales
 
         public void savepayment()
         {
-            double total = 0.0;
-            if (Rdcashcard.Checked || (rbUpiCash != null && rbUpiCash.Checked))
+            cashPaymentSaved = false;
+            string denominationMessage;
+            if (!TryValidateCashDenomination(out denominationMessage))
             {
-                total = Convert.ToDouble(lblpaymenttotal.Text) - Convert.ToDouble(lblpaidbalance.Text);
+                MessageBox.Show(denominationMessage);
+                return;
+            }
+            double total = 0.0;
+            decimal payable = ParsePayAmount(lblpaymentamount.Text);
+            if (payable == 0m)
+            {
+                payable = ParsePayAmount(lblpatroundoff.Text);
+            }
+            decimal denominationTotal = ParsePayAmount(lblpaymenttotal.Text);
+            decimal changeGiven = panelCustomerpaid.Visible ? ParsePayAmount(lblpaidbalance.Text) : 0m;
+            if (payable < 0m)
+            {
+                total = (double)payable;
+            }
+            else if (IsSplitCashPayment())
+            {
+                total = (double)(denominationTotal - changeGiven);
+            }
+            else if (lblpaymentmode.Text == "Partial Credit Bill")
+            {
+                total = (double)denominationTotal;
             }
             else
             {
-                total = Convert.ToDouble(lblpaymenttotal.Text) - Convert.ToDouble(lblpaymentbalance.Text);
+                total = (double)payable;
             }
             //  Pnloading4.Visible = true;
             objQuotationbal.transid = txtpayorderno.Text;
             ReceiptId = txtpayorderno.Text;
-            objQuotationbal.paidtwothousand = Convert.ToString(cashddl.Rows[0].Cells[1].Value);
-            objQuotationbal.paidthousand = Convert.ToString(cashddl.Rows[1].Cells[1].Value);
-            objQuotationbal.paidfivehundred = Convert.ToString(cashddl.Rows[2].Cells[1].Value);
-            objQuotationbal.paidhundred = Convert.ToString(cashddl.Rows[3].Cells[1].Value);
-            objQuotationbal.paidfifty = Convert.ToString(cashddl.Rows[4].Cells[1].Value);
-            objQuotationbal.paidtwenty = Convert.ToString(cashddl.Rows[5].Cells[1].Value);
-            objQuotationbal.paidten = Convert.ToString(cashddl.Rows[6].Cells[1].Value);
-            objQuotationbal.paidfive = Convert.ToString(cashddl.Rows[7].Cells[1].Value);
-            objQuotationbal.paidcoin = Convert.ToString(cashddl.Rows[8].Cells[1].Value);
-            objQuotationbal.PaidOne = Convert.ToString(cashddl.Rows[9].Cells[1].Value);
+            AssignReceivedDenominations();
             objQuotationbal.OAmount = Convert.ToString(total);
 
 
@@ -8115,6 +8509,8 @@ namespace Inventory.Sales
             }
           
             lblid.Text = objQuotationbal.Savepayment(objQuotationbal, lblpaymenttotal.Text);
+            SaveTwoHundredCount(lblid.Text, NoteCount(cashddl, 200));
+            cashPaymentSaved = !string.IsNullOrEmpty(lblid.Text);
 
 
              //checkval = lblid.Text;
@@ -8140,112 +8536,21 @@ namespace Inventory.Sales
             objQuotationbal.recivetransid = lblid.Text;
             //ReceiptId = lblid.Text;
 
-            if (Convert.ToString(dgvCustomerpaid.Rows[0].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivetwothousand = "-" + Convert.ToString(dgvCustomerpaid.Rows[0].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivetwothousand = Convert.ToString(dgvCustomerpaid.Rows[0].Cells[1].Value);
-            }
-            if (Convert.ToString(dgvCustomerpaid.Rows[1].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivethousand = "-" + Convert.ToString(dgvCustomerpaid.Rows[1].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivethousand = Convert.ToString(dgvCustomerpaid.Rows[1].Cells[1].Value);
-            }
-            if (Convert.ToString(dgvCustomerpaid.Rows[2].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivefivehundred = "-" + Convert.ToString(dgvCustomerpaid.Rows[2].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivefivehundred = Convert.ToString(dgvCustomerpaid.Rows[2].Cells[1].Value);
-            }
-
-
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[3].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivehundred = "-" + Convert.ToString(dgvCustomerpaid.Rows[3].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivehundred = Convert.ToString(dgvCustomerpaid.Rows[3].Cells[1].Value);
-            }
-
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[4].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivefifty = "-" + Convert.ToString(dgvCustomerpaid.Rows[4].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivefifty = Convert.ToString(dgvCustomerpaid.Rows[4].Cells[1].Value);
-            }
-
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[5].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivetwenty = "-" + Convert.ToString(dgvCustomerpaid.Rows[5].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivetwenty = Convert.ToString(dgvCustomerpaid.Rows[5].Cells[1].Value);
-            }
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[6].Cells[1].Value) != "0")
-            {
-                objQuotationbal.reciveten = "-" + Convert.ToString(dgvCustomerpaid.Rows[6].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.reciveten = Convert.ToString(dgvCustomerpaid.Rows[6].Cells[1].Value);
-            }
-
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[7].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivefive = "-" + Convert.ToString(dgvCustomerpaid.Rows[7].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivefive = Convert.ToString(dgvCustomerpaid.Rows[7].Cells[1].Value);
-            }
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[8].Cells[1].Value) != "0")
-            {
-                objQuotationbal.recivecoin = "-" + Convert.ToString(dgvCustomerpaid.Rows[8].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.recivecoin = Convert.ToString(dgvCustomerpaid.Rows[8].Cells[1].Value);
-            }
-
-            if (Convert.ToString(dgvCustomerpaid.Rows[9].Cells[1].Value) != "0")
-            {
-                objQuotationbal.ReceiveOne = "-" + Convert.ToString(dgvCustomerpaid.Rows[9].Cells[1].Value);
-
-            }
-            else
-            {
-                objQuotationbal.ReceiveOne = Convert.ToString(dgvCustomerpaid.Rows[9].Cells[1].Value);
-            }
+            objQuotationbal.recivetwothousand = ChangeNoteCount(2000);
+            objQuotationbal.recivethousand = ChangeNoteCount(1000);
+            objQuotationbal.recivefivehundred = ChangeNoteCount(500);
+            objQuotationbal.recivehundred = ChangeNoteCount(100);
+            objQuotationbal.recivefifty = ChangeNoteCount(50);
+            objQuotationbal.recivetwenty = ChangeNoteCount(20);
+            objQuotationbal.reciveten = ChangeNoteCount(10);
+            objQuotationbal.recivefive = ChangeNoteCount(5);
+            objQuotationbal.recivecoin = ChangeNoteCount(2);
+            objQuotationbal.ReceiveOne = ChangeNoteCount(1);
 
             objQuotationbal.OAmount = "-" + lblpaidbalance.Text;
 
             string output = objQuotationbal.SavepaymentDenomination(objQuotationbal);
+            SaveTwoHundredCount(lblid.Text, ChangeNoteCount(200));
 
             if (output == "1")
             {
@@ -8319,6 +8624,25 @@ namespace Inventory.Sales
 
             pntransction.Controls.Add(lblUpiReference);
             pntransction.Controls.Add(txtUpiReference);
+
+            lblUpiAmount = new Label();
+            lblUpiAmount.AutoSize = true;
+            lblUpiAmount.Font = new System.Drawing.Font("Calibri", 14F);
+            lblUpiAmount.Text = "UPI Amount";
+            lblUpiAmount.Location = new Point(3, 8);
+            lblUpiAmount.Visible = false;
+
+            txtUpiSplitAmount = new TextBox();
+            txtUpiSplitAmount.Font = new System.Drawing.Font("Calibri", 12F);
+            txtUpiSplitAmount.Location = new Point(160, 6);
+            txtUpiSplitAmount.Size = new Size(200, 27);
+            txtUpiSplitAmount.MaxLength = 10;
+            txtUpiSplitAmount.Visible = false;
+            txtUpiSplitAmount.KeyPress += new KeyPressEventHandler(lblcardammount_KeyPress);
+            txtUpiSplitAmount.TextChanged += new EventHandler(txtUpiSplitAmount_TextChanged);
+
+            pntransction.Controls.Add(lblUpiAmount);
+            pntransction.Controls.Add(txtUpiSplitAmount);
         }
 
         private bool IsUpiModeSelected()
@@ -8346,31 +8670,96 @@ namespace Inventory.Sales
             rbUpiCash.Checked = false;
             rbUpiCard.Checked = false;
             txtUpiReference.Text = string.Empty;
+            if (txtUpiSplitAmount != null)
+            {
+                txtUpiSplitAmount.Text = string.Empty;
+            }
             ShowUpiReference(false);
+        }
+
+        private void RestoreStandardTransactionLayout()
+        {
+            label145.Text = "Amount To Pay :";
+            label145.Location = new Point(20, 9);
+            lblcardammount.Location = new Point(179, 9);
+            lblcardammount.Size = new Size(192, 27);
+            lblcardammount.ReadOnly = false;
+            label148.Text = "Bank";
+            label148.Location = new Point(7, 55);
+            cmbbank.Location = new Point(130, 51);
+            label149.Location = new Point(3, 89);
+            txtcardno.Location = new Point(130, 85);
+            lblChequeNo.Text = "Transaction Id";
+            lblChequeNo.Location = new Point(3, 125);
+            txttransactionid.Location = new Point(130, 121);
+            btntransactionpay.Location = new Point(297, 157);
+            pntransction.Size = new Size(378, 188);
+            panelTransaction.Size = new Size(379, 216);
+            if (lblUpiAmount != null)
+            {
+                lblUpiAmount.Visible = false;
+                txtUpiSplitAmount.Visible = false;
+            }
+        }
+
+        private void ApplyUpiCardLayout()
+        {
+            lblUpiAmount.Visible = true;
+            txtUpiSplitAmount.Visible = true;
+            txtUpiSplitAmount.Text = string.Empty;
+            lblUpiReference.Visible = true;
+            txtUpiReference.Visible = true;
+            lblUpiAmount.Location = new Point(3, 8);
+            txtUpiSplitAmount.Location = new Point(160, 6);
+            lblUpiReference.Location = new Point(3, 42);
+            txtUpiReference.Location = new Point(160, 40);
+            label145.Text = "Card Amount";
+            label145.Location = new Point(3, 76);
+            lblcardammount.Location = new Point(160, 74);
+            lblcardammount.Size = new Size(200, 27);
+            lblcardammount.ReadOnly = true;
+            label148.Location = new Point(3, 110);
+            cmbbank.Location = new Point(160, 108);
+            label149.Location = new Point(3, 144);
+            txtcardno.Location = new Point(160, 142);
+            lblChequeNo.Text = "Card Transaction ID";
+            lblChequeNo.Location = new Point(3, 178);
+            txttransactionid.Location = new Point(160, 176);
+            btntransactionpay.Location = new Point(290, 214);
+            pntransction.Size = new Size(400, 255);
+            panelTransaction.Size = new Size(420, 300);
+            lblcardammount.Text = String.Format("{0:0.00}", Convert.ToDouble(lblpatroundoff.Text));
+            txtUpiSplitAmount.Focus();
+        }
+
+        private void txtUpiSplitAmount_TextChanged(object sender, EventArgs e)
+        {
+            if (rbUpiCard == null || !rbUpiCard.Checked)
+            {
+                return;
+            }
+            decimal total = ParsePayAmount(lblpatroundoff.Text);
+            decimal upiAmount = ParsePayAmount(txtUpiSplitAmount.Text);
+            decimal cardAmount = total - upiAmount;
+            if (cardAmount < 0m)
+            {
+                cardAmount = 0m;
+            }
+            lblcardammount.Text = cardAmount.ToString("0.00");
         }
 
         private void ShowUpiReference(bool show)
         {
+            if (rbUpiCard == null || !rbUpiCard.Checked)
+            {
+                RestoreStandardTransactionLayout();
+            }
             lblUpiReference.Visible = show;
             txtUpiReference.Visible = show;
-            if (show && rbUpiCard.Checked)
-            {
-                lblUpiReference.Location = new Point(3, 155);
-                txtUpiReference.Location = new Point(130, 152);
-                pntransction.Size = new Size(378, 230);
-                panelTransaction.Size = new Size(379, 260);
-                btntransactionpay.Location = new Point(297, 190);
-            }
-            else if (show)
+            if (show && (rbUpiCard == null || !rbUpiCard.Checked))
             {
                 lblUpiReference.Location = new Point(3, 55);
                 txtUpiReference.Location = new Point(130, 51);
-                pntransction.Size = new Size(378, 188);
-                panelTransaction.Size = new Size(379, 216);
-                btntransactionpay.Location = new Point(297, 157);
-            }
-            else
-            {
                 pntransction.Size = new Size(378, 188);
                 panelTransaction.Size = new Size(379, 216);
                 btntransactionpay.Location = new Point(297, 157);
@@ -8399,7 +8788,18 @@ namespace Inventory.Sales
             {
                 return;
             }
-            lblcardammount.Text = String.Format("{0:00.00}", Convert.ToDouble(lblpatroundoff.Text));
+            if (RejectNonCashRefund())
+            {
+                return;
+            }
+            if (IsCashRefund())
+            {
+                lblcardammount.Text = String.Format("{0:00.00}", (double)Math.Abs(ParsePayAmount(lblpatroundoff.Text)));
+            }
+            else
+            {
+                lblcardammount.Text = String.Format("{0:00.00}", Convert.ToDouble(lblpatroundoff.Text));
+            }
             label105.Text = lblcardammount.Text;
             cashpl.Visible = false;
             panelCustomerpaid.Visible = false;
@@ -8416,6 +8816,10 @@ namespace Inventory.Sales
             {
                 return;
             }
+            if (RejectNonCashRefund())
+            {
+                return;
+            }
             lblpaymentamount.Text = String.Format("{0:00.00}", Convert.ToDouble(lblpatroundoff.Text));
             cashpl.Visible = true;
             panelTransaction.Visible = false;
@@ -8429,6 +8833,11 @@ namespace Inventory.Sales
         {
             if (!rbUpiCard.Checked)
             {
+                RestoreStandardTransactionLayout();
+                return;
+            }
+            if (RejectNonCashRefund())
+            {
                 return;
             }
             lblcardammount.Text = string.Empty;
@@ -8438,7 +8847,7 @@ namespace Inventory.Sales
             pntransction.Visible = true;
             ShowCardEntryFields(true);
             ShowUpiReference(true);
-            cmbbank.Focus();
+            ApplyUpiCardLayout();
         }
 
         private bool ValidateUpiReference()
@@ -8466,6 +8875,16 @@ namespace Inventory.Sales
             {
                 return false;
             }
+            if (IsCashRefund())
+            {
+                decimal refundTarget = Math.Abs(ParsePayAmount(lblpatroundoff.Text));
+                if (Math.Abs(ParsePayAmount(lblcardammount.Text) - refundTarget) > 0.009m)
+                {
+                    MessageBox.Show("Please Pay Full Amount");
+                    return false;
+                }
+                return true;
+            }
             if (lblpaymentmode.Text != "Partial Credit Bill")
             {
                 if (Convert.ToDouble(lblcardammount.Text) != Convert.ToDouble(lblpatroundoff.Text))
@@ -8477,44 +8896,80 @@ namespace Inventory.Sales
             return true;
         }
 
+        private string SaveUpiRefund(string estimationId, string amount, string reference)
+        {
+            try
+            {
+                int result = 0;
+                using (SqlConnection con = new SqlConnection(Program.connection))
+                using (SqlCommand cmd = new SqlCommand("dbo.SaveUpiRefund", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@RequestId", estimationId);
+                    cmd.Parameters.AddWithValue("@Amount", Convert.ToDecimal(amount));
+                    cmd.Parameters.AddWithValue("@Reference", reference);
+                    SqlParameter resultParameter = cmd.Parameters.Add("@Result", SqlDbType.Int);
+                    resultParameter.Direction = ParameterDirection.Output;
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    result = Convert.ToInt32(resultParameter.Value);
+                }
+                return result.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return "0";
+            }
+        }
+
         private bool ValidateUpiAndCard()
         {
-            if (cmbbank.SelectedIndex == 0)
+            decimal totalAmount = ParsePayAmount(lblpatroundoff.Text);
+            decimal upiAmount = ParsePayAmount(txtUpiSplitAmount.Text);
+            decimal cardAmount = ParsePayAmount(lblcardammount.Text);
+            if (upiAmount <= 0m)
             {
-                MessageBox.Show("Select Your Account");
-                cmbbank.Focus();
+                MessageBox.Show("Enter UPI Amount");
+                txtUpiSplitAmount.Focus();
                 return false;
             }
-            if (string.IsNullOrEmpty(txtcardno.Text))
+            if (cardAmount <= 0m)
             {
-                MessageBox.Show("Enter Card No");
-                txtcardno.Focus();
+                MessageBox.Show("Card amount must be greater than zero.");
+                txtUpiSplitAmount.Focus();
                 return false;
             }
-            if (string.IsNullOrEmpty(txttransactionid.Text))
+            if (Math.Abs((upiAmount + cardAmount) - totalAmount) > 0.009m)
             {
-                MessageBox.Show("Enter Transction  No");
-                txttransactionid.Focus();
-                return false;
-            }
-            if (string.IsNullOrEmpty(lblcardammount.Text) || lblcardammount.Text == ".")
-            {
-                MessageBox.Show("Enter Your Amount");
-                lblcardammount.Focus();
+                MessageBox.Show("UPI amount plus Card amount must equal the amount to pay.");
+                txtUpiSplitAmount.Focus();
                 return false;
             }
             if (!ValidateUpiReference())
             {
                 return false;
             }
-            double totalAmount = Convert.ToDouble(lblpatroundoff.Text);
-            double cardAmount = Convert.ToDouble(lblcardammount.Text);
-            if (cardAmount <= 0 || cardAmount >= totalAmount)
+            if (cmbbank.SelectedIndex == 0)
             {
-                MessageBox.Show("Enter a Card amount less than the total. The remaining amount is UPI.");
-                lblcardammount.Focus();
+                MessageBox.Show("Select Your Account");
+                cmbbank.Focus();
                 return false;
             }
+            if (txtcardno.Text == null || txtcardno.Text.Trim().Length == 0)
+            {
+                MessageBox.Show("Enter Card No");
+                txtcardno.Focus();
+                return false;
+            }
+            txtcardno.Text = txtcardno.Text.Trim();
+            if (txttransactionid.Text == null || txttransactionid.Text.Trim().Length == 0)
+            {
+                MessageBox.Show("Enter Card Transaction ID");
+                txttransactionid.Focus();
+                return false;
+            }
+            txttransactionid.Text = txttransactionid.Text.Trim();
             return true;
         }
 
@@ -9445,6 +9900,10 @@ namespace Inventory.Sales
         private void RbPaymentCard_CheckedChanged(object sender, EventArgs e)
         {
             lnkbackcard.Visible = false;
+            if (RbPaymentCard.Checked && RejectNonCashRefund())
+            {
+                return;
+            }
 
             if (rbpaymentCash.Checked)
             {
@@ -9874,6 +10333,10 @@ namespace Inventory.Sales
 
         private void radioButton1_CheckedChanged_1(object sender, EventArgs e)
         {
+            if (Rdcashcard.Checked && RejectNonCashRefund())
+            {
+                return;
+            }
             if (IsUpiModeSelected())
             {
                 return;
@@ -10897,18 +11360,10 @@ namespace Inventory.Sales
             //  Pnloading4.Visible = true;
             objQuotationbal.transid = txtpayorderno.Text;
             ReceiptId = txtpayorderno.Text;
-            objQuotationbal.paidtwothousand = Convert.ToString(cashddl.Rows[0].Cells[1].Value);
-            objQuotationbal.paidthousand = Convert.ToString(cashddl.Rows[1].Cells[1].Value);
-            objQuotationbal.paidfivehundred = Convert.ToString(cashddl.Rows[2].Cells[1].Value);
-            objQuotationbal.paidhundred = Convert.ToString(cashddl.Rows[3].Cells[1].Value);
-            objQuotationbal.paidfifty = Convert.ToString(cashddl.Rows[4].Cells[1].Value);
-            objQuotationbal.paidtwenty = Convert.ToString(cashddl.Rows[5].Cells[1].Value);
-            objQuotationbal.paidten = Convert.ToString(cashddl.Rows[6].Cells[1].Value);
-            objQuotationbal.paidfive = Convert.ToString(cashddl.Rows[7].Cells[1].Value);
-            objQuotationbal.paidcoin = Convert.ToString(cashddl.Rows[8].Cells[1].Value);
-            objQuotationbal.PaidOne = Convert.ToString(cashddl.Rows[9].Cells[1].Value);
+            AssignReceivedDenominations();
             objQuotationbal.OAmount = Convert.ToString(total);
             lblid.Text = objQuotationbal.Savepayment(objQuotationbal, lblpaymenttotal.Text);
+            SaveTwoHundredCount(lblid.Text, NoteCount(cashddl, 200));
             paymentdenobind();
 
 
